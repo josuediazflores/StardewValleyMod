@@ -215,7 +215,13 @@ function Cmd-Play {
     }
     else {
         Write-Host 'Launching vanilla Stardew Valley...'
-        Start-Process 'steam://rungameid/413150'
+        $vanillaExe = Join-Path $gameDir 'Stardew Valley.exe'
+        if (Test-Path $vanillaExe) {
+            Start-Process -FilePath $vanillaExe -WorkingDirectory $gameDir
+        } else {
+            Write-Host 'Vanilla executable not found — launching through Steam...'
+            Start-Process 'steam://rungameid/413150'
+        }
     }
 }
 

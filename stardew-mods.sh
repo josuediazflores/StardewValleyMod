@@ -184,7 +184,8 @@ cmd_play() {
             ;;
         *)
             echo "Launching vanilla Stardew Valley..."
-            open "steam://rungameid/413150"
+            cd "$SMAPI_DIR"
+            ./"Stardew Valley" "$@"
             ;;
     esac
 }
