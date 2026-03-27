@@ -9,36 +9,18 @@ struct SidebarView: View {
         List(selection: $state.sidebarSelection) {
             Section {
                 ForEach(SidebarItem.allCases) { item in
-                    HStack(spacing: 10) {
-                        stardewIcon(for: item)
+                    Label {
                         Text(item.rawValue)
-                            .font(.stardew(size: 18))
-                        Spacer()
-                        if item == .myMods && appState.mods.count > 0 {
-                            Text("\(appState.mods.count)")
-                                .font(.stardew(size: 14))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 1)
-                                .background(Color.sidebarWoodDark)
-                                .foregroundStyle(Color.accentGold)
-                                .clipShape(RoundedRectangle(cornerRadius: 3))
-                        }
+                            .font(.stardew(size: 16))
+                    } icon: {
+                        stardewIcon(for: item)
                     }
                     .tag(item)
-                    .listRowBackground(
-                        appState.sidebarSelection == item
-                            ? AnyView(
-                                LinearGradient(colors: [.accentGold, Color(red: 0.77, green: 0.58, blue: 0.31)],
-                                               startPoint: .leading, endPoint: .trailing)
-                                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                              )
-                            : AnyView(Color.clear)
-                    )
-                    .foregroundStyle(appState.sidebarSelection == item ? Color.textDark : Color(red: 0.77, green: 0.58, blue: 0.42))
+                    .badge(item == .myMods ? appState.mods.count : 0)
                 }
             } header: {
-                Text("Navigation")
-                    .font(.stardew(size: 14))
+                Text("NAVIGATION")
+                    .font(.stardew(size: 13))
                     .foregroundStyle(Color.textMuted)
             }
         }
@@ -48,22 +30,21 @@ struct SidebarView: View {
             LinearGradient(colors: [.sidebarWoodLight, .sidebarWood],
                            startPoint: .top, endPoint: .bottom)
         )
+        .foregroundStyle(Color.accentGold)
+        .tint(.accentGold)
         .safeAreaInset(edge: .bottom) {
             HStack(spacing: 6) {
-                Rectangle()
+                Circle()
                     .fill(appState.settings.isSMAPIInstalled ? Color.stardewGreen : Color.stardewRed)
                     .frame(width: 8, height: 8)
                 Text(appState.settings.isSMAPIInstalled ? "SMAPI Ready" : "SMAPI Not Found")
-                    .font(.stardew(size: 14))
+                    .font(.stardew(size: 13))
                     .foregroundStyle(Color.textMuted)
                 Spacer()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(Color.sidebarWood)
-            .overlay(alignment: .top) {
-                Rectangle().fill(Color.sidebarWoodLight).frame(height: 1)
-            }
         }
         .navigationTitle("Stardew Mod Manager")
     }
@@ -72,13 +53,13 @@ struct SidebarView: View {
     private func stardewIcon(for item: SidebarItem) -> some View {
         switch item {
         case .myMods:
-            StardewIcon(type: .chest, size: 20)
+            StardewIcon(type: .chest, size: 18)
         case .modpacks:
-            StardewIcon(type: .scroll, size: 20)
+            StardewIcon(type: .scroll, size: 18)
         case .browseNexus:
-            StardewIcon(type: .globe, size: 20)
+            StardewIcon(type: .globe, size: 18)
         case .importMods:
-            StardewIcon(type: .arrowBox, size: 20)
+            StardewIcon(type: .arrowBox, size: 18)
         }
     }
 }

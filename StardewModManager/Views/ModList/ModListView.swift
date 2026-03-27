@@ -26,26 +26,30 @@ struct ModListView: View {
                 modTable
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.parchment)
         .inspector(isPresented: $state.showInspector) {
             if let mod = appState.selectedMod {
                 ModDetailView(mod: mod)
                     .inspectorColumnWidth(min: 250, ideal: 300, max: 400)
             } else {
                 Text("Select a mod to view details")
-                    .foregroundStyle(.secondary)
-                    .frame(maxHeight: .infinity)
+                    .font(.stardew(size: 16))
+                    .foregroundStyle(Color.textLight)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.parchment)
             }
         }
         .safeAreaInset(edge: .bottom) {
             HStack {
                 Text("\(appState.filteredMods.count) mods \u{00B7} \(appState.enabledCount) enabled \u{00B7} \(appState.disabledCount) disabled")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(.stardew(size: 14))
+                    .foregroundStyle(Color.textLight)
                 Spacer()
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 4)
-            .background(.bar)
+            .padding(.vertical, 5)
+            .background(Color.parchmentHeader)
         }
         .confirmationDialog(
             "Delete Mod",
@@ -90,16 +94,18 @@ struct ModListView: View {
 
             TableColumn("Author", value: \.manifest.author) { (mod: Mod) in
                 Text(mod.manifest.author)
-                    .foregroundStyle(.secondary)
+                    .font(.stardew(size: 15))
+                    .foregroundStyle(Color.textLight)
                     .lineLimit(1)
-                    .opacity(mod.isEnabled ? 1 : 0.6)
+                    .opacity(mod.isEnabled ? 1 : 0.55)
             }
             .width(min: 80, ideal: 140)
 
             TableColumn("Version", value: \.manifest.version) { (mod: Mod) in
                 Text(mod.manifest.version)
-                    .foregroundStyle(.secondary)
-                    .opacity(mod.isEnabled ? 1 : 0.6)
+                    .font(.stardew(size: 15))
+                    .foregroundStyle(Color.textLight)
+                    .opacity(mod.isEnabled ? 1 : 0.55)
             }
             .width(80)
 
@@ -216,23 +222,25 @@ private struct ModNameCell: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: mod.modType == .codeMod ? "gearshape.fill" : "doc.fill")
-                .foregroundStyle(mod.modType == .codeMod ? .purple : .orange)
-                .frame(width: 20)
+            StardewIcon(type: mod.modType == .codeMod ? .gear : .scroll, size: 16)
             Text(mod.manifest.name)
-                .fontWeight(.medium)
+                .font(.stardew(size: 16))
+                .foregroundStyle(Color.textDark)
                 .lineLimit(1)
             if mod.isBuiltIn {
-                Text("Built-in")
-                    .font(.caption2)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 1)
-                    .background(.blue.opacity(0.15))
-                    .foregroundStyle(.blue)
-                    .clipShape(Capsule())
+                HStack(spacing: 3) {
+                    StardewIcon(type: .star, size: 10)
+                    Text("Built-in")
+                        .font(.stardew(size: 12))
+                        .foregroundStyle(Color(red: 0.1, green: 0.29, blue: 0.36))
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 1)
+                .background(Color.stardewBlue.opacity(0.3))
+                .clipShape(RoundedRectangle(cornerRadius: 3))
             }
         }
-        .opacity(mod.isEnabled ? 1 : 0.6)
+        .opacity(mod.isEnabled ? 1 : 0.55)
     }
 }
 
@@ -240,14 +248,14 @@ private struct ModTypeBadge: View {
     let mod: Mod
 
     var body: some View {
-        let color: Color = mod.modType == .codeMod ? .purple : .orange
+        let color: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
         Text(mod.modType.rawValue)
-            .font(.caption2)
+            .font(.stardew(size: 13))
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
-            .background(color.opacity(0.1))
+            .background(color.opacity(0.15))
             .foregroundStyle(color)
-            .clipShape(Capsule())
-            .opacity(mod.isEnabled ? 1 : 0.6)
+            .clipShape(RoundedRectangle(cornerRadius: 3))
+            .opacity(mod.isEnabled ? 1 : 0.55)
     }
 }

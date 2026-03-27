@@ -18,6 +18,13 @@ mkdir -p "$APP_DIR/Contents/Resources"
 # Copy binary
 cp "${BUILD_DIR}/StardewModManager" "$APP_DIR/Contents/MacOS/"
 
+# Copy bundled resources (font, etc.)
+RESOURCE_BUNDLE="${BUILD_DIR}/StardewModManager_StardewModManager.bundle"
+if [ -d "$RESOURCE_BUNDLE" ]; then
+    cp -R "$RESOURCE_BUNDLE" "$APP_DIR/Contents/Resources/"
+    echo "Resource bundle copied."
+fi
+
 # Copy icon
 if [ -f "$ICON_SRC" ]; then
     cp "$ICON_SRC" "$APP_DIR/Contents/Resources/AppIcon.icns"
