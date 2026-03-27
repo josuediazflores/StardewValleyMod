@@ -193,6 +193,8 @@ struct ModpackDetailView: View {
             return ("Imported", Color.stardewBlue)
         case .externalURL:
             return ("External", Color.textMuted)
+        case .currentProfile:
+            return ("Live", Color.stardewGreen)
         }
     }
 

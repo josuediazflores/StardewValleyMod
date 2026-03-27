@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ModRowView: View {
     let mod: Mod
+    let updateInfo: ModUpdateInfo?
     let onToggle: () -> Void
     let onDelete: () -> Void
 
@@ -40,6 +41,27 @@ struct ModRowView: View {
                         .font(.caption)
                         .foregroundStyle(.tertiary)
 
+                    if let update = updateInfo {
+                        Button {
+                            if let urlString = update.updateURL, let url = URL(string: urlString) {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "arrow.up.circle.fill")
+                                Text(update.newVersion)
+                            }
+                            .font(.caption2)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.stardewOrange.opacity(0.15))
+                            .foregroundStyle(Color.stardewOrange)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .help("Update available — click to open download page")
+                    }
+
                     Text(mod.modType.rawValue)
                         .font(.caption2)
                         .padding(.horizontal, 5)
@@ -59,13 +81,7 @@ struct ModRowView: View {
                     .help("Missing or disabled dependencies")
             }
 
-            // Toggle
             if !mod.isBuiltIn {
-                Toggle("", isOn: .constant(mod.isEnabled))
-                    .toggleStyle(.switch)
-                    .labelsHidden()
-                    .onTapGesture { onToggle() }
-
                 Button(role: .destructive) {
                     onDelete()
                 } label: {

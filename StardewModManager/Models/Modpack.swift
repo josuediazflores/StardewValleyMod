@@ -16,6 +16,7 @@ enum ModpackSource: Codable, Hashable {
     case imported(fileName: String)
     case nexusCollection(collectionId: Int)
     case externalURL(urlString: String)
+    case currentProfile
 }
 
 struct Modpack: Codable, Identifiable, Hashable {

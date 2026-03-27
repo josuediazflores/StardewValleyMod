@@ -71,6 +71,17 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
         <key>NSAllowsArbitraryLoads</key>
         <true/>
     </dict>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>NXM Protocol</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>nxm</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>
 PLIST

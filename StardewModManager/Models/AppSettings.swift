@@ -6,7 +6,13 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(gamePath, forKey: "gamePath") }
     }
     var nexusAPIKey: String? {
-        didSet { UserDefaults.standard.set(nexusAPIKey, forKey: "nexusAPIKey") }
+        didSet {
+            if let nexusAPIKey {
+                try? KeychainService.save(apiKey: nexusAPIKey)
+            } else {
+                KeychainService.delete()
+            }
+        }
     }
     var isAPIKeyValidated: Bool = false
     var nexusUserName: String?
@@ -42,6 +48,13 @@ final class AppSettings {
         } else {
             gamePath = GamePathDetector.detect() ?? ""
         }
-        nexusAPIKey = UserDefaults.standard.string(forKey: "nexusAPIKey")
+        // Migrate API key from UserDefaults to Keychain
+        if let legacyKey = UserDefaults.standard.string(forKey: "nexusAPIKey"), !legacyKey.isEmpty {
+            try? KeychainService.save(apiKey: legacyKey)
+            UserDefaults.standard.removeObject(forKey: "nexusAPIKey")
+            nexusAPIKey = legacyKey
+        } else {
+            nexusAPIKey = KeychainService.load()
+        }
     }
 }

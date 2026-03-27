@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 
 enum SidebarItem: String, CaseIterable, Identifiable {
-    case myMods = "My Mods"
     case modpacks = "Modpacks"
     case browseNexus = "Browse Nexus"
     case importMods = "Import Mods"
@@ -11,7 +10,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
-        case .myMods: return "folder.fill"
         case .modpacks: return "archivebox.fill"
         case .browseNexus: return "globe"
         case .importMods: return "square.and.arrow.down"
@@ -22,15 +20,32 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 @Observable
 @MainActor
 final class AppState {
+    static let junimoNames = [
+        "Junimo_Green", "Junimo_Blue", "Junimo_Red",
+        "Junimo_Orange", "Junimo_Yellow", "Junimo_White",
+        "Junimo_Cyan", "Junimo_Purple", "Junimo_Pink"
+    ]
+
+    let selectedJunimoName = junimoNames.randomElement()!
+
     var settings = AppSettings()
     var mods: [Mod] = []
-    var sidebarSelection: SidebarItem? = .myMods
+    var sidebarSelection: SidebarItem? = .modpacks
     var selectedModID: String?
     var searchText = ""
     var filterMode: ModFilter = .all
     var isLoading = false
     var showInspector = true
     var errorMessage: String?
+
+    // Update checking state
+    var modUpdates: [String: ModUpdateInfo] = [:]
+    var isCheckingUpdates = false
+
+    // NXM protocol state
+    var nxmDownloadStatus: String?
+    var showModpackPicker = false
+    var pendingNXMMods: [Mod] = []
 
     // Nexus state
     var nexusTrendingMods: [NexusModInfo] = []
@@ -49,6 +64,9 @@ final class AppState {
     var selectedModpackID: UUID?
     var isModpackLoading = false
     var modpackError: String?
+    var expandedModpackID: UUID? = AppState.currentProfileID
+
+    static let currentProfileID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
 
     var activeModpack: Modpack? {
         guard let id = activeModpackID else { return nil }
@@ -58,6 +76,62 @@ final class AppState {
     var selectedModpack: Modpack? {
         guard let id = selectedModpackID else { return nil }
         return modpacks.first { $0.id == id }
+    }
+
+    var currentProfileModpack: Modpack {
+        let entries = mods.filter { !$0.isBuiltIn }.map { mod in
+            ModpackEntry(
+                uniqueID: mod.id,
+                name: mod.manifest.name,
+                version: mod.manifest.version,
+                nexusModID: mod.nexusModID,
+                nexusFileID: nil,
+                isEnabled: mod.isEnabled
+            )
+        }
+        return Modpack(
+            id: AppState.currentProfileID,
+            name: "Current Profile",
+            description: "Your currently installed mods",
+            entries: entries,
+            source: .currentProfile,
+            includesFiles: false,
+            bundleFolderName: nil,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+
+    var filteredModpacks: [Modpack] {
+        guard !searchText.isEmpty, expandedModpackID == nil else { return modpacks }
+        let query = searchText.lowercased()
+        return modpacks.filter {
+            $0.name.lowercased().contains(query) ||
+            $0.description.lowercased().contains(query)
+        }
+    }
+
+    func filteredEntriesForModpack(_ modpack: Modpack) -> [ModpackEntry] {
+        var result = modpack.entries
+
+        if !searchText.isEmpty {
+            let query = searchText.lowercased()
+            result = result.filter { $0.name.lowercased().contains(query) }
+        }
+
+        switch filterMode {
+        case .all: break
+        case .enabled: result = result.filter { $0.isEnabled }
+        case .disabled: result = result.filter { !$0.isEnabled }
+        case .codeMods:
+            let codeModIDs = Set(mods.filter { $0.modType == .codeMod }.map(\.id))
+            result = result.filter { codeModIDs.contains($0.uniqueID) }
+        case .contentPacks:
+            let cpIDs = Set(mods.filter { $0.modType == .contentPack }.map(\.id))
+            result = result.filter { cpIDs.contains($0.uniqueID) }
+        }
+
+        return result
     }
 
     var filteredMods: [Mod] {
@@ -182,9 +256,97 @@ final class AppState {
         DependencyResolver.resolveAll(mods: mods)
     }
 
+    // MARK: - Update Checking
+
+    func checkForUpdates() {
+        isCheckingUpdates = true
+        Task {
+            do {
+                let updates = try await nexusAPI.checkForUpdates(mods: mods)
+                modUpdates = Dictionary(updates.map { ($0.modID, $0) }, uniquingKeysWith: { first, _ in first })
+            } catch {
+                print("Update check failed: \(error.localizedDescription)")
+            }
+            isCheckingUpdates = false
+        }
+    }
+
+    // MARK: - NXM Protocol Handler
+
+    func handleNXMLink(_ url: URL) {
+        guard let nxmLink = NXMLink(url: url) else {
+            errorMessage = "Invalid NXM link."
+            return
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+        nxmDownloadStatus = "Downloading mod..."
+
+        Task {
+            do {
+                if let key = settings.nexusAPIKey {
+                    await nexusAPI.setAPIKey(key)
+                }
+
+                let links: [NexusDownloadLink]
+                if let nxmKey = nxmLink.key, let nxmExpires = nxmLink.expires {
+                    links = try await nexusAPI.downloadLinks(modId: nxmLink.modId, fileId: nxmLink.fileId, nxmKey: nxmKey, nxmExpires: nxmExpires)
+                } else {
+                    links = try await nexusAPI.downloadLinks(modId: nxmLink.modId, fileId: nxmLink.fileId)
+                }
+
+                guard let link = links.first else {
+                    nxmDownloadStatus = nil
+                    errorMessage = "No download links available."
+                    return
+                }
+
+                let tempDir = FileManager.default.temporaryDirectory
+                let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
+                let imported = try ModManagementService.importMod(from: zipURL, settings: settings)
+                try? FileManager.default.removeItem(at: zipURL)
+
+                for newMod in imported {
+                    mods.removeAll { $0.id == newMod.id }
+                    mods.append(newMod)
+                }
+                mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+                DependencyResolver.resolveAll(mods: mods)
+
+                nxmDownloadStatus = nil
+                pendingNXMMods = imported
+                showModpackPicker = true
+            } catch {
+                nxmDownloadStatus = nil
+                errorMessage = "NXM download failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    func addModsToModpack(_ modpackID: UUID, mods modsToAdd: [Mod]) {
+        guard let index = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
+        for mod in modsToAdd {
+            let entry = ModpackEntry(
+                uniqueID: mod.id,
+                name: mod.manifest.name,
+                version: mod.manifest.version,
+                nexusModID: mod.nexusModID,
+                nexusFileID: nil,
+                isEnabled: true
+            )
+            if !modpacks[index].entries.contains(where: { $0.uniqueID == entry.uniqueID }) {
+                modpacks[index].entries.append(entry)
+            }
+        }
+        try? ModpackService.saveModpacks(modpacks, settings: settings)
+    }
+
     // MARK: - Game Launch
 
     func launchGame() {
+        if let soundURL = Bundle.module.url(forResource: "bigSelect", withExtension: "wav") {
+            NSSound(contentsOf: soundURL, byReference: true)?.play()
+        }
         do {
             try GameLauncherService.launch(settings: settings)
         } catch {
@@ -447,5 +609,34 @@ final class AppState {
             modpackError = error.localizedDescription
         }
         isModpackLoading = false
+    }
+
+    // MARK: - Modpack Entry Mutations
+
+    func toggleModpackEntry(modpackID: UUID, entryID: String) {
+        guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }),
+              let entryIdx = modpacks[idx].entries.firstIndex(where: { $0.uniqueID == entryID }) else { return }
+        modpacks[idx].entries[entryIdx].isEnabled.toggle()
+        modpacks[idx].updatedAt = Date()
+        try? ModpackService.saveModpacks(modpacks, settings: settings)
+    }
+
+    func removeModpackEntry(modpackID: UUID, entryID: String) {
+        guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
+        modpacks[idx].entries.removeAll { $0.uniqueID == entryID }
+        modpacks[idx].updatedAt = Date()
+        try? ModpackService.saveModpacks(modpacks, settings: settings)
+    }
+
+    func addModToModpack(modpackID: UUID, mod: Mod) {
+        guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
+        guard !modpacks[idx].entries.contains(where: { $0.uniqueID == mod.id }) else { return }
+        let entry = ModpackEntry(
+            uniqueID: mod.id, name: mod.manifest.name, version: mod.manifest.version,
+            nexusModID: mod.nexusModID, nexusFileID: nil, isEnabled: true
+        )
+        modpacks[idx].entries.append(entry)
+        modpacks[idx].updatedAt = Date()
+        try? ModpackService.saveModpacks(modpacks, settings: settings)
     }
 }

@@ -9,116 +9,125 @@ struct ModpackListView: View {
     @State private var modpackToDelete: Modpack?
     @State private var applyResultMessage: String?
     @State private var showApplyAlert = false
-    @State private var exportModpack: Modpack?
-    @State private var exportAsZIP = false
 
     var body: some View {
         @Bindable var state = appState
 
-        VStack(spacing: 0) {
-            // Toolbar
-            HStack(spacing: 12) {
-                Button {
-                    showCreateSheet = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                        Text("New Modpack")
-                            .font(.stardew(size: 16))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.stardewGreen)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                }
-                .buttonStyle(.plain)
+        ScrollView {
+            LazyVStack(spacing: 10) {
+                // Current Profile
+                ExpandableModpackCardView(
+                    modpack: appState.currentProfileModpack,
+                    isCurrentProfile: true,
+                    isExpanded: appState.expandedModpackID == AppState.currentProfileID,
+                    onApply: {},
+                    onExportJSON: {},
+                    onExportZIP: {},
+                    onDelete: {},
+                    onSaveAsModpack: { showCreateSheet = true }
+                )
 
-                Menu {
-                    Button("From File...") {
-                        importFromFile()
-                    }
-                    Button("From URL...") {
-                        showImportSheet = true
-                    }
-                    Button("From Nexus Collection...") {
-                        showImportSheet = true
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "square.and.arrow.down")
-                        Text("Import")
-                            .font(.stardew(size: 16))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.accentGold)
-                    .foregroundStyle(Color.textDark)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                }
+                // Saved Profiles header
+                HStack(spacing: 8) {
+                    Text("Saved Profiles")
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(Color.textMuted)
 
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(Color.parchmentHeader)
+                    VStack { Divider().overlay(Color.stardewDivider) }
 
-            Divider()
-                .overlay(Color.stardewDivider)
-
-            // Content
-            if appState.modpacks.isEmpty {
-                ContentUnavailableView {
-                    Label {
-                        Text("No Modpacks")
-                            .font(.stardew(size: 22))
-                            .foregroundStyle(Color.textDark)
-                    } icon: {
-                        StardewIcon(type: .chest, size: 48)
-                    }
-                } description: {
-                    Text("Create a modpack to save your current mod configuration, or import one from a file or URL.")
-                        .font(.stardew(size: 16))
-                        .foregroundStyle(Color.textLight)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 10) {
-                        ForEach(appState.modpacks) { modpack in
-                            ModpackCardView(
-                                modpack: modpack,
-                                isActive: appState.activeModpackID == modpack.id,
-                                isSelected: appState.selectedModpackID == modpack.id,
-                                onSelect: {
-                                    appState.selectedModpackID = modpack.id
-                                },
-                                onApply: {
-                                    applyModpack(modpack)
-                                },
-                                onExportJSON: {
-                                    exportModpack = modpack
-                                    exportAsZIP = false
-                                    showExportPanel(modpack: modpack, asZIP: false)
-                                },
-                                onExportZIP: {
-                                    exportModpack = modpack
-                                    exportAsZIP = true
-                                    showExportPanel(modpack: modpack, asZIP: true)
-                                },
-                                onDelete: {
-                                    modpackToDelete = modpack
-                                    showDeleteConfirmation = true
-                                }
-                            )
+                    Button {
+                        showCreateSheet = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 10))
+                            Text("New")
+                                .font(.stardew(size: 13))
                         }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.stardewGreen)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 3))
                     }
-                    .padding(16)
+                    .buttonStyle(.plain)
+
+                    Menu {
+                        Button("From File...") { importFromFile() }
+                        Button("From URL...") { showImportSheet = true }
+                        Button("From Nexus Collection...") { showImportSheet = true }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 10))
+                            Text("Import")
+                                .font(.stardew(size: 13))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.accentGold)
+                        .foregroundStyle(Color.textDark)
+                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                    }
                 }
-                .scrollContentBackground(.hidden)
+                .padding(.vertical, 4)
+
+                // Saved modpacks
+                if appState.modpacks.isEmpty {
+                    Text("No saved profiles yet")
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(Color.textMuted)
+                        .padding(.vertical, 20)
+                } else {
+                    ForEach(appState.filteredModpacks) { modpack in
+                        ExpandableModpackCardView(
+                            modpack: modpack,
+                            isCurrentProfile: false,
+                            isExpanded: appState.expandedModpackID == modpack.id,
+                            onApply: { applyModpack(modpack) },
+                            onExportJSON: { showExportPanel(modpack: modpack, asZIP: false) },
+                            onExportZIP: { showExportPanel(modpack: modpack, asZIP: true) },
+                            onDelete: {
+                                modpackToDelete = modpack
+                                showDeleteConfirmation = true
+                            },
+                            onSaveAsModpack: {}
+                        )
+                    }
+                }
+            }
+            .padding(16)
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color.parchment)
+        .inspector(isPresented: $state.showInspector) {
+            if appState.expandedModpackID == AppState.currentProfileID,
+               let mod = appState.selectedMod {
+                ModDetailView(mod: mod)
+                    .inspectorColumnWidth(min: 250, ideal: 300, max: 400)
+            } else {
+                Text("Select a mod to view details")
+                    .font(.stardew(size: 16))
+                    .foregroundStyle(Color.textLight)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.parchment)
             }
         }
-        .background(Color.parchment)
+        .safeAreaInset(edge: .bottom) {
+            HStack {
+                if appState.expandedModpackID == AppState.currentProfileID {
+                    Text("\(appState.filteredMods.count) mods \u{00B7} \(appState.enabledCount) enabled \u{00B7} \(appState.disabledCount) disabled")
+                } else {
+                    Text("\(appState.modpacks.count + 1) profiles \u{00B7} \(appState.mods.count) mods installed")
+                }
+                Spacer()
+            }
+            .font(.stardew(size: 14))
+            .foregroundStyle(Color.textLight)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .background(Color.parchmentHeader)
+        }
         .sheet(isPresented: $showCreateSheet) {
             ModpackCreateSheet()
                 .environment(appState)
@@ -144,6 +153,13 @@ struct ModpackListView: View {
             if let msg = applyResultMessage {
                 Text(msg)
             }
+        }
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            handleDrop(providers)
+        }
+        .onChange(of: appState.expandedModpackID) { _, _ in
+            appState.searchText = ""
+            appState.filterMode = .all
         }
     }
 
@@ -180,143 +196,27 @@ struct ModpackListView: View {
             appState.exportModpack(modpack, asZIP: asZIP, to: url)
         }
     }
-}
 
-// MARK: - Modpack Card
+    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
+        var urls: [URL] = []
+        let group = DispatchGroup()
 
-private struct ModpackCardView: View {
-    let modpack: Modpack
-    let isActive: Bool
-    let isSelected: Bool
-    let onSelect: () -> Void
-    let onApply: () -> Void
-    let onExportJSON: () -> Void
-    let onExportZIP: () -> Void
-    let onDelete: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Name + active indicator
-            HStack {
-                Text(modpack.name)
-                    .font(.stardew(size: 18))
-                    .foregroundStyle(Color.textDark)
-                    .lineLimit(1)
-
-                if isActive {
-                    Text("Active")
-                        .font(.stardew(size: 12))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.stardewGreen.opacity(0.2))
-                        .foregroundStyle(Color.stardewGreen)
-                        .clipShape(Capsule())
+        for provider in providers {
+            group.enter()
+            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { data, _ in
+                if let data = data as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
+                    urls.append(url)
                 }
-
-                Spacer()
-
-                sourceBadge
-            }
-
-            // Description
-            if !modpack.description.isEmpty {
-                Text(modpack.description)
-                    .font(.stardew(size: 14))
-                    .foregroundStyle(Color.textLight)
-                    .lineLimit(2)
-            }
-
-            // Mod count
-            HStack(spacing: 16) {
-                Text("\(modpack.entries.count) mods")
-                    .font(.stardew(size: 14))
-                    .foregroundStyle(Color.textMuted)
-
-                Spacer()
-
-                // Action buttons
-                HStack(spacing: 8) {
-                    Button {
-                        onApply()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 10))
-                            Text("Apply")
-                                .font(.stardew(size: 14))
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.stardewGreen)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 3))
-                    }
-                    .buttonStyle(.plain)
-
-                    Menu {
-                        Button("Export as JSON") { onExportJSON() }
-                        Button("Export as ZIP") { onExportZIP() }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 10))
-                            Text("Export")
-                                .font(.stardew(size: 14))
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.accentGold)
-                        .foregroundStyle(Color.textDark)
-                        .clipShape(RoundedRectangle(cornerRadius: 3))
-                    }
-
-                    Button {
-                        onDelete()
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.system(size: 12))
-                            .padding(6)
-                            .foregroundStyle(Color.stardewRed)
-                    }
-                    .buttonStyle(.plain)
-                }
+                group.leave()
             }
         }
-        .padding(12)
-        .background(isSelected ? Color.parchmentAlt : Color.parchment)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(isActive ? Color.stardewGreen : Color.accentGold.opacity(0.4), lineWidth: isActive ? 2 : 1)
-        )
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onSelect()
-        }
-    }
 
-    @ViewBuilder
-    private var sourceBadge: some View {
-        let (label, color) = sourceInfo
-        Text(label)
-            .font(.stardew(size: 12))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.15))
-            .foregroundStyle(color)
-            .clipShape(Capsule())
-    }
-
-    private var sourceInfo: (String, Color) {
-        switch modpack.source {
-        case .manual:
-            return ("Manual", Color.stardewPurple)
-        case .nexusCollection:
-            return ("Nexus Collection", Color.stardewOrange)
-        case .imported:
-            return ("Imported", Color.stardewBlue)
-        case .externalURL:
-            return ("External", Color.textMuted)
+        group.notify(queue: .main) {
+            if !urls.isEmpty {
+                appState.importMods(from: urls)
+            }
         }
+
+        return true
     }
 }

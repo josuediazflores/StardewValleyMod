@@ -259,3 +259,67 @@ struct StardewIcon: View {
         context.stroke(star, with: .color(Color(hex: 0xB8860B)), lineWidth: 0.5)
     }
 }
+
+// MARK: - Junimo Icon
+
+struct JunimoIcon: View {
+    let name: String
+    var size: CGFloat = 20
+
+    var body: some View {
+        if let url = Bundle.module.url(forResource: name, withExtension: "png"),
+           let nsImage = NSImage(contentsOf: url) {
+            Image(nsImage: nsImage)
+                .renderingMode(.original)
+                .resizable()
+                .interpolation(.none)
+                .frame(width: size, height: size)
+        } else {
+            Image(systemName: "play.fill")
+                .font(.system(size: size * 0.7))
+        }
+    }
+}
+
+// MARK: - Stardew Segmented Picker
+
+struct StardewSegmentedPicker<T: Hashable & Identifiable & CaseIterable>: View where T.AllCases: RandomAccessCollection {
+    @Binding var selection: T
+    let label: (T) -> String
+
+    var body: some View {
+        let allItems = Array(T.allCases)
+        HStack(spacing: 0) {
+            ForEach(Array(allItems.enumerated()), id: \.offset) { index, item in
+                if index > 0 {
+                    Color.accentGoldBorder.opacity(0.4)
+                        .frame(width: 1)
+                        .padding(.vertical, 6)
+                }
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        selection = item
+                    }
+                } label: {
+                    Text(label(item))
+                        .font(.stardew(size: 18))
+                        .lineLimit(1)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 5)
+                        .background(
+                            selection == item
+                                ? RoundedRectangle(cornerRadius: 4).fill(Color.accentGold)
+                                    .padding(4)
+                                : nil
+                        )
+                        .foregroundStyle(
+                            selection == item
+                                ? Color.textDark
+                                : Color.textLight
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}

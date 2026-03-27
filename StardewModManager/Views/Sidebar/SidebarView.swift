@@ -24,8 +24,8 @@ struct SidebarView: View {
                             .font(.stardew(size: 16))
                             .lineLimit(1)
                         Spacer()
-                        if item == .myMods && appState.mods.count > 0 {
-                            Text("\(appState.mods.count)")
+                        if item == .modpacks {
+                            Text("\(appState.modpacks.count + 1)")
                                 .font(.stardew(size: 14))
                                 .foregroundStyle(Color.textMuted)
                         }
@@ -70,12 +70,26 @@ struct SidebarView: View {
     @ViewBuilder
     private func stardewIcon(for item: SidebarItem) -> some View {
         switch item {
-        case .myMods:
-            StardewIcon(type: .chest, size: 18)
         case .modpacks:
-            StardewIcon(type: .scroll, size: 18)
+            if let url = Bundle.module.url(forResource: "Golden_Scroll", withExtension: "png"),
+               let nsImage = NSImage(contentsOf: url) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .interpolation(.none)
+                    .frame(width: 18, height: 18)
+            } else {
+                StardewIcon(type: .chest, size: 18)
+            }
         case .browseNexus:
-            StardewIcon(type: .globe, size: 18)
+            if let url = Bundle.module.url(forResource: "Horse_The_Book", withExtension: "png"),
+               let nsImage = NSImage(contentsOf: url) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .interpolation(.none)
+                    .frame(width: 18, height: 18)
+            } else {
+                StardewIcon(type: .globe, size: 18)
+            }
         case .importMods:
             StardewIcon(type: .arrowBox, size: 18)
         }

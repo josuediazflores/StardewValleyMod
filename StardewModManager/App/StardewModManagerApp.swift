@@ -15,6 +15,16 @@ struct StardewModManagerApp: App {
                 .onAppear {
                     appState.loadMods()
                 }
+                .onOpenURL { url in
+                    appState.handleNXMLink(url)
+                }
+                .sheet(isPresented: .init(
+                    get: { appState.showModpackPicker },
+                    set: { appState.showModpackPicker = $0 }
+                )) {
+                    NXMModpackPickerSheet(importedMods: appState.pendingNXMMods)
+                        .environment(appState)
+                }
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 1100, height: 700)
@@ -37,6 +47,11 @@ struct StardewModManagerApp: App {
                 }
                 .keyboardShortcut("l", modifiers: .command)
                 .disabled(!appState.settings.isSMAPIInstalled)
+
+                Button("Check for Updates") {
+                    appState.checkForUpdates()
+                }
+                .keyboardShortcut("u", modifiers: .command)
 
                 Divider()
 
@@ -103,8 +118,6 @@ struct ContentView: View {
             SidebarView()
         } detail: {
             switch appState.sidebarSelection {
-            case .myMods:
-                ModListView()
             case .modpacks:
                 ModpackListView()
             case .browseNexus:
@@ -119,27 +132,45 @@ struct ContentView: View {
         .navigationTitle("")
         .preferredColorScheme(.light)
         .toolbarBackground(Color.parchmentHeader, for: .windowToolbar)
-        .searchable(text: $state.searchText, placement: .toolbar, prompt: "Search mods...")
+        .background(WindowAccessor())
+        .searchable(text: $state.searchText, placement: .toolbar, prompt: appState.expandedModpackID != nil ? "Search mods..." : "Search modpacks...")
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button {
                     appState.launchGame()
                 } label: {
-                    Label("Play", systemImage: "play.fill")
+                    HStack(spacing: 10) {
+                        JunimoIcon(name: appState.selectedJunimoName, size: 36)
+                        Text("Play")
+                            .font(.stardew(size: 24))
+                    }
+                    .padding(.leading, 10)
+                    .padding(.trailing, 16)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.stardewGreen.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.stardewGreen, lineWidth: 1.5)
+                            )
+                    )
                 }
-                .tint(.stardewGreen)
+                .buttonStyle(.plain)
                 .disabled(!appState.settings.isSMAPIInstalled)
                 .help("Launch Stardew Valley with SMAPI")
+                .layoutPriority(1)
             }
 
             ToolbarItem(placement: .principal) {
-                Picker("Filter", selection: $state.filterMode) {
-                    ForEach(ModFilter.allCases) { filter in
-                        Text(filter.rawValue).tag(filter)
-                    }
+                if appState.expandedModpackID != nil {
+                    StardewSegmentedPicker(
+                        selection: $state.filterMode,
+                        label: { $0.rawValue }
+                    )
+                    .frame(minWidth: 200, idealWidth: 400, maxWidth: 500)
+                    .layoutPriority(-1)
                 }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 500)
             }
 
             ToolbarItem(placement: .primaryAction) {
@@ -158,6 +189,40 @@ struct ContentView: View {
             Button("OK") { appState.errorMessage = nil }
         } message: {
             Text(appState.errorMessage ?? "")
+        }
+    }
+}
+
+// MARK: - Window Titlebar Styling
+
+private struct WindowAccessor: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            applyTitlebarStyle(to: view.window)
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            applyTitlebarStyle(to: nsView.window)
+        }
+    }
+
+    private func applyTitlebarStyle(to window: NSWindow?) {
+        guard let window else { return }
+        window.backgroundColor = NSColor(Color.parchmentHeader)
+        window.titlebarAppearsTransparent = true
+        window.toolbar?.isVisible = true
+        window.minSize = NSSize(width: 700, height: 450)
+        window.collectionBehavior.insert(.fullScreenPrimary)
+        // Keep toolbar visible in full screen
+        let accessor = NSTitlebarAccessoryViewController()
+        accessor.layoutAttribute = .bottom
+        accessor.fullScreenMinHeight = 0
+        if window.titlebarAccessoryViewControllers.isEmpty {
+            window.addTitlebarAccessoryViewController(accessor)
         }
     }
 }
