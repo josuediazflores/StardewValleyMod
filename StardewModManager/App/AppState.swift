@@ -3,18 +3,18 @@ import SwiftUI
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case myMods = "My Mods"
+    case modpacks = "Modpacks"
     case browseNexus = "Browse Nexus"
     case importMods = "Import Mods"
-    case settings = "Settings"
 
     var id: String { rawValue }
 
     var icon: String {
         switch self {
         case .myMods: return "folder.fill"
+        case .modpacks: return "archivebox.fill"
         case .browseNexus: return "globe"
         case .importMods: return "square.and.arrow.down"
-        case .settings: return "gear"
         }
     }
 }
@@ -29,6 +29,7 @@ final class AppState {
     var searchText = ""
     var filterMode: ModFilter = .all
     var isLoading = false
+    var showInspector = true
     var errorMessage: String?
 
     // Nexus state
@@ -40,6 +41,24 @@ final class AppState {
     var nexusError: String?
 
     let nexusAPI = NexusAPIService()
+    let externalDownloader = ExternalDownloadService()
+
+    // Modpack state
+    var modpacks: [Modpack] = []
+    var activeModpackID: UUID?
+    var selectedModpackID: UUID?
+    var isModpackLoading = false
+    var modpackError: String?
+
+    var activeModpack: Modpack? {
+        guard let id = activeModpackID else { return nil }
+        return modpacks.first { $0.id == id }
+    }
+
+    var selectedModpack: Modpack? {
+        guard let id = selectedModpackID else { return nil }
+        return modpacks.first { $0.id == id }
+    }
 
     var filteredMods: [Mod] {
         var result = mods
@@ -71,6 +90,21 @@ final class AppState {
 
     var enabledCount: Int { mods.filter { $0.isEnabled }.count }
     var disabledCount: Int { mods.filter { !$0.isEnabled }.count }
+
+    // MARK: - Sorting
+
+    func sortMods(using comparators: [KeyPathComparator<Mod>]) {
+        mods.sort { lhs, rhs in
+            for comparator in comparators {
+                switch comparator.compare(lhs, rhs) {
+                case .orderedAscending: return true
+                case .orderedDescending: return false
+                case .orderedSame: continue
+                }
+            }
+            return false
+        }
+    }
 
     // MARK: - Mod Operations
 
@@ -256,5 +290,162 @@ final class AppState {
         if let url = URL(string: "https://www.nexusmods.com/stardewvalley/mods/\(modId)") {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    // MARK: - Modpack Operations
+
+    func loadModpacks() {
+        modpacks = ModpackService.loadModpacks(settings: settings)
+    }
+
+    func createModpackFromCurrentState(name: String, description: String) {
+        let modpack = ModpackService.createModpack(name: name, description: description, from: mods)
+        modpacks.append(modpack)
+        do {
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func applyModpack(_ modpack: Modpack) {
+        isModpackLoading = true
+        modpackError = nil
+        do {
+            let result = try ModpackService.applyModpack(modpack, mods: mods, settings: settings)
+            activeModpackID = modpack.id
+            loadMods()
+
+            if !result.missing.isEmpty {
+                let names = result.missing.map(\.name).joined(separator: ", ")
+                modpackError = "Applied profile. Missing mods: \(names)"
+            }
+        } catch {
+            modpackError = error.localizedDescription
+        }
+        isModpackLoading = false
+    }
+
+    func deleteModpack(_ modpack: Modpack) {
+        do {
+            try ModpackService.deleteModpack(modpack, settings: settings)
+            modpacks.removeAll { $0.id == modpack.id }
+            if activeModpackID == modpack.id { activeModpackID = nil }
+            if selectedModpackID == modpack.id { selectedModpackID = nil }
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func renameModpack(_ modpack: Modpack, to newName: String) {
+        guard let index = modpacks.firstIndex(where: { $0.id == modpack.id }) else { return }
+        modpacks[index].name = newName
+        modpacks[index].updatedAt = Date()
+        do {
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func exportModpack(_ modpack: Modpack, asZIP: Bool, to url: URL) {
+        do {
+            if asZIP {
+                try ModpackService.exportAsZIP(modpack, mods: mods, settings: settings, to: url)
+            } else {
+                try ModpackService.exportAsJSON(modpack, to: url)
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func importModpackFromFile(url: URL) {
+        do {
+            let securityScoped = url.startAccessingSecurityScopedResource()
+            defer { if securityScoped { url.stopAccessingSecurityScopedResource() } }
+
+            if url.pathExtension.lowercased() == "json" {
+                let modpack = try ModpackService.importFromJSON(at: url)
+                modpacks.append(modpack)
+            } else {
+                let (modpack, imported) = try ModpackService.importFromZIP(at: url, settings: settings)
+                modpacks.append(modpack)
+                for newMod in imported {
+                    mods.removeAll { $0.id == newMod.id }
+                    mods.append(newMod)
+                }
+                mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+                DependencyResolver.resolveAll(mods: mods)
+            }
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func importModpackFromURL(urlString: String) async {
+        isModpackLoading = true
+        modpackError = nil
+        do {
+            let tempDir = FileManager.default.temporaryDirectory
+            let localURL = try await externalDownloader.downloadFile(from: urlString, to: tempDir)
+            let (modpack, imported) = try ModpackService.importFromZIP(at: localURL, settings: settings)
+            try? FileManager.default.removeItem(at: localURL)
+
+            modpacks.append(modpack)
+            for newMod in imported {
+                mods.removeAll { $0.id == newMod.id }
+                mods.append(newMod)
+            }
+            mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+            DependencyResolver.resolveAll(mods: mods)
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            modpackError = error.localizedDescription
+        }
+        isModpackLoading = false
+    }
+
+    func importNexusCollection(slug: String) async {
+        isModpackLoading = true
+        modpackError = nil
+        do {
+            if let key = settings.nexusAPIKey {
+                await nexusAPI.setAPIKey(key)
+            }
+            let info = try await nexusAPI.collectionDetails(slug: slug)
+            let collectionMods = try await nexusAPI.collectionMods(slug: slug)
+
+            let entries = collectionMods.map { cm in
+                ModpackEntry(
+                    uniqueID: "",
+                    name: cm.name,
+                    version: cm.version,
+                    nexusModID: cm.modId,
+                    nexusFileID: cm.fileId,
+                    isEnabled: !(cm.optional ?? false)
+                )
+            }
+
+            var modpack = Modpack(
+                id: UUID(),
+                name: info.name,
+                description: info.summary ?? "",
+                entries: entries,
+                source: .nexusCollection(collectionId: info.id),
+                includesFiles: false,
+                bundleFolderName: nil,
+                createdAt: Date(),
+                updatedAt: Date()
+            )
+            _ = modpack // suppress warning
+            modpacks.append(modpack)
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            modpackError = error.localizedDescription
+        }
+        isModpackLoading = false
     }
 }

@@ -20,6 +20,10 @@ final class AppSettings {
         URL(filePath: gamePath).appending(path: "Mods_Disabled")
     }
 
+    var modpacksDirectoryURL: URL {
+        URL(filePath: gamePath).appending(path: "Modpacks")
+    }
+
     var smapiURL: URL {
         URL(filePath: gamePath).appending(path: "StardewModdingAPI")
     }

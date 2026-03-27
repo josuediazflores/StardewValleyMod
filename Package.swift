@@ -7,7 +7,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "StardewModManager",
-            path: "StardewModManager"
+            path: "StardewModManager",
+            resources: [.process("Resources")]
         )
     ]
 )

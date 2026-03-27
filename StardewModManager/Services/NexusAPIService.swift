@@ -149,6 +149,115 @@ actor NexusAPIService {
         return gqlResponse.data.mods.nodes
     }
 
+    // MARK: - Collections
+
+    func collectionDetails(slug: String) async throws -> NexusCollectionInfo {
+        guard let apiKey, !apiKey.isEmpty else { throw NexusAPIError.noAPIKey }
+
+        let query = """
+        query { collectionRevision(slug: "\(slug)", gameDomainName: "\(gameDomain)") { collection { id name summary description user { name } endorsements modCount } } }
+        """
+        let body: [String: Any] = ["query": query]
+        let jsonData = try JSONSerialization.data(withJSONObject: body)
+
+        var request = URLRequest(url: URL(string: "https://api.nexusmods.com/v2/graphql")!)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "apikey")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+
+        let (data, response) = try await performRequest(request)
+        try checkResponse(response)
+
+        struct GQLResponse: Codable {
+            struct DataField: Codable {
+                struct RevisionField: Codable {
+                    struct CollectionField: Codable {
+                        let id: Int
+                        let name: String
+                        let summary: String?
+                        let description: String?
+                        let user: UserField?
+                        let endorsements: Int?
+                        let modCount: Int?
+                        struct UserField: Codable { let name: String }
+                    }
+                    let collection: CollectionField
+                }
+                let collectionRevision: RevisionField
+            }
+            let data: DataField
+        }
+
+        let gql = try JSONDecoder().decode(GQLResponse.self, from: data)
+        let c = gql.data.collectionRevision.collection
+        return NexusCollectionInfo(
+            id: c.id, slug: slug, name: c.name, summary: c.summary,
+            author: c.user?.name, modCount: c.modCount,
+            endorsements: c.endorsements, imageUrl: nil
+        )
+    }
+
+    func collectionMods(slug: String) async throws -> [NexusCollectionMod] {
+        guard let apiKey, !apiKey.isEmpty else { throw NexusAPIError.noAPIKey }
+
+        let query = """
+        query { collectionRevision(slug: "\(slug)", gameDomainName: "\(gameDomain)") { modFiles { mod { modId name } file { fileId } version optional } } }
+        """
+        let body: [String: Any] = ["query": query]
+        let jsonData = try JSONSerialization.data(withJSONObject: body)
+
+        var request = URLRequest(url: URL(string: "https://api.nexusmods.com/v2/graphql")!)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "apikey")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+
+        let (data, response) = try await performRequest(request)
+        try checkResponse(response)
+
+        struct GQLResponse: Codable {
+            struct DataField: Codable {
+                struct RevisionField: Codable {
+                    struct ModFileEntry: Codable {
+                        struct ModRef: Codable { let modId: Int; let name: String }
+                        struct FileRef: Codable { let fileId: Int? }
+                        let mod: ModRef
+                        let file: FileRef?
+                        let version: String?
+                        let optional: Bool?
+                    }
+                    let modFiles: [ModFileEntry]
+                }
+                let collectionRevision: RevisionField
+            }
+            let data: DataField
+        }
+
+        let gql = try JSONDecoder().decode(GQLResponse.self, from: data)
+        return gql.data.collectionRevision.modFiles.map { entry in
+            NexusCollectionMod(
+                modId: entry.mod.modId,
+                name: entry.mod.name,
+                version: entry.version,
+                fileId: entry.file?.fileId,
+                optional: entry.optional
+            )
+        }
+    }
+
+    static func parseCollectionURL(_ urlString: String) -> String? {
+        // https://next.nexusmods.com/stardewvalley/collections/{slug}
+        guard let url = URL(string: urlString),
+              url.host?.contains("nexusmods.com") == true,
+              url.pathComponents.contains("collections"),
+              let slugIndex = url.pathComponents.firstIndex(of: "collections"),
+              slugIndex + 1 < url.pathComponents.count else {
+            return nil
+        }
+        return url.pathComponents[slugIndex + 1]
+    }
+
     // MARK: - Helpers
 
     private func fetchModList(path: String) async throws -> [NexusModInfo] {
