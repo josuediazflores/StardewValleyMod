@@ -127,7 +127,7 @@ struct ModListView: View {
             }
             .width(60)
         }
-        .tableStyle(.inset(alternatesRowBackgrounds: true))
+        .tableStyle(.inset(alternatesRowBackgrounds: false))
         .contextMenu(forSelectionType: String.self) { selectedIDs in
             contextMenuContent(for: selectedIDs)
         }

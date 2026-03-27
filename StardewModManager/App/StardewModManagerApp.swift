@@ -116,6 +116,9 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .navigationTitle("")
+        .preferredColorScheme(.light)
+        .toolbarBackground(Color.parchmentHeader, for: .windowToolbar)
         .searchable(text: $state.searchText, placement: .toolbar, prompt: "Search mods...")
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -136,7 +139,7 @@ struct ContentView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(maxWidth: 350)
+                .frame(maxWidth: 500)
             }
 
             ToolbarItem(placement: .primaryAction) {

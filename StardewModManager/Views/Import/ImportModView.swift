@@ -11,34 +11,51 @@ struct ImportModView: View {
         VStack(spacing: 24) {
             // Drop zone
             VStack(spacing: 16) {
-                Image(systemName: "square.and.arrow.down.on.square")
-                    .font(.system(size: 56))
-                    .foregroundStyle(isTargeted ? .blue : .secondary)
+                StardewIcon(type: .arrowBox, size: 56)
 
                 Text("Drag & Drop Mods Here")
-                    .font(.title2.weight(.bold))
+                    .font(.stardew(size: 24))
+                    .foregroundStyle(Color.textDark)
 
                 Text("Drop mod folders or .zip files to install them")
-                    .foregroundStyle(.secondary)
+                    .font(.stardew(size: 16))
+                    .foregroundStyle(Color.textLight)
 
                 Text("— or —")
-                    .foregroundStyle(.tertiary)
+                    .font(.stardew(size: 14))
+                    .foregroundStyle(Color.textMuted)
 
-                Button("Choose Files...") {
+                Button {
                     openFilePicker()
+                } label: {
+                    Text("Choose Files...")
+                        .font(.stardew(size: 16))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.stardewGreen)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.plain)
 
-                Button("Choose Folder...") {
+                Button {
                     openFolderPicker()
+                } label: {
+                    Text("Choose Folder...")
+                        .font(.stardew(size: 16))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.accentGold)
+                        .foregroundStyle(Color.textDark)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.plain)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(
-                        isTargeted ? Color.blue : Color.secondary.opacity(0.3),
+                        isTargeted ? Color.stardewGreen : Color.accentGold.opacity(0.5),
                         style: StrokeStyle(lineWidth: 2, dash: [8, 4])
                     )
             )
@@ -50,22 +67,31 @@ struct ImportModView: View {
             // Instructions
             VStack(alignment: .leading, spacing: 8) {
                 Text("Supported Formats:")
-                    .font(.headline)
+                    .font(.stardew(size: 16))
+                    .foregroundStyle(Color.textDark)
 
                 HStack(spacing: 24) {
-                    Label("Mod Folders", systemImage: "folder")
-                    Label("ZIP Archives", systemImage: "doc.zipper")
+                    HStack(spacing: 6) {
+                        StardewIcon(type: .chest, size: 14)
+                        Text("Mod Folders")
+                            .font(.stardew(size: 14))
+                    }
+                    HStack(spacing: 6) {
+                        StardewIcon(type: .scroll, size: 14)
+                        Text("ZIP Archives")
+                            .font(.stardew(size: 14))
+                    }
                 }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textLight)
 
                 Text("Each mod must contain a manifest.json file. ZIP files with multiple mods will be imported individually.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(.stardew(size: 13))
+                    .foregroundStyle(Color.textMuted)
             }
             .padding(.horizontal, 32)
             .padding(.bottom, 16)
         }
+        .background(Color.parchment)
         .alert("Import Complete", isPresented: $showImportResult) {
             Button("OK") {}
         } message: {

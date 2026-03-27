@@ -6,26 +6,44 @@ struct SidebarView: View {
     var body: some View {
         @Bindable var state = appState
 
-        List(selection: $state.sidebarSelection) {
-            Section {
-                ForEach(SidebarItem.allCases) { item in
-                    Label {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("NAVIGATION")
+                .font(.stardew(size: 13))
+                .foregroundStyle(Color.textMuted)
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 6)
+
+            ForEach(SidebarItem.allCases, id: \.self) { item in
+                Button {
+                    appState.sidebarSelection = item
+                } label: {
+                    HStack(spacing: 8) {
+                        stardewIcon(for: item)
                         Text(item.rawValue)
                             .font(.stardew(size: 16))
-                    } icon: {
-                        stardewIcon(for: item)
+                            .lineLimit(1)
+                        Spacer()
+                        if item == .myMods && appState.mods.count > 0 {
+                            Text("\(appState.mods.count)")
+                                .font(.stardew(size: 14))
+                                .foregroundStyle(Color.textMuted)
+                        }
                     }
-                    .tag(item)
-                    .badge(item == .myMods ? appState.mods.count : 0)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        appState.sidebarSelection == item
+                            ? Color.accentGold.opacity(0.25)
+                            : Color.clear
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
-            } header: {
-                Text("NAVIGATION")
-                    .font(.stardew(size: 13))
-                    .foregroundStyle(Color.textMuted)
+                .buttonStyle(.plain)
+                .padding(.horizontal, 8)
             }
+            Spacer()
         }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
         .background(
             LinearGradient(colors: [.sidebarWoodLight, .sidebarWood],
                            startPoint: .top, endPoint: .bottom)
