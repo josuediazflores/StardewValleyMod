@@ -134,6 +134,32 @@ enum ModpackService {
             disabledNames.append(mod.manifest.name)
         }
 
+        // Also move orphan folders (no manifest.json) out of Mods to keep the profile clean
+        let fm = FileManager.default
+        let disabledDir = settings.disabledModsDirectoryURL
+        if !fm.fileExists(atPath: disabledDir.path(percentEncoded: false)) {
+            try? fm.createDirectory(at: disabledDir, withIntermediateDirectories: true)
+        }
+        if let contents = try? fm.contentsOfDirectory(at: settings.modsDirectoryURL,
+                                                       includingPropertiesForKeys: [.isDirectoryKey],
+                                                       options: [.skipsHiddenFiles]) {
+            let knownIDs = Set(mods.map(\.folderURL))
+            for itemURL in contents {
+                guard (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else { continue }
+                // Skip folders the discovery service already knows about
+                if knownIDs.contains(itemURL) { continue }
+                // Skip SMAPI internal folders
+                let name = itemURL.lastPathComponent
+                if name == "StardewModdingAPI" || name.hasPrefix("Mods_backup") { continue }
+                // Move orphan folder to disabled
+                let dest = disabledDir.appending(path: name)
+                if fm.fileExists(atPath: dest.path(percentEncoded: false)) {
+                    try? fm.removeItem(at: dest)
+                }
+                try? fm.moveItem(at: itemURL, to: dest)
+            }
+        }
+
         return ApplyResult(
             enabled: enabledNames,
             disabled: disabledNames,

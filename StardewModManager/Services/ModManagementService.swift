@@ -24,6 +24,10 @@ enum ModManagementService {
         try ensureDirectoryExists(settings.modsDirectoryURL, fm: fm)
 
         let destination = settings.modsDirectoryURL.appending(path: mod.folderName)
+        // Remove existing copy at destination to prevent move failure
+        if fm.fileExists(atPath: destination.path(percentEncoded: false)) {
+            try? fm.removeItem(at: destination)
+        }
         do {
             try fm.moveItem(at: mod.folderURL, to: destination)
             mod.folderURL = destination
@@ -38,6 +42,10 @@ enum ModManagementService {
         try ensureDirectoryExists(settings.disabledModsDirectoryURL, fm: fm)
 
         let destination = settings.disabledModsDirectoryURL.appending(path: mod.folderName)
+        // Remove existing copy at destination to prevent move failure
+        if fm.fileExists(atPath: destination.path(percentEncoded: false)) {
+            try? fm.removeItem(at: destination)
+        }
         do {
             try fm.moveItem(at: mod.folderURL, to: destination)
             mod.folderURL = destination
@@ -146,6 +154,31 @@ enum ModManagementService {
         }
 
         return result
+    }
+
+    /// Peek into a zip to extract mod names without installing
+    static func peekModNames(from zipURL: URL) -> [String] {
+        let fm = FileManager.default
+        let tempDir = fm.temporaryDirectory.appending(path: "peek_\(UUID().uuidString)")
+        defer { try? fm.removeItem(at: tempDir) }
+
+        do {
+            try fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+            process.arguments = ["-xk", zipURL.path(percentEncoded: false), tempDir.path(percentEncoded: false)]
+            try process.run()
+            process.waitUntilExit()
+
+            let modDirs = findModFolders(in: tempDir, fm: fm)
+            return modDirs.compactMap { dir in
+                let manifestURL = dir.appending(path: "manifest.json")
+                guard let manifest = ManifestParser.parse(at: manifestURL) else { return nil }
+                return manifest.name
+            }
+        } catch {
+            return []
+        }
     }
 
     private static func ensureDirectoryExists(_ url: URL, fm: FileManager) throws {

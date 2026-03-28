@@ -11,6 +11,7 @@ struct StardewModManagerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .id(appState.settings.theme)
                 .environment(appState)
                 .onAppear {
                     appState.loadMods()
@@ -27,6 +28,7 @@ struct StardewModManagerApp: App {
                 }
         }
         .windowStyle(.titleBar)
+        .windowToolbarStyle(.unified)
         .defaultSize(width: 1100, height: 700)
         .commands {
             CommandGroup(after: .newItem) {
@@ -77,13 +79,6 @@ struct StardewModManagerApp: App {
             }
 
             CommandGroup(before: .toolbar) {
-                Button("Toggle Inspector") {
-                    appState.showInspector.toggle()
-                }
-                .keyboardShortcut("i", modifiers: [.command, .option])
-
-                Divider()
-
                 Button("Show All Mods") {
                     appState.filterMode = .all
                 }
@@ -103,8 +98,16 @@ struct StardewModManagerApp: App {
 
         Settings {
             SettingsView()
+                .id(appState.settings.theme)
                 .environment(appState)
         }
+    }
+}
+
+struct PlayButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
     }
 }
 
@@ -114,8 +117,9 @@ struct ContentView: View {
     var body: some View {
         @Bindable var state = appState
 
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             SidebarView()
+                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
         } detail: {
             switch appState.sidebarSelection {
             case .modpacks:
@@ -130,8 +134,9 @@ struct ContentView: View {
             }
         }
         .navigationTitle("")
+        .toolbar(removing: .sidebarToggle)
         .preferredColorScheme(.light)
-        .toolbarBackground(Color.parchmentHeader, for: .windowToolbar)
+        .toolbarBackground(Color.parchment, for: .windowToolbar)
         .background(WindowAccessor())
         .searchable(text: $state.searchText, placement: .toolbar, prompt: appState.expandedModpackID != nil ? "Search mods..." : "Search modpacks...")
         .toolbar {
@@ -139,24 +144,27 @@ struct ContentView: View {
                 Button {
                     appState.launchGame()
                 } label: {
-                    HStack(spacing: 10) {
-                        JunimoIcon(name: appState.selectedJunimoName, size: 36)
+                    HStack(spacing: 8) {
+                        JunimoIcon(name: appState.selectedJunimoName, size: 24)
+                            .frame(width: 24, height: 24)
                         Text("Play")
                             .font(.stardew(size: 24))
+                            .foregroundStyle(Color.parchment)
+                            .frame(height: 24)
                     }
-                    .padding(.leading, 10)
+                    .padding(.leading, 12)
                     .padding(.trailing, 16)
                     .padding(.vertical, 6)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.stardewGreen.opacity(0.1))
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(LinearGradient(colors: [.stardewGreen, .stardewGreenDark], startPoint: .top, endPoint: .bottom))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.stardewGreen, lineWidth: 1.5)
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color(hex: 0x3E5C22), lineWidth: 2)
                             )
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PlayButtonStyle())
                 .disabled(!appState.settings.isSMAPIInstalled)
                 .help("Launch Stardew Valley with SMAPI")
                 .layoutPriority(1)
@@ -166,21 +174,13 @@ struct ContentView: View {
                 if appState.expandedModpackID != nil {
                     StardewSegmentedPicker(
                         selection: $state.filterMode,
-                        label: { $0.rawValue }
+                        label: { $0.shortLabel }
                     )
                     .frame(minWidth: 200, idealWidth: 400, maxWidth: 500)
                     .layoutPriority(-1)
                 }
             }
 
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    appState.showInspector.toggle()
-                } label: {
-                    Label("Toggle Inspector", systemImage: "sidebar.trailing")
-                }
-                .help("Toggle Inspector")
-            }
         }
         .alert("Error", isPresented: .init(
             get: { appState.errorMessage != nil },
@@ -212,17 +212,45 @@ private struct WindowAccessor: NSViewRepresentable {
 
     private func applyTitlebarStyle(to window: NSWindow?) {
         guard let window else { return }
-        window.backgroundColor = NSColor(Color.parchmentHeader)
+        window.backgroundColor = NSColor(Color.parchment)
         window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
         window.toolbar?.isVisible = true
+        window.toolbar?.showsBaselineSeparator = false
+        // Remove the sidebar toggle button from toolbar
+        if let toolbar = window.toolbar {
+            toolbar.items.forEach { item in
+                if item.itemIdentifier.rawValue.contains("sidebarTrackingSeparator") ||
+                   item.itemIdentifier.rawValue.contains("toggleSidebar") ||
+                   item.itemIdentifier == .toggleSidebar {
+                    item.isEnabled = false
+                    item.view?.isHidden = true
+                }
+            }
+        }
         window.minSize = NSSize(width: 700, height: 450)
         window.collectionBehavior.insert(.fullScreenPrimary)
-        // Keep toolbar visible in full screen
-        let accessor = NSTitlebarAccessoryViewController()
-        accessor.layoutAttribute = .bottom
-        accessor.fullScreenMinHeight = 0
-        if window.titlebarAccessoryViewControllers.isEmpty {
-            window.addTitlebarAccessoryViewController(accessor)
+        // Hide the sidebar toggle button
+        if let splitView = window.contentView?.subviews.first(where: { $0 is NSSplitView }) as? NSSplitView {
+            splitView.dividerStyle = .thin
         }
+        // Remove separator between titlebar and detail pane; keep sidebar inset
+        if let svc = findSplitViewController(in: window.contentViewController) {
+            for (index, item) in svc.splitViewItems.enumerated() {
+                item.titlebarSeparatorStyle = index == 0 ? .line : .none
+            }
+        }
+    }
+
+    private func findSplitViewController(in viewController: NSViewController?) -> NSSplitViewController? {
+        if let svc = viewController as? NSSplitViewController {
+            return svc
+        }
+        for child in viewController?.children ?? [] {
+            if let found = findSplitViewController(in: child) {
+                return found
+            }
+        }
+        return nil
     }
 }

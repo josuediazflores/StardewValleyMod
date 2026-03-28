@@ -1,9 +1,23 @@
 import Foundation
 
+enum AppTheme: String, CaseIterable, Identifiable {
+    case stardew = "Stardew"
+    case pink = "Pink"
+
+    var id: String { rawValue }
+
+    static var current: AppTheme {
+        AppTheme(rawValue: UserDefaults.standard.string(forKey: "appTheme") ?? "Stardew") ?? .stardew
+    }
+}
+
 @Observable
 final class AppSettings {
     var gamePath: String {
         didSet { UserDefaults.standard.set(gamePath, forKey: "gamePath") }
+    }
+    var theme: AppTheme {
+        didSet { UserDefaults.standard.set(theme.rawValue, forKey: "appTheme") }
     }
     var nexusAPIKey: String? {
         didSet {
@@ -43,6 +57,7 @@ final class AppSettings {
     }
 
     init() {
+        theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: "appTheme") ?? "Stardew") ?? .stardew
         if let saved = UserDefaults.standard.string(forKey: "gamePath"), !saved.isEmpty {
             gamePath = saved
         } else {

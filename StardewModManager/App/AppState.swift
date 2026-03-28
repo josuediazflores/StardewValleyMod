@@ -46,6 +46,8 @@ final class AppState {
     var nxmDownloadStatus: String?
     var showModpackPicker = false
     var pendingNXMMods: [Mod] = []
+    var pendingNXMZipURL: URL?
+    var pendingNXMModNames: [String] = []
 
     // Nexus state
     var nexusTrendingMods: [NexusModInfo] = []
@@ -78,6 +80,14 @@ final class AppState {
         return modpacks.first { $0.id == id }
     }
 
+    var activeProfileName: String {
+        guard let id = activeModpackID,
+              let pack = modpacks.first(where: { $0.id == id }) else {
+            return "Current Profile"
+        }
+        return pack.name
+    }
+
     var currentProfileModpack: Modpack {
         let entries = mods.filter { !$0.isBuiltIn }.map { mod in
             ModpackEntry(
@@ -91,7 +101,7 @@ final class AppState {
         }
         return Modpack(
             id: AppState.currentProfileID,
-            name: "Current Profile",
+            name: activeProfileName,
             description: "Your currently installed mods",
             entries: entries,
             source: .currentProfile,
@@ -103,12 +113,18 @@ final class AppState {
     }
 
     var filteredModpacks: [Modpack] {
-        guard !searchText.isEmpty, expandedModpackID == nil else { return modpacks }
-        let query = searchText.lowercased()
-        return modpacks.filter {
-            $0.name.lowercased().contains(query) ||
-            $0.description.lowercased().contains(query)
+        // Hide the active modpack from saved profiles (it's shown as Current Profile)
+        var result = modpacks.filter { $0.id != activeModpackID }
+
+        if !searchText.isEmpty && expandedModpackID == nil {
+            let query = searchText.lowercased()
+            result = result.filter {
+                $0.name.lowercased().contains(query) ||
+                $0.description.lowercased().contains(query)
+            }
         }
+
+        return result
     }
 
     func filteredEntriesForModpack(_ modpack: Modpack) -> [ModpackEntry] {
@@ -188,6 +204,7 @@ final class AppState {
 
         mods = ModDiscoveryService.discoverMods(settings: settings)
         DependencyResolver.resolveAll(mods: mods)
+        loadModpacks()
 
         isLoading = false
     }
@@ -303,24 +320,79 @@ final class AppState {
 
                 let tempDir = FileManager.default.temporaryDirectory
                 let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
-                let imported = try ModManagementService.importMod(from: zipURL, settings: settings)
-                try? FileManager.default.removeItem(at: zipURL)
 
-                for newMod in imported {
-                    mods.removeAll { $0.id == newMod.id }
-                    mods.append(newMod)
-                }
-                mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
-                DependencyResolver.resolveAll(mods: mods)
+                // Parse mod names from the zip without installing
+                let names = ModManagementService.peekModNames(from: zipURL)
 
                 nxmDownloadStatus = nil
-                pendingNXMMods = imported
+                pendingNXMZipURL = zipURL
+                pendingNXMModNames = names.isEmpty ? ["Downloaded mod"] : names
                 showModpackPicker = true
             } catch {
                 nxmDownloadStatus = nil
                 errorMessage = "NXM download failed: \(error.localizedDescription)"
             }
         }
+    }
+
+    func installPendingNXMToCurrentProfile() {
+        guard let zipURL = pendingNXMZipURL else { return }
+        do {
+            let imported = try ModManagementService.importMod(from: zipURL, settings: settings)
+            try? FileManager.default.removeItem(at: zipURL)
+            for newMod in imported {
+                mods.removeAll { $0.id == newMod.id }
+                mods.append(newMod)
+            }
+            mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+            DependencyResolver.resolveAll(mods: mods)
+            pendingNXMMods = imported
+        } catch {
+            errorMessage = "Failed to install mod: \(error.localizedDescription)"
+        }
+        pendingNXMZipURL = nil
+        pendingNXMModNames = []
+    }
+
+    func installPendingNXMToModpack(_ modpackID: UUID) {
+        // Install to current profile first, then add to modpack
+        installPendingNXMToCurrentProfile()
+        if !pendingNXMMods.isEmpty {
+            addModsToModpack(modpackID, mods: pendingNXMMods)
+        }
+        pendingNXMMods = []
+    }
+
+    func installPendingNXMToNewModpack(name: String) {
+        installPendingNXMToCurrentProfile()
+        if !pendingNXMMods.isEmpty {
+            createModpackFromCurrentState(name: name, description: "Created from NXM download")
+            if let newPack = modpacks.last {
+                // Clear entries and only add the downloaded mods
+                if let idx = modpacks.firstIndex(where: { $0.id == newPack.id }) {
+                    modpacks[idx].entries = pendingNXMMods.map { mod in
+                        ModpackEntry(
+                            uniqueID: mod.id,
+                            name: mod.manifest.name,
+                            version: mod.manifest.version,
+                            nexusModID: mod.nexusModID,
+                            nexusFileID: nil,
+                            isEnabled: true
+                        )
+                    }
+                    try? ModpackService.saveModpacks(modpacks, settings: settings)
+                }
+            }
+        }
+        pendingNXMMods = []
+    }
+
+    func cancelPendingNXM() {
+        if let zipURL = pendingNXMZipURL {
+            try? FileManager.default.removeItem(at: zipURL)
+        }
+        pendingNXMZipURL = nil
+        pendingNXMModNames = []
     }
 
     func addModsToModpack(_ modpackID: UUID, mods modsToAdd: [Mod]) {

@@ -8,19 +8,20 @@ struct ModDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 // Header
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(mod.manifest.name)
-                        .font(.title2.weight(.bold))
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(Color.textDark)
 
                     HStack(spacing: 12) {
                         Label(mod.manifest.author, systemImage: "person")
                         Label("v\(mod.manifest.version)", systemImage: "tag")
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textLight)
                 }
 
-                Divider()
+                Color.stardewDivider.opacity(0.4).frame(height: 1)
 
                 // Status
                 HStack {
@@ -28,15 +29,18 @@ struct ModDetailView: View {
                         mod.isEnabled ? "Enabled" : "Disabled",
                         systemImage: mod.isEnabled ? "checkmark.circle.fill" : "xmark.circle"
                     )
-                    .foregroundStyle(mod.isEnabled ? .green : .red)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(mod.isEnabled ? Color.stardewGreen : Color.stardewRed)
 
                     Spacer()
 
+                    let typeColor: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
                     Text(mod.modType.rawValue)
-                        .font(.caption)
+                        .font(.system(size: 11, weight: .medium))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .background(.fill.tertiary)
+                        .background(typeColor.opacity(0.1))
+                        .foregroundStyle(typeColor)
                         .clipShape(Capsule())
                 }
 
@@ -44,10 +48,12 @@ struct ModDetailView: View {
                 if let desc = mod.manifest.description, !desc.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Description")
-                            .font(.headline)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color.textMuted)
+                            .tracking(0.5)
                         Text(desc)
-                            .font(.body)
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textLight)
                     }
                 }
 
@@ -55,10 +61,12 @@ struct ModDetailView: View {
                 if let cpf = mod.manifest.contentPackFor {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Content Pack For")
-                            .font(.headline)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color.textMuted)
+                            .tracking(0.5)
                         Label(cpf.uniqueID, systemImage: "link")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textLight)
                     }
                 }
 
@@ -66,20 +74,24 @@ struct ModDetailView: View {
                 if !mod.resolvedDependencies.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Dependencies")
-                            .font(.headline)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color.textMuted)
+                            .tracking(0.5)
 
                         ForEach(mod.resolvedDependencies) { dep in
                             HStack(spacing: 8) {
                                 Image(systemName: depIcon(dep.status))
+                                    .font(.system(size: 12))
                                     .foregroundStyle(depColor(dep.status))
 
-                                VStack(alignment: .leading) {
+                                VStack(alignment: .leading, spacing: 1) {
                                     Text(dep.modName ?? dep.entry.uniqueID)
-                                        .font(.subheadline)
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color.textDark)
                                     if !dep.entry.isRequired {
                                         Text("Optional")
-                                            .font(.caption2)
-                                            .foregroundStyle(.secondary)
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(Color.textMuted)
                                     }
                                 }
                             }
@@ -90,26 +102,30 @@ struct ModDetailView: View {
                 // Unique ID
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Unique ID")
-                        .font(.headline)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.textMuted)
+                        .tracking(0.5)
                     Text(mod.manifest.uniqueID)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(Color.textLight)
                         .textSelection(.enabled)
                 }
 
                 // Folder
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Folder")
-                        .font(.headline)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.textMuted)
+                        .tracking(0.5)
                     Text(mod.folderName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textLight)
 
                     Button("Show in Finder") {
                         NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mod.folderURL.path(percentEncoded: false))
                     }
                     .buttonStyle(.link)
-                    .font(.caption)
+                    .font(.system(size: 11))
                 }
 
                 // Nexus link
@@ -118,14 +134,16 @@ struct ModDetailView: View {
                         appState.openNexusModPage(modId: nexusId)
                     } label: {
                         Label("View on Nexus Mods", systemImage: "globe")
+                            .font(.system(size: 12))
                     }
                     .buttonStyle(.link)
                 }
 
                 Spacer()
             }
-            .padding()
+            .padding(16)
         }
+        .background(Color.parchment)
     }
 
     private func depIcon(_ status: DependencyStatus) -> String {
@@ -138,9 +156,9 @@ struct ModDetailView: View {
 
     private func depColor(_ status: DependencyStatus) -> Color {
         switch status {
-        case .satisfied: return .green
-        case .missing: return .red
-        case .disabled: return .yellow
+        case .satisfied: return .stardewGreen
+        case .missing: return .stardewRed
+        case .disabled: return .stardewOrange
         }
     }
 }

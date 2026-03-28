@@ -30,6 +30,16 @@ enum ModFilter: String, CaseIterable, Identifiable {
     case contentPacks = "Content Packs"
 
     var id: String { rawValue }
+
+    var shortLabel: String {
+        switch self {
+        case .all: "All"
+        case .enabled: "Enabled"
+        case .disabled: "Disabled"
+        case .codeMods: "Code"
+        case .contentPacks: "Packs"
+        }
+    }
 }
 
 @Observable

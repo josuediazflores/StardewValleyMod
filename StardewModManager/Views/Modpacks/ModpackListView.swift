@@ -29,11 +29,12 @@ struct ModpackListView: View {
 
                 // Saved Profiles header
                 HStack(spacing: 8) {
-                    Text("Saved Profiles")
-                        .font(.stardew(size: 14))
-                        .foregroundStyle(Color.textMuted)
+                    Text("SAVED PROFILES")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Color.textMuted.opacity(0.7))
+                        .tracking(0.8)
 
-                    VStack { Divider().overlay(Color.stardewDivider) }
+                    VStack { Divider().overlay(Color.stardewDivider.opacity(0.5)) }
 
                     Button {
                         showCreateSheet = true
@@ -42,13 +43,13 @@ struct ModpackListView: View {
                             Image(systemName: "plus")
                                 .font(.system(size: 10))
                             Text("New")
-                                .font(.stardew(size: 13))
+                                .font(.system(size: 11, weight: .medium))
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
                         .background(Color.stardewGreen)
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                        .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
 
@@ -61,23 +62,28 @@ struct ModpackListView: View {
                             Image(systemName: "square.and.arrow.down")
                                 .font(.system(size: 10))
                             Text("Import")
-                                .font(.stardew(size: 13))
+                                .font(.system(size: 11, weight: .medium))
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
                         .background(Color.accentGold)
                         .foregroundStyle(Color.textDark)
-                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                        .clipShape(Capsule())
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
 
                 // Saved modpacks
                 if appState.modpacks.isEmpty {
-                    Text("No saved profiles yet")
-                        .font(.stardew(size: 14))
-                        .foregroundStyle(Color.textMuted)
-                        .padding(.vertical, 20)
+                    VStack(spacing: 8) {
+                        Image(systemName: "archivebox")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Color.textMuted.opacity(0.3))
+                        Text("No saved profiles yet")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textMuted)
+                    }
+                    .padding(.vertical, 24)
                 } else {
                     ForEach(appState.filteredModpacks) { modpack in
                         ExpandableModpackCardView(
@@ -106,11 +112,16 @@ struct ModpackListView: View {
                 ModDetailView(mod: mod)
                     .inspectorColumnWidth(min: 250, ideal: 300, max: 400)
             } else {
-                Text("Select a mod to view details")
-                    .font(.stardew(size: 16))
-                    .foregroundStyle(Color.textLight)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.parchment)
+                VStack(spacing: 12) {
+                    Image(systemName: "sidebar.right")
+                        .font(.system(size: 28))
+                        .foregroundStyle(Color.textMuted.opacity(0.3))
+                    Text("Select a mod to view details")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.textMuted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.parchment)
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -122,11 +133,16 @@ struct ModpackListView: View {
                 }
                 Spacer()
             }
-            .font(.stardew(size: 14))
-            .foregroundStyle(Color.textLight)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 5)
-            .background(Color.parchmentHeader)
+            .font(.system(size: 11))
+            .foregroundStyle(Color.textMuted)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(
+                Color.parchmentHeader
+                    .overlay(alignment: .top) {
+                        Color.stardewDivider.opacity(0.3).frame(height: 1)
+                    }
+            )
         }
         .sheet(isPresented: $showCreateSheet) {
             ModpackCreateSheet()
@@ -147,7 +163,7 @@ struct ModpackListView: View {
         } message: { modpack in
             Text("Are you sure you want to delete \"\(modpack.name)\"? This cannot be undone.")
         }
-        .alert("Modpack Applied", isPresented: $showApplyAlert) {
+        .alert("Profile Loaded", isPresented: $showApplyAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             if let msg = applyResultMessage {
@@ -170,7 +186,7 @@ struct ModpackListView: View {
         if let error = appState.modpackError {
             applyResultMessage = error
         } else {
-            applyResultMessage = "Modpack \"\(modpack.name)\" applied successfully."
+            applyResultMessage = "Profile \"\(modpack.name)\" loaded successfully."
         }
         showApplyAlert = true
     }

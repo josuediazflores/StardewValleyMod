@@ -12,6 +12,7 @@ struct ExpandableModpackCardView: View {
     let onSaveAsModpack: () -> Void
 
     @State private var sortOrder = [KeyPathComparator(\Mod.manifest.name, order: .forward)]
+    @State private var hoveredModID: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -30,15 +31,16 @@ struct ExpandableModpackCardView: View {
             }
         }
         .background(Color.parchment)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: 8)
                 .stroke(
-                    isCurrentProfile && isExpanded ? Color.stardewGreen :
-                    isExpanded ? Color.accentGold : Color.accentGold.opacity(0.4),
-                    lineWidth: isExpanded ? 2 : 1
+                    isCurrentProfile && isExpanded ? Color.stardewGreen.opacity(0.5) :
+                    isExpanded ? Color.cardBorder : Color.cardBorder.opacity(0.3),
+                    lineWidth: isExpanded ? 1.5 : 1
                 )
         )
+        .shadow(color: .black.opacity(isExpanded ? 0.08 : 0.03), radius: isExpanded ? 8 : 3, y: isExpanded ? 3 : 1)
         .contentShape(Rectangle())
         .onTapGesture {
             guard !isExpanded else { return }
@@ -94,9 +96,16 @@ struct ExpandableModpackCardView: View {
             }
 
             // Mod count
-            Text("\(modpack.entries.count) mods")
-                .font(.stardew(size: 14))
-                .foregroundStyle(Color.textMuted)
+            if isCurrentProfile {
+                let enabled = modpack.entries.filter(\.isEnabled).count
+                Text("\(enabled) mods")
+                    .font(.stardew(size: 14))
+                    .foregroundStyle(Color.textMuted)
+            } else {
+                Text("\(modpack.entries.count) mods")
+                    .font(.stardew(size: 14))
+                    .foregroundStyle(Color.textMuted)
+            }
 
             Spacer()
 
@@ -109,13 +118,13 @@ struct ExpandableModpackCardView: View {
                         Image(systemName: "square.and.arrow.down")
                             .font(.system(size: 10))
                         Text("Save as Pack")
-                            .font(.stardew(size: 13))
+                            .font(.system(size: 11, weight: .medium))
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
                     .background(Color.accentGold)
                     .foregroundStyle(Color.textDark)
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
             } else {
@@ -126,14 +135,14 @@ struct ExpandableModpackCardView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "play.fill")
                                 .font(.system(size: 10))
-                            Text("Apply")
-                                .font(.stardew(size: 13))
+                            Text("Load Profile")
+                                .font(.system(size: 11, weight: .medium))
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
                         .background(Color.stardewGreen)
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                        .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
 
@@ -159,9 +168,9 @@ struct ExpandableModpackCardView: View {
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(isExpanded ? Color.parchmentHeader.opacity(0.5) : Color.clear)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(isExpanded ? Color.parchmentHeader.opacity(0.4) : Color.clear)
     }
 
     // MARK: - Current Profile Table
@@ -171,98 +180,145 @@ struct ExpandableModpackCardView: View {
         let mods = appState.filteredMods
 
         if mods.isEmpty {
-            Text("No mods match the current filter")
-                .font(.stardew(size: 14))
-                .foregroundStyle(Color.textMuted)
-                .frame(maxWidth: .infinity, minHeight: 100)
-        } else {
-            // Header row
-            HStack(spacing: 0) {
-                Text("Name")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text("Author")
-                    .frame(width: 140, alignment: .leading)
-                Text("Version")
-                    .frame(width: 80, alignment: .leading)
-                Text("Type")
-                    .frame(width: 100, alignment: .leading)
-                Text("Status")
-                    .frame(width: 60, alignment: .center)
+            VStack(spacing: 8) {
+                Image(systemName: "tray")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.textMuted.opacity(0.4))
+                Text("No mods match the current filter")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.textMuted)
             }
-            .font(.stardew(size: 13))
-            .foregroundStyle(Color.textMuted)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.parchmentHeader)
-
-            // Mod rows
+            .frame(maxWidth: .infinity, minHeight: 120)
+        } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(mods) { mod in
-                        HStack(spacing: 0) {
-                            // Name
-                            HStack(spacing: 8) {
-                                ModNameCell(mod: mod)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    ForEach(Array(mods.enumerated()), id: \.element.id) { index, mod in
+                        VStack(spacing: 0) {
+                            HStack(spacing: 0) {
+                                // Left: type dot + name on line 1, author on line 2
+                                VStack(alignment: .leading, spacing: 3) {
+                                    HStack(spacing: 8) {
+                                        Circle()
+                                            .fill(mod.modType == .codeMod ? Color.stardewPurple : Color.stardewOrange)
+                                            .frame(width: 7, height: 7)
 
-                            // Author
-                            Text(mod.manifest.author)
-                                .font(.stardew(size: 15))
-                                .foregroundStyle(Color.textLight)
-                                .lineLimit(1)
-                                .frame(width: 140, alignment: .leading)
-                                .opacity(mod.isEnabled ? 1 : 0.55)
+                                        Text(mod.manifest.name)
+                                            .font(.system(size: 13, weight: .medium))
+                                            .foregroundStyle(Color.textDark)
+                                            .lineLimit(1)
 
-                            // Version
-                            VersionCell(mod: mod, updateInfo: appState.modUpdates[mod.id])
-                                .frame(width: 80, alignment: .leading)
+                                        if mod.isBuiltIn {
+                                            Text("Built-in")
+                                                .font(.system(size: 9, weight: .semibold))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 1)
+                                                .background(Color.stardewBlue.opacity(0.12))
+                                                .foregroundStyle(Color.stardewBlue)
+                                                .clipShape(Capsule())
+                                        }
 
-                            // Type
-                            ModTypeBadge(mod: mod)
-                                .frame(width: 100, alignment: .leading)
+                                        if let update = appState.modUpdates[mod.id] {
+                                            Button {
+                                                if let urlString = update.updateURL, let url = URL(string: urlString) {
+                                                    NSWorkspace.shared.open(url)
+                                                }
+                                            } label: {
+                                                HStack(spacing: 2) {
+                                                    Image(systemName: "arrow.up.circle.fill")
+                                                    Text(update.newVersion)
+                                                }
+                                                .font(.system(size: 10))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 1)
+                                                .background(Color.stardewOrange.opacity(0.12))
+                                                .foregroundStyle(Color.stardewOrange)
+                                                .clipShape(Capsule())
+                                            }
+                                            .buttonStyle(.plain)
+                                            .help("Update available")
+                                        }
+                                    }
 
-                        }
-                        .padding(.horizontal, 12)
-                        .frame(height: 34)
-                        .background(
-                            appState.selectedModID == mod.id
-                                ? Color.accentGold.opacity(0.2)
-                                : Color.clear
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            appState.selectedModID = mod.id
-                        }
-                        .contextMenu {
-                            if !mod.isBuiltIn {
-                                Button(mod.isEnabled ? "Disable Mod" : "Enable Mod") {
-                                    toggleMod(mod)
+                                    Text(mod.manifest.author)
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(Color.textMuted)
+                                        .lineLimit(1)
+                                        .padding(.leading, 15)
                                 }
-                                Divider()
-                            }
-                            Button("Show in Finder") {
-                                NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mod.folderURL.path)
-                            }
-                            Button("Copy Unique ID") {
-                                NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString(mod.manifest.uniqueID, forType: .string)
-                            }
-                            if !mod.isBuiltIn {
-                                Divider()
-                                Button("Delete Mod...", role: .destructive) {
-                                    appState.deleteMod(mod)
+
+                                Spacer(minLength: 12)
+
+                                // Right: version + type badge
+                                VStack(alignment: .trailing, spacing: 3) {
+                                    Text(mod.manifest.version)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundStyle(Color.textLight)
+
+                                    ModTypeBadge(mod: mod)
                                 }
                             }
-                        }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 9)
+                            .opacity(mod.isEnabled ? 1 : 0.5)
+                            .background(
+                                Group {
+                                    if appState.selectedModID == mod.id {
+                                        Color.rowSelected
+                                    } else if hoveredModID == mod.id {
+                                        Color.rowHover
+                                    } else {
+                                        Color.clear
+                                    }
+                                }
+                            )
+                            .overlay(alignment: .leading) {
+                                if appState.selectedModID == mod.id {
+                                    Color.accentGold
+                                        .frame(width: 3)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                appState.selectedModID = mod.id
+                            }
+                            .onHover { hovering in
+                                withAnimation(.easeInOut(duration: 0.1)) {
+                                    hoveredModID = hovering ? mod.id : nil
+                                }
+                            }
+                            .contextMenu {
+                                if !mod.isBuiltIn {
+                                    Button(mod.isEnabled ? "Disable Mod" : "Enable Mod") {
+                                        toggleMod(mod)
+                                    }
+                                    Divider()
+                                }
+                                Button("Show in Finder") {
+                                    NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mod.folderURL.path)
+                                }
+                                Button("Copy Unique ID") {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(mod.manifest.uniqueID, forType: .string)
+                                }
+                                if !mod.isBuiltIn {
+                                    Divider()
+                                    Button("Delete Mod...", role: .destructive) {
+                                        appState.deleteMod(mod)
+                                    }
+                                }
+                            }
 
-                        if mod.id != mods.last?.id {
-                            Divider().overlay(Color.stardewDivider.opacity(0.3))
+                            // Indented divider
+                            if index < mods.count - 1 {
+                                Color.stardewDivider.opacity(0.2)
+                                    .frame(height: 1)
+                                    .padding(.leading, 31)
+                            }
                         }
                     }
                 }
             }
-            .frame(height: min(CGFloat(mods.count) * 35, 450))
+            .frame(maxHeight: 500)
         }
     }
 
@@ -377,41 +433,27 @@ struct ModNameCell: View {
     let mod: Mod
 
     var body: some View {
-        HStack(spacing: 8) {
-            if mod.modType == .codeMod,
-               let iridiumURL = Bundle.module.url(forResource: "Iridium_Bar", withExtension: "png"),
-               let iridiumImg = NSImage(contentsOf: iridiumURL) {
-                Image(nsImage: iridiumImg)
-                    .resizable()
-                    .interpolation(.none)
-                    .frame(width: 16, height: 16)
-            } else if let url = Bundle.module.url(forResource: "Secret_Note", withExtension: "png"),
-                      let nsImage = NSImage(contentsOf: url) {
-                Image(nsImage: nsImage)
-                    .resizable()
-                    .interpolation(.none)
-                    .frame(width: 16, height: 16)
-            } else {
-                StardewIcon(type: .scroll, size: 16)
-            }
+        HStack(spacing: 10) {
+            Circle()
+                .fill(mod.modType == .codeMod ? Color.stardewPurple : Color.stardewOrange)
+                .frame(width: 8, height: 8)
+
             Text(mod.manifest.name)
-                .font(.stardew(size: 16))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(Color.textDark)
                 .lineLimit(1)
+
             if mod.isBuiltIn {
-                HStack(spacing: 3) {
-                    StardewIcon(type: .star, size: 10)
-                    Text("Built-in")
-                        .font(.stardew(size: 12))
-                        .foregroundStyle(Color(red: 0.1, green: 0.29, blue: 0.36))
-                }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 1)
-                .background(Color.stardewBlue.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 3))
+                Text("Built-in")
+                    .font(.system(size: 10, weight: .medium))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(Color.stardewBlue.opacity(0.15))
+                    .foregroundStyle(Color.stardewBlue)
+                    .clipShape(Capsule())
             }
         }
-        .opacity(mod.isEnabled ? 1 : 0.55)
+        .opacity(mod.isEnabled ? 1 : 0.5)
     }
 }
 
@@ -421,13 +463,13 @@ struct ModTypeBadge: View {
     var body: some View {
         let color: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
         Text(mod.modType.rawValue)
-            .font(.stardew(size: 13))
-            .padding(.horizontal, 6)
+            .font(.system(size: 11, weight: .medium))
+            .padding(.horizontal, 7)
             .padding(.vertical, 2)
-            .background(color.opacity(0.15))
+            .background(color.opacity(0.1))
             .foregroundStyle(color)
-            .clipShape(RoundedRectangle(cornerRadius: 3))
-            .opacity(mod.isEnabled ? 1 : 0.55)
+            .clipShape(Capsule())
+            .opacity(mod.isEnabled ? 1 : 0.5)
     }
 }
 
@@ -438,9 +480,9 @@ private struct VersionCell: View {
     var body: some View {
         HStack(spacing: 4) {
             Text(mod.manifest.version)
-                .font(.stardew(size: 15))
-                .foregroundStyle(Color.textLight)
-                .opacity(mod.isEnabled ? 1 : 0.55)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(Color.textMuted)
+                .opacity(mod.isEnabled ? 1 : 0.5)
 
             if let update = updateInfo {
                 Button {
@@ -453,9 +495,9 @@ private struct VersionCell: View {
                         Text(update.newVersion)
                     }
                     .font(.system(size: 10))
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, 5)
                     .padding(.vertical, 1)
-                    .background(Color.stardewOrange.opacity(0.15))
+                    .background(Color.stardewOrange.opacity(0.12))
                     .foregroundStyle(Color.stardewOrange)
                     .clipShape(Capsule())
                 }

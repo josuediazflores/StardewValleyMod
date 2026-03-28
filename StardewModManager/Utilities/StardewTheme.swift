@@ -21,28 +21,30 @@ extension Font {
 // MARK: - Stardew Colors
 
 extension Color {
-    // Sidebar wood tones
-    static let sidebarWood = Color(hex: 0x5B3A21)
-    static let sidebarWoodLight = Color(hex: 0x6B4226)
-    static let sidebarWoodDark = Color(hex: 0x3E2218)
+    private static var isPink: Bool { AppTheme.current == .pink }
+
+    // Sidebar tones
+    static var sidebarWood: Color { isPink ? Color(hex: 0x9E4B6D) : Color(hex: 0x5B3A21) }
+    static var sidebarWoodLight: Color { isPink ? Color(hex: 0xB05A7E) : Color(hex: 0x6B4226) }
+    static var sidebarWoodDark: Color { isPink ? Color(hex: 0x7A3555) : Color(hex: 0x3E2218) }
 
     // Parchment backgrounds
-    static let parchment = Color(hex: 0xFFF8E1)
-    static let parchmentAlt = Color(hex: 0xF5EDD5)
-    static let parchmentHeader = Color(hex: 0xEDE0C8)
+    static var parchment: Color { isPink ? Color(hex: 0xFFF0F3) : Color(hex: 0xFFF8E1) }
+    static var parchmentAlt: Color { isPink ? Color(hex: 0xFFE4EA) : Color(hex: 0xF5EDD5) }
+    static var parchmentHeader: Color { isPink ? Color(hex: 0xFFD6E0) : Color(hex: 0xEDE0C8) }
 
-    // Text browns
-    static let textDark = Color(hex: 0x3E2218)
-    static let textMedium = Color(hex: 0x5B3A21)
-    static let textLight = Color(hex: 0x7A6344)
-    static let textMuted = Color(hex: 0xA0855C)
+    // Text
+    static var textDark: Color { isPink ? Color(hex: 0x5C1A33) : Color(hex: 0x3E2218) }
+    static var textMedium: Color { isPink ? Color(hex: 0x8B3A5C) : Color(hex: 0x5B3A21) }
+    static var textLight: Color { isPink ? Color(hex: 0xB06A8A) : Color(hex: 0x7A6344) }
+    static var textMuted: Color { isPink ? Color(hex: 0xC9879F) : Color(hex: 0xA0855C) }
 
-    // Accent gold
-    static let accentGold = Color(hex: 0xD4A96A)
-    static let accentGoldBorder = Color(hex: 0xB8842A)
-    static let accentGoldDark = Color(hex: 0x8B6914)
+    // Accent
+    static var accentGold: Color { isPink ? Color(hex: 0xF2A0B5) : Color(hex: 0xD4A96A) }
+    static var accentGoldBorder: Color { isPink ? Color(hex: 0xD47A95) : Color(hex: 0xB8842A) }
+    static var accentGoldDark: Color { isPink ? Color(hex: 0xB85A7A) : Color(hex: 0x8B6914) }
 
-    // Game colors
+    // Game colors (semantic — stay the same)
     static let stardewGreen = Color(hex: 0x5D8A3C)
     static let stardewGreenDark = Color(hex: 0x4A7030)
     static let stardewPurple = Color(hex: 0x7B4FA2)
@@ -53,10 +55,20 @@ extension Color {
     static let stardewRed = Color(hex: 0xC0392B)
 
     // UI
-    static let toggleOff = Color(hex: 0x8B7355)
-    static let stardewDivider = Color(hex: 0xC9B896)
+    static var toggleOff: Color { isPink ? Color(hex: 0xC9879F) : Color(hex: 0x8B7355) }
+    static var stardewDivider: Color { isPink ? Color(hex: 0xE8B8C8) : Color(hex: 0xC9B896) }
 
-    fileprivate init(hex: UInt32) {
+    // Table row backgrounds
+    static var rowEven: Color { isPink ? Color(hex: 0xFFFAFC) : Color(hex: 0xFFFCF3) }
+    static var rowOdd: Color { isPink ? Color(hex: 0xFFF0F5) : Color(hex: 0xF7EEDB) }
+    static var rowHover: Color { isPink ? Color(hex: 0xFFE4ED) : Color(hex: 0xF0E5C8) }
+    static var rowSelected: Color { isPink ? Color(hex: 0xFFD6E3) : Color(hex: 0xE8D8B2) }
+    static var tableHeader: Color { isPink ? Color(hex: 0xF5D0DE) : Color(hex: 0xE6D5B4) }
+
+    // Card
+    static var cardBorder: Color { isPink ? Color(hex: 0xD8A0B8) : Color(hex: 0xC4A875) }
+
+    init(hex: UInt32) {
         self.init(
             red: Double((hex >> 16) & 0xFF) / 255,
             green: Double((hex >> 8) & 0xFF) / 255,
@@ -292,7 +304,7 @@ struct StardewSegmentedPicker<T: Hashable & Identifiable & CaseIterable>: View w
         HStack(spacing: 0) {
             ForEach(Array(allItems.enumerated()), id: \.offset) { index, item in
                 if index > 0 {
-                    Color.accentGoldBorder.opacity(0.4)
+                    Color.accentGoldBorder.opacity(0.3)
                         .frame(width: 1)
                         .padding(.vertical, 6)
                 }
@@ -304,7 +316,7 @@ struct StardewSegmentedPicker<T: Hashable & Identifiable & CaseIterable>: View w
                     Text(label(item))
                         .font(.stardew(size: 18))
                         .lineLimit(1)
-                        .padding(.horizontal, 14)
+                        .padding(.horizontal, 12)
                         .padding(.vertical, 5)
                         .background(
                             selection == item
@@ -315,11 +327,19 @@ struct StardewSegmentedPicker<T: Hashable & Identifiable & CaseIterable>: View w
                         .foregroundStyle(
                             selection == item
                                 ? Color.textDark
-                                : Color.textLight
+                                : Color.textMuted
                         )
                 }
                 .buttonStyle(.plain)
             }
         }
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.parchmentAlt)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.accentGoldBorder.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
 }
