@@ -28,8 +28,7 @@ struct StardewModManagerApp: App {
                         .environment(appState)
                 }
         }
-        .windowStyle(.titleBar)
-        .windowToolbarStyle(.unified)
+        .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1100, height: 700)
         .commands {
             CommandGroup(after: .newItem) {
@@ -119,29 +118,10 @@ struct ContentView: View {
     var body: some View {
         @Bindable var state = appState
 
-        NavigationSplitView(columnVisibility: .constant(.all)) {
-            SidebarView()
-                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
-        } detail: {
-            switch appState.sidebarSelection {
-            case .modpacks:
-                ModpackListView()
-            case .installedMods:
-                InstalledModsView()
-            case .browseNexus:
-                NexusBrowseView()
-            case nil:
-                Text("Select an item from the sidebar")
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .navigationTitle("")
-        .toolbar(removing: .sidebarToggle)
-        .preferredColorScheme(.light)
-        .toolbarBackground(Color.parchmentHeader, for: .windowToolbar)
-        .background(WindowAccessor())
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
+        VStack(spacing: 0) {
+            // Custom header bar (replaces native toolbar entirely)
+            HStack(spacing: 12) {
+                // Play button
                 Button {
                     appState.launchGame()
                 } label: {
@@ -168,21 +148,21 @@ struct ContentView: View {
                 .buttonStyle(PlayButtonStyle())
                 .disabled(!appState.settings.isSMAPIInstalled)
                 .help("Launch Stardew Valley with SMAPI")
-                .layoutPriority(1)
-            }
 
-            ToolbarItem(placement: .principal) {
+                Spacer()
+
+                // Filter picker (when viewing mods)
                 if appState.expandedModpackID != nil || appState.sidebarSelection == .installedMods {
                     StardewSegmentedPicker(
                         selection: $state.filterMode,
                         label: { $0.shortLabel }
                     )
-                    .frame(minWidth: 200, idealWidth: 400, maxWidth: 500)
-                    .layoutPriority(-1)
+                    .fixedSize()
                 }
-            }
 
-            ToolbarItem(placement: .automatic) {
+                Spacer()
+
+                // Search field
                 HStack(spacing: 4) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 11))
@@ -217,8 +197,31 @@ struct ContentView: View {
                         )
                 )
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.parchmentHeader)
 
+            // Main content
+            HStack(spacing: 0) {
+                SidebarView()
+                    .frame(width: 220)
+
+                switch appState.sidebarSelection {
+                case .modpacks:
+                    ModpackListView()
+                case .installedMods:
+                    InstalledModsView()
+                case .browseNexus:
+                    NexusBrowseView()
+                case nil:
+                    Text("Select an item from the sidebar")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
         }
+        .preferredColorScheme(.light)
+        .background(WindowAccessor())
         .alert("Error", isPresented: .init(
             get: { appState.errorMessage != nil },
             set: { if !$0 { appState.errorMessage = nil } }
@@ -253,50 +256,9 @@ private struct WindowAccessor: NSViewRepresentable {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.titlebarSeparatorStyle = .none
-        window.toolbar?.isVisible = true
-        window.toolbar?.showsBaselineSeparator = false
-        // Hide non-essential toolbar items (sidebar toggle, separators, flexible space)
-        if let toolbar = window.toolbar {
-            for item in toolbar.items {
-                let id = item.itemIdentifier.rawValue
-                if id.contains("toggleSidebar") ||
-                   id.contains("splitViewSeparator") ||
-                   id == "NSToolbarFlexibleSpaceItem" ||
-                   item.itemIdentifier == .toggleSidebar ||
-                   item.itemIdentifier == .space ||
-                   item.itemIdentifier == .flexibleSpace {
-                    item.isEnabled = false
-                    item.view?.isHidden = true
-                    item.minSize = NSSize(width: 0, height: 0)
-                    item.maxSize = NSSize(width: 0, height: 0)
-                }
-            }
-            // Remove the split view separator appearance from the toolbar
-            toolbar.displayMode = .iconOnly
-        }
+        window.toolbar?.isVisible = false
         window.minSize = NSSize(width: 700, height: 450)
         window.collectionBehavior.insert(.fullScreenPrimary)
-        // Hide the sidebar toggle button
-        if let splitView = window.contentView?.subviews.first(where: { $0 is NSSplitView }) as? NSSplitView {
-            splitView.dividerStyle = .thin
-        }
-        // Remove separator between titlebar and detail pane; keep sidebar inset
-        if let svc = findSplitViewController(in: window.contentViewController) {
-            for (index, item) in svc.splitViewItems.enumerated() {
-                item.titlebarSeparatorStyle = index == 0 ? .line : .none
-            }
-        }
     }
 
-    private func findSplitViewController(in viewController: NSViewController?) -> NSSplitViewController? {
-        if let svc = viewController as? NSSplitViewController {
-            return svc
-        }
-        for child in viewController?.children ?? [] {
-            if let found = findSplitViewController(in: child) {
-                return found
-            }
-        }
-        return nil
-    }
 }
