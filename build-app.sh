@@ -77,6 +77,12 @@ cat > "$APP_DIR/Contents/Info.plist" << PLIST
         <key>NSAllowsArbitraryLoads</key>
         <true/>
     </dict>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Stardew Mod Manager uses local network to sync modpacks with nearby players.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_smm-sync._tcp</string>
+    </array>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

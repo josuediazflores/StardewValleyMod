@@ -10,6 +10,7 @@ struct ModpackListView: View {
     @State private var applyResultMessage: String?
     @State private var showApplyAlert = false
     @State private var showCompareSheet = false
+    @State private var showNearbyCompareSheet = false
 
     var body: some View {
         @Bindable var state = appState
@@ -26,18 +27,18 @@ struct ModpackListView: View {
                                 .frame(width: 24, height: 24)
                             Text("Play")
                                 .font(.stardew(size: 24))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color.textDark)
                                 .frame(height: 24)
                         }
                         .padding(.leading, 12)
                         .padding(.trailing, 16)
                         .padding(.vertical, 6)
                         .background(
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(LinearGradient(colors: [.stardewGreen, .stardewGreenDark], startPoint: .top, endPoint: .bottom))
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.accentGold)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Color(hex: 0x3E5C22), lineWidth: 2)
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.frameBorder, lineWidth: 2)
                                 )
                         )
                     }
@@ -154,8 +155,80 @@ struct ModpackListView: View {
                         }
                         .buttonStyle(.plain)
                     }
+
+                    Button {
+                        showNearbyCompareSheet = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                                .font(.system(size: 10))
+                            Text("Nearby")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.stardewPurple)
+                        .foregroundStyle(.white)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.vertical, 6)
+
+                // Vanilla profile (always present, not editable)
+                HStack(spacing: 10) {
+                    Image(systemName: "leaf")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.stardewGreen)
+
+                    Text("Vanilla")
+                        .font(.stardew(size: 18))
+                        .foregroundStyle(Color.textDark)
+
+                    Text("Vanilla")
+                        .font(.stardew(size: 12))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.stardewGreen.opacity(0.15))
+                        .foregroundStyle(Color.stardewGreen)
+                        .clipShape(Capsule())
+
+                    Text("0 mods")
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(Color.textMuted)
+
+                    Spacer()
+
+                    Button {
+                        applyVanilla()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 10))
+                            Text("Load Profile")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.stardewGreen)
+                        .foregroundStyle(.white)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(Color.parchmentAlt)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.frameBorder, lineWidth: 3)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.frameBorderDark, lineWidth: 1)
+                        .padding(2)
+                )
 
                 // Saved modpacks
                 if appState.modpacks.isEmpty {
@@ -261,9 +334,23 @@ struct ModpackListView: View {
             CompareModpacksSheet()
                 .environment(appState)
         }
+        .sheet(isPresented: $showNearbyCompareSheet) {
+            NearbyCompareSheet()
+                .environment(appState)
+        }
     }
 
     // MARK: - Actions
+
+    private func applyVanilla() {
+        // Disable all mods
+        for mod in appState.mods where mod.isEnabled && !mod.isBuiltIn {
+            appState.performDisableMod(mod)
+        }
+        appState.activeModpackID = nil
+        applyResultMessage = "Vanilla profile loaded. All mods disabled."
+        showApplyAlert = true
+    }
 
     private func applyModpack(_ modpack: Modpack) {
         appState.applyModpack(modpack)
