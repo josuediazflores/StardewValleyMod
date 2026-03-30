@@ -140,7 +140,6 @@ struct ContentView: View {
         .preferredColorScheme(.light)
         .toolbarBackground(Color.parchmentHeader, for: .windowToolbar)
         .background(WindowAccessor())
-        .searchable(text: $state.searchText, placement: .toolbar, prompt: appState.expandedModpackID != nil ? "Search mods..." : "Search modpacks...")
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button {
@@ -181,6 +180,42 @@ struct ContentView: View {
                     .frame(minWidth: 200, idealWidth: 400, maxWidth: 500)
                     .layoutPriority(-1)
                 }
+            }
+
+            ToolbarItem(placement: .automatic) {
+                HStack(spacing: 4) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textMuted)
+                    TextField(
+                        appState.expandedModpackID != nil ? "Search mods..." : "Search modpacks...",
+                        text: $state.searchText
+                    )
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.textDark)
+                    .frame(width: 160)
+                    if !appState.searchText.isEmpty {
+                        Button {
+                            appState.searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.textMuted)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.parchmentAlt)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.frameBorder.opacity(0.5), lineWidth: 1)
+                        )
+                )
             }
 
         }
