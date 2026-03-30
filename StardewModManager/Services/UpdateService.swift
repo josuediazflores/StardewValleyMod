@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 
 struct AppUpdate {
     let version: String
@@ -52,13 +53,76 @@ enum UpdateService {
 
         guard isNewer(latestVersion, than: currentVersion) else { return nil }
 
-        let dmg = release.assets?.first(where: { $0.name.hasSuffix(".dmg") || $0.name.hasSuffix(".zip") || $0.name.hasSuffix(".app") })
+        let zip = release.assets?.first(where: { $0.name.hasSuffix(".zip") })
 
         return AppUpdate(
             version: latestVersion,
             htmlURL: release.htmlUrl,
-            downloadURL: dmg?.browserDownloadUrl
+            downloadURL: zip?.browserDownloadUrl
         )
+    }
+
+    /// Download the update zip, extract it, replace the current app, and relaunch
+    static func downloadAndInstall(update: AppUpdate) async throws {
+        guard let downloadURL = update.downloadURL, let url = URL(string: downloadURL) else {
+            throw UpdateError.noDownloadURL
+        }
+
+        // Download the zip
+        let (tempZipURL, response) = try await URLSession.shared.download(from: url)
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            throw UpdateError.downloadFailed
+        }
+
+        let fm = FileManager.default
+        let tempDir = fm.temporaryDirectory.appending(path: "StardewModManagerUpdate-\(UUID().uuidString)")
+        try fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
+
+        // Extract the zip using ditto (preserves permissions and code signing)
+        let process = Process()
+        process.executableURL = URL(filePath: "/usr/bin/ditto")
+        process.arguments = ["-xk", tempZipURL.path(percentEncoded: false), tempDir.path(percentEncoded: false)]
+        try process.run()
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else {
+            throw UpdateError.extractFailed
+        }
+
+        // Find the .app in the extracted directory
+        let contents = try fm.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+        guard let newAppURL = contents.first(where: { $0.pathExtension == "app" }) else {
+            throw UpdateError.noAppFound
+        }
+
+        // Replace current app
+        let currentAppPath = Bundle.main.bundleURL
+        let backupPath = currentAppPath.deletingLastPathComponent().appending(path: "StardewModManager_backup.app")
+
+        // Remove old backup if exists
+        try? fm.removeItem(at: backupPath)
+
+        // Move current app to backup
+        try fm.moveItem(at: currentAppPath, to: backupPath)
+
+        // Move new app into place
+        try fm.moveItem(at: newAppURL, to: currentAppPath)
+
+        // Clean up
+        try? fm.removeItem(at: tempDir)
+        try? fm.removeItem(at: tempZipURL)
+        try? fm.removeItem(at: backupPath)
+
+        // Relaunch
+        let task = Process()
+        task.executableURL = URL(filePath: "/usr/bin/open")
+        task.arguments = ["-n", currentAppPath.path(percentEncoded: false)]
+        try task.run()
+
+        // Exit current instance
+        DispatchQueue.main.async {
+            NSApplication.shared.terminate(nil)
+        }
     }
 
     private static func isNewer(_ latest: String, than current: String) -> Bool {
@@ -72,5 +136,21 @@ enum UpdateService {
             if l < c { return false }
         }
         return false
+    }
+
+    enum UpdateError: LocalizedError {
+        case noDownloadURL
+        case downloadFailed
+        case extractFailed
+        case noAppFound
+
+        var errorDescription: String? {
+            switch self {
+            case .noDownloadURL: return "No download URL available for this update."
+            case .downloadFailed: return "Failed to download the update."
+            case .extractFailed: return "Failed to extract the update."
+            case .noAppFound: return "Could not find the app in the downloaded update."
+            }
+        }
     }
 }

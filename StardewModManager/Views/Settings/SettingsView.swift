@@ -464,22 +464,51 @@ struct AboutSettingsTab: View {
             }
 
             if let update = appState.availableUpdate {
-                Button {
-                    if let url = URL(string: update.htmlURL) {
-                        NSWorkspace.shared.open(url)
+                if appState.isUpdating {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                        Text("Downloading update...")
+                            .font(.stardew(size: 14))
+                            .foregroundStyle(Color.textMuted)
                     }
-                } label: {
-                    Text("Download v\(update.version)")
-                        .font(.stardew(size: 16))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.stardewOrange)
-                        )
+                } else {
+                    HStack(spacing: 12) {
+                        Button {
+                            appState.performAppUpdate()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.system(size: 12))
+                                Text("Update to v\(update.version)")
+                                    .font(.stardew(size: 16))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.stardewOrange)
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button("View Release Notes") {
+                            if let url = URL(string: update.htmlURL) {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(Color.stardewBlue)
+                        .buttonStyle(.plain)
+                    }
                 }
-                .buttonStyle(.plain)
+
+                if let error = appState.updateError {
+                    Text(error)
+                        .font(.stardew(size: 13))
+                        .foregroundStyle(Color.stardewRed)
+                }
             }
 
             Spacer()

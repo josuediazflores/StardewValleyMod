@@ -499,9 +499,26 @@ final class AppState {
 
     // MARK: - App Update Check
 
+    var isUpdating = false
+    var updateError: String?
+
     func checkForAppUpdate() {
         Task {
             availableUpdate = await UpdateService.checkForUpdate()
+        }
+    }
+
+    func performAppUpdate() {
+        guard let update = availableUpdate else { return }
+        isUpdating = true
+        updateError = nil
+        Task {
+            do {
+                try await UpdateService.downloadAndInstall(update: update)
+            } catch {
+                isUpdating = false
+                updateError = error.localizedDescription
+            }
         }
     }
 

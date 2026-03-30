@@ -95,3 +95,17 @@ PLIST
 echo ""
 echo "Build complete: $APP_DIR"
 echo "You can now double-click it to launch, or drag it to /Applications."
+
+# Create GitHub Release if --release flag is passed
+if [ "$1" = "--release" ]; then
+    echo ""
+    echo "Creating GitHub Release v${APP_VERSION}..."
+    ZIP_PATH="$(pwd)/build/Stardew Mod Manager.zip"
+    rm -f "$ZIP_PATH"
+    cd "$(pwd)/build" && zip -r "Stardew Mod Manager.zip" "Stardew Mod Manager.app" && cd ..
+    gh release create "v${APP_VERSION}" "$ZIP_PATH" \
+        --title "v${APP_VERSION}" \
+        --notes "Release v${APP_VERSION}" \
+        --latest
+    echo "Release v${APP_VERSION} published to GitHub."
+fi
