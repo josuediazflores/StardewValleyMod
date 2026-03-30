@@ -28,10 +28,14 @@ extension Color {
     static var sidebarWoodLight: Color { isPink ? Color(hex: 0xB05A7E) : Color(hex: 0x6B4226) }
     static var sidebarWoodDark: Color { isPink ? Color(hex: 0x7A3555) : Color(hex: 0x3E2218) }
 
-    // Parchment backgrounds
-    static var parchment: Color { isPink ? Color(hex: 0xFFF0F3) : Color(hex: 0xFFF8E1) }
-    static var parchmentAlt: Color { isPink ? Color(hex: 0xFFE4EA) : Color(hex: 0xF5EDD5) }
-    static var parchmentHeader: Color { isPink ? Color(hex: 0xFFD6E0) : Color(hex: 0xEDE0C8) }
+    // Parchment backgrounds (warm sandy tones matching in-game UI)
+    static var parchment: Color { isPink ? Color(hex: 0xFFF0F3) : Color(hex: 0xF5D6A0) }
+    static var parchmentAlt: Color { isPink ? Color(hex: 0xFFE4EA) : Color(hex: 0xECC888) }
+    static var parchmentHeader: Color { isPink ? Color(hex: 0xFFD6E0) : Color(hex: 0xE0B870) }
+
+    // Frame borders (thick brown/orange borders matching in-game panels)
+    static var frameBorder: Color { isPink ? Color(hex: 0xC46A8A) : Color(hex: 0xB8741A) }
+    static var frameBorderDark: Color { isPink ? Color(hex: 0x9E4A6A) : Color(hex: 0x8B5A14) }
 
     // Text
     static var textDark: Color { isPink ? Color(hex: 0x5C1A33) : Color(hex: 0x3E2218) }
@@ -56,17 +60,17 @@ extension Color {
 
     // UI
     static var toggleOff: Color { isPink ? Color(hex: 0xC9879F) : Color(hex: 0x8B7355) }
-    static var stardewDivider: Color { isPink ? Color(hex: 0xE8B8C8) : Color(hex: 0xC9B896) }
+    static var stardewDivider: Color { isPink ? Color(hex: 0xC46A8A) : Color(hex: 0xB8741A) }
 
-    // Table row backgrounds
-    static var rowEven: Color { isPink ? Color(hex: 0xFFFAFC) : Color(hex: 0xFFFCF3) }
-    static var rowOdd: Color { isPink ? Color(hex: 0xFFF0F5) : Color(hex: 0xF7EEDB) }
-    static var rowHover: Color { isPink ? Color(hex: 0xFFE4ED) : Color(hex: 0xF0E5C8) }
-    static var rowSelected: Color { isPink ? Color(hex: 0xFFD6E3) : Color(hex: 0xE8D8B2) }
-    static var tableHeader: Color { isPink ? Color(hex: 0xF5D0DE) : Color(hex: 0xE6D5B4) }
+    // Table row backgrounds (warmer to match parchment)
+    static var rowEven: Color { isPink ? Color(hex: 0xFFFAFC) : Color(hex: 0xF7DDB0) }
+    static var rowOdd: Color { isPink ? Color(hex: 0xFFF0F5) : Color(hex: 0xF0CC95) }
+    static var rowHover: Color { isPink ? Color(hex: 0xFFE4ED) : Color(hex: 0xE8C080) }
+    static var rowSelected: Color { isPink ? Color(hex: 0xFFD6E3) : Color(hex: 0xE0B870) }
+    static var tableHeader: Color { isPink ? Color(hex: 0xF5D0DE) : Color(hex: 0xDAAA60) }
 
     // Card
-    static var cardBorder: Color { isPink ? Color(hex: 0xD8A0B8) : Color(hex: 0xC4A875) }
+    static var cardBorder: Color { isPink ? Color(hex: 0xC46A8A) : Color(hex: 0xB8741A) }
 
     init(hex: UInt32) {
         self.init(
@@ -338,7 +342,7 @@ struct StardewSegmentedPicker<T: Hashable & Identifiable & CaseIterable>: View w
                 .fill(Color.parchmentAlt)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.accentGoldBorder.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.frameBorder, lineWidth: 2)
                 )
         )
     }

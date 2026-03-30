@@ -174,27 +174,45 @@ actor NexusAPIService {
         return destURL
     }
 
-    // MARK: - Search (v2 GraphQL)
+    // MARK: - Search & Browse (v2 GraphQL)
 
-    func searchMods(query: String) async throws -> [NexusModInfo] {
+    enum ModSortField: String {
+        case endorsements
+        case downloads
+        case createdAt
+    }
+
+    func browseMods(sortBy: ModSortField, offset: Int = 0, count: Int = 20, searchText: String? = nil) async throws -> [NexusModInfo] {
         var request = try buildGraphQLRequest()
 
+        let searchFilter = searchText.map { text -> String in
+            let escaped = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "")
+            return ", name: { value: \\\"\(escaped)\\\", op: WILDCARD }"
+        } ?? ""
+
         let graphqlQuery = """
-        {
-          "query": "query SearchMods($searchText: String!) { mods(filter: { gameDomainName: { value: \\"stardewvalley\\" }, searchText: { value: $searchText } }, sortBy: { downloads: { direction: DESC } }) { nodes { modId name summary version author pictureUrl endorsementCount modDownloads } } }",
-          "variables": { "searchText": "\(query.replacingOccurrences(of: "\"", with: "\\\""))" }
-        }
+        {"query":"{ mods(filter: { gameDomainName: { value: \\"stardewvalley\\" }\(searchFilter) }, sort: [{ \(sortBy.rawValue): { direction: DESC } }], offset: \(offset), count: \(count)) { nodes { modId name summary version author pictureUrl downloads endorsements } } }"}
         """
         request.httpBody = graphqlQuery.data(using: .utf8)
 
         let (data, response) = try await performRequest(request)
         try checkResponse(response)
 
-        // Parse the GraphQL response
+        struct GQLMod: Codable {
+            let modId: Int
+            let name: String?
+            let summary: String?
+            let version: String?
+            let author: String?
+            let pictureUrl: String?
+            let downloads: Int?
+            let endorsements: Int?
+        }
+
         struct GraphQLResponse: Codable {
             struct DataField: Codable {
                 struct ModsField: Codable {
-                    let nodes: [NexusModInfo]
+                    let nodes: [GQLMod]
                 }
                 let mods: ModsField
             }
@@ -202,7 +220,19 @@ actor NexusAPIService {
         }
 
         let gqlResponse = try JSONDecoder().decode(GraphQLResponse.self, from: data)
-        return gqlResponse.data.mods.nodes
+        return gqlResponse.data.mods.nodes.map { m in
+            NexusModInfo(
+                modId: m.modId, name: m.name, summary: m.summary,
+                description: nil, version: m.version, author: m.author,
+                pictureUrl: m.pictureUrl, endorsementCount: m.endorsements,
+                modDownloads: m.downloads, modUniqueDownloads: nil,
+                categoryId: nil, available: nil, status: nil, uploadedBy: nil
+            )
+        }
+    }
+
+    func searchMods(query: String) async throws -> [NexusModInfo] {
+        try await browseMods(sortBy: .downloads, searchText: query)
     }
 
     // MARK: - Collections

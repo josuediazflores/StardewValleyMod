@@ -3,16 +3,16 @@ import SwiftUI
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case modpacks = "Modpacks"
+    case installedMods = "Mods"
     case browseNexus = "Browse Nexus"
-    case importMods = "Import Mods"
 
     var id: String { rawValue }
 
     var icon: String {
         switch self {
         case .modpacks: return "archivebox.fill"
+        case .installedMods: return "hammer.fill"
         case .browseNexus: return "globe"
-        case .importMods: return "square.and.arrow.down"
         }
     }
 }
@@ -35,6 +35,7 @@ final class AppState {
     var searchText = ""
     var filterMode: ModFilter = .all
     var isLoading = false
+    var showImportPicker = false
     var showInspector = true
     var errorMessage: String?
 
@@ -55,7 +56,9 @@ final class AppState {
     var nexusSearchResults: [NexusModInfo] = []
     var nexusSearchText = ""
     var isNexusLoading = false
+    var isNexusLoadingMore = false
     var nexusError: String?
+    var nexusHasMore = true
 
     let nexusAPI = NexusAPIService()
     let externalDownloader = ExternalDownloadService()
@@ -66,9 +69,7 @@ final class AppState {
     var selectedModpackID: UUID?
     var isModpackLoading = false
     var modpackError: String?
-    var expandedModpackID: UUID? = AppState.currentProfileID
-
-    static let currentProfileID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    var expandedModpackID: UUID? = nil
 
     var activeModpack: Modpack? {
         guard let id = activeModpackID else { return nil }
@@ -80,41 +81,8 @@ final class AppState {
         return modpacks.first { $0.id == id }
     }
 
-    var activeProfileName: String {
-        guard let id = activeModpackID,
-              let pack = modpacks.first(where: { $0.id == id }) else {
-            return "Current Profile"
-        }
-        return pack.name
-    }
-
-    var currentProfileModpack: Modpack {
-        let entries = mods.filter { !$0.isBuiltIn }.map { mod in
-            ModpackEntry(
-                uniqueID: mod.id,
-                name: mod.manifest.name,
-                version: mod.manifest.version,
-                nexusModID: mod.nexusModID,
-                nexusFileID: nil,
-                isEnabled: mod.isEnabled
-            )
-        }
-        return Modpack(
-            id: AppState.currentProfileID,
-            name: activeProfileName,
-            description: "Your currently installed mods",
-            entries: entries,
-            source: .currentProfile,
-            includesFiles: false,
-            bundleFolderName: nil,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
-
     var filteredModpacks: [Modpack] {
-        // Hide the active modpack from saved profiles (it's shown as Current Profile)
-        var result = modpacks.filter { $0.id != activeModpackID }
+        var result = modpacks
 
         if !searchText.isEmpty && expandedModpackID == nil {
             let query = searchText.lowercased()
@@ -180,6 +148,7 @@ final class AppState {
 
     var enabledCount: Int { mods.filter { $0.isEnabled }.count }
     var disabledCount: Int { mods.filter { !$0.isEnabled }.count }
+    var userModCount: Int { mods.filter { !$0.isBuiltIn }.count }
 
     // MARK: - Sorting
 
@@ -428,6 +397,13 @@ final class AppState {
 
     // MARK: - Nexus Operations
 
+    func revalidateAPIKeyIfNeeded() {
+        guard let key = settings.nexusAPIKey, !key.isEmpty, !settings.isAPIKeyValidated else { return }
+        Task {
+            await validateNexusAPIKey(key)
+        }
+    }
+
     func validateNexusAPIKey(_ key: String) async {
         do {
             await nexusAPI.setAPIKey(key)
@@ -445,11 +421,12 @@ final class AppState {
     func loadTrendingMods() async {
         isNexusLoading = true
         nexusError = nil
+        nexusHasMore = true
         do {
             if let key = settings.nexusAPIKey {
                 await nexusAPI.setAPIKey(key)
             }
-            nexusTrendingMods = try await nexusAPI.trendingMods()
+            nexusTrendingMods = try await nexusAPI.browseMods(sortBy: .endorsements, offset: 0)
         } catch {
             nexusError = error.localizedDescription
         }
@@ -459,11 +436,12 @@ final class AppState {
     func loadLatestMods() async {
         isNexusLoading = true
         nexusError = nil
+        nexusHasMore = true
         do {
             if let key = settings.nexusAPIKey {
                 await nexusAPI.setAPIKey(key)
             }
-            nexusLatestMods = try await nexusAPI.latestAddedMods()
+            nexusLatestMods = try await nexusAPI.browseMods(sortBy: .createdAt, offset: 0)
         } catch {
             nexusError = error.localizedDescription
         }
@@ -473,15 +451,43 @@ final class AppState {
     func searchNexusMods(query: String) async {
         isNexusLoading = true
         nexusError = nil
+        nexusHasMore = true
         do {
             if let key = settings.nexusAPIKey {
                 await nexusAPI.setAPIKey(key)
             }
-            nexusSearchResults = try await nexusAPI.searchMods(query: query)
+            nexusSearchResults = try await nexusAPI.browseMods(sortBy: .downloads, searchText: query)
         } catch {
             nexusError = error.localizedDescription
         }
         isNexusLoading = false
+    }
+
+    enum NexusTab { case trending, latest, search }
+
+    func loadMoreMods(tab: NexusTab) async {
+        guard !isNexusLoadingMore, nexusHasMore else { return }
+        isNexusLoadingMore = true
+        do {
+            if let key = settings.nexusAPIKey {
+                await nexusAPI.setAPIKey(key)
+            }
+            let newMods: [NexusModInfo]
+            switch tab {
+            case .trending:
+                newMods = try await nexusAPI.browseMods(sortBy: .endorsements, offset: nexusTrendingMods.count)
+                if newMods.isEmpty { nexusHasMore = false } else { nexusTrendingMods.append(contentsOf: newMods) }
+            case .latest:
+                newMods = try await nexusAPI.browseMods(sortBy: .createdAt, offset: nexusLatestMods.count)
+                if newMods.isEmpty { nexusHasMore = false } else { nexusLatestMods.append(contentsOf: newMods) }
+            case .search:
+                newMods = try await nexusAPI.browseMods(sortBy: .downloads, offset: nexusSearchResults.count, searchText: nexusSearchText)
+                if newMods.isEmpty { nexusHasMore = false } else { nexusSearchResults.append(contentsOf: newMods) }
+            }
+        } catch {
+            // Silently fail on load-more
+        }
+        isNexusLoadingMore = false
     }
 
     func downloadAndInstallMod(modId: Int, fileId: Int) async {

@@ -15,21 +15,9 @@ struct ModpackListView: View {
 
         ScrollView {
             LazyVStack(spacing: 10) {
-                // Current Profile
-                ExpandableModpackCardView(
-                    modpack: appState.currentProfileModpack,
-                    isCurrentProfile: true,
-                    isExpanded: appState.expandedModpackID == AppState.currentProfileID,
-                    onApply: {},
-                    onExportJSON: {},
-                    onExportZIP: {},
-                    onDelete: {},
-                    onSaveAsModpack: { showCreateSheet = true }
-                )
-
-                // Saved Profiles header
+                // Profiles header
                 HStack(spacing: 8) {
-                    Text("SAVED PROFILES")
+                    Text("PROFILES")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(Color.textMuted.opacity(0.7))
                         .tracking(0.8)
@@ -88,7 +76,7 @@ struct ModpackListView: View {
                     ForEach(appState.filteredModpacks) { modpack in
                         ExpandableModpackCardView(
                             modpack: modpack,
-                            isCurrentProfile: false,
+                            isActive: appState.activeModpackID == modpack.id,
                             isExpanded: appState.expandedModpackID == modpack.id,
                             onApply: { applyModpack(modpack) },
                             onExportJSON: { showExportPanel(modpack: modpack, asZIP: false) },
@@ -96,8 +84,7 @@ struct ModpackListView: View {
                             onDelete: {
                                 modpackToDelete = modpack
                                 showDeleteConfirmation = true
-                            },
-                            onSaveAsModpack: {}
+                            }
                         )
                     }
                 }
@@ -107,8 +94,7 @@ struct ModpackListView: View {
         .scrollContentBackground(.hidden)
         .background(Color.parchment)
         .inspector(isPresented: $state.showInspector) {
-            if appState.expandedModpackID == AppState.currentProfileID,
-               let mod = appState.selectedMod {
+            if let mod = appState.selectedMod {
                 ModDetailView(mod: mod)
                     .inspectorColumnWidth(min: 250, ideal: 300, max: 400)
             } else {
@@ -126,11 +112,7 @@ struct ModpackListView: View {
         }
         .safeAreaInset(edge: .bottom) {
             HStack {
-                if appState.expandedModpackID == AppState.currentProfileID {
-                    Text("\(appState.filteredMods.count) mods \u{00B7} \(appState.enabledCount) enabled \u{00B7} \(appState.disabledCount) disabled")
-                } else {
-                    Text("\(appState.modpacks.count + 1) profiles \u{00B7} \(appState.mods.count) mods installed")
-                }
+                Text("\(appState.modpacks.count) profiles \u{00B7} \(appState.mods.count) mods installed")
                 Spacer()
             }
             .font(.system(size: 11))

@@ -15,6 +15,7 @@ struct StardewModManagerApp: App {
                 .environment(appState)
                 .onAppear {
                     appState.loadMods()
+                    appState.revalidateAPIKeyIfNeeded()
                 }
                 .onOpenURL { url in
                     appState.handleNXMLink(url)
@@ -33,7 +34,8 @@ struct StardewModManagerApp: App {
         .commands {
             CommandGroup(after: .newItem) {
                 Button("Import Mods...") {
-                    appState.sidebarSelection = .importMods
+                    appState.sidebarSelection = .installedMods
+                    appState.showImportPicker = true
                 }
                 .keyboardShortcut("i", modifiers: .command)
 
@@ -124,10 +126,10 @@ struct ContentView: View {
             switch appState.sidebarSelection {
             case .modpacks:
                 ModpackListView()
+            case .installedMods:
+                InstalledModsView()
             case .browseNexus:
                 NexusBrowseView()
-            case .importMods:
-                ImportModView()
             case nil:
                 Text("Select an item from the sidebar")
                     .foregroundStyle(.secondary)
@@ -136,7 +138,7 @@ struct ContentView: View {
         .navigationTitle("")
         .toolbar(removing: .sidebarToggle)
         .preferredColorScheme(.light)
-        .toolbarBackground(Color.parchment, for: .windowToolbar)
+        .toolbarBackground(Color.parchmentHeader, for: .windowToolbar)
         .background(WindowAccessor())
         .searchable(text: $state.searchText, placement: .toolbar, prompt: appState.expandedModpackID != nil ? "Search mods..." : "Search modpacks...")
         .toolbar {
@@ -149,7 +151,7 @@ struct ContentView: View {
                             .frame(width: 24, height: 24)
                         Text("Play")
                             .font(.stardew(size: 24))
-                            .foregroundStyle(Color.parchment)
+                            .foregroundStyle(.white)
                             .frame(height: 24)
                     }
                     .padding(.leading, 12)
@@ -171,7 +173,7 @@ struct ContentView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                if appState.expandedModpackID != nil {
+                if appState.expandedModpackID != nil || appState.sidebarSelection == .installedMods {
                     StardewSegmentedPicker(
                         selection: $state.filterMode,
                         label: { $0.shortLabel }
@@ -212,7 +214,7 @@ private struct WindowAccessor: NSViewRepresentable {
 
     private func applyTitlebarStyle(to window: NSWindow?) {
         guard let window else { return }
-        window.backgroundColor = NSColor(Color.parchment)
+        window.backgroundColor = NSColor(Color.parchmentHeader)
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
         window.toolbar?.isVisible = true

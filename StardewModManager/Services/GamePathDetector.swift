@@ -2,8 +2,14 @@ import Foundation
 
 enum GamePathDetector {
     private static let standardPaths = [
+        // Steam
         "~/Library/Application Support/Steam/steamapps/common/Stardew Valley/Contents/MacOS",
         "~/Library/Application Support/Steam/steamapps/common/Stardew Valley (game preview)/Contents/MacOS",
+        // Mac App Store
+        "/Applications/Stardew Valley.app/Contents/MacOS",
+        "~/Applications/Stardew Valley.app/Contents/MacOS",
+        // GOG
+        "/Applications/Stardew Valley - GOG.com.app/Contents/MacOS",
     ]
 
     static func detect() -> String? {

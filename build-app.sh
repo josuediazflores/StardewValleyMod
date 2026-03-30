@@ -19,9 +19,10 @@ mkdir -p "$APP_DIR/Contents/Resources"
 cp "${BUILD_DIR}/StardewModManager" "$APP_DIR/Contents/MacOS/"
 
 # Copy bundled resources (font, etc.)
+# Must be in Contents/MacOS/ because SPM's Bundle.module looks relative to the binary
 RESOURCE_BUNDLE="${BUILD_DIR}/StardewModManager_StardewModManager.bundle"
 if [ -d "$RESOURCE_BUNDLE" ]; then
-    cp -R "$RESOURCE_BUNDLE" "$APP_DIR/Contents/Resources/"
+    cp -R "$RESOURCE_BUNDLE" "$APP_DIR/Contents/MacOS/"
     echo "Resource bundle copied."
 fi
 

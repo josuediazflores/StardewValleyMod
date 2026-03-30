@@ -13,11 +13,11 @@ struct NexusModCardView: View {
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Rectangle()
-                        .fill(.fill.tertiary)
+                        .fill(Color.parchmentHeader)
                         .overlay {
                             Image(systemName: "photo")
                                 .font(.title)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.textMuted)
                         }
                 }
                 .frame(height: 140)
@@ -26,39 +26,45 @@ struct NexusModCardView: View {
             }
 
             // Info
-            Text(mod.name)
-                .font(.headline)
+            Text(mod.displayName)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.textDark)
                 .lineLimit(2)
 
-            Text(mod.summary)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(mod.summary ?? "")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.textLight)
                 .lineLimit(3)
 
             HStack {
-                Label(mod.author, systemImage: "person")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                Label(mod.author ?? "Unknown", systemImage: "person")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color.textMuted)
 
                 Spacer()
 
                 if let downloads = mod.modDownloads {
                     Label(formatNumber(downloads), systemImage: "arrow.down.circle")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.textMuted)
                 }
 
                 if let endorsements = mod.endorsementCount {
                     Label(formatNumber(endorsements), systemImage: "hand.thumbsup")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.textMuted)
                 }
             }
         }
         .padding()
-        .background(.background.secondary)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.parchmentAlt)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.cardBorder, lineWidth: 1)
+                )
+        )
     }
 
     private func formatNumber(_ n: Int) -> String {

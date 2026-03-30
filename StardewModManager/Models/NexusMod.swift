@@ -2,29 +2,35 @@ import Foundation
 
 struct NexusModInfo: Codable, Identifiable {
     let modId: Int
-    let name: String
-    let summary: String
+    let name: String?
+    let summary: String?
     let description: String?
-    let version: String
-    let author: String
+    let version: String?
+    let author: String?
     let pictureUrl: String?
     let endorsementCount: Int?
     let modDownloads: Int?
     let modUniqueDownloads: Int?
     let categoryId: Int?
     let available: Bool?
+    let status: String?
+    let uploadedBy: String?
 
     var id: Int { modId }
 
+    /// Display name: uses name if available, falls back to uploadedBy's mod
+    var displayName: String { name ?? "Mod #\(modId)" }
+
     enum CodingKeys: String, CodingKey {
         case modId = "mod_id"
-        case name, summary, description, version, author
+        case name, summary, description, version, author, status
         case pictureUrl = "picture_url"
         case endorsementCount = "endorsement_count"
         case modDownloads = "mod_downloads"
         case modUniqueDownloads = "mod_unique_downloads"
         case categoryId = "category_id"
         case available
+        case uploadedBy = "uploaded_by"
     }
 }
 

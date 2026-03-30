@@ -35,7 +35,7 @@ struct ModpackCreateSheet: View {
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textDark)
                     TextField("My Modpack", text: $name)
-                        .font(.stardew(size: 16))
+                        .font(.system(size: 14))
                         .textFieldStyle(.roundedBorder)
                 }
 
@@ -44,7 +44,7 @@ struct ModpackCreateSheet: View {
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textDark)
                     TextField("Optional description...", text: $description)
-                        .font(.stardew(size: 16))
+                        .font(.system(size: 14))
                         .textFieldStyle(.roundedBorder)
                 }
 

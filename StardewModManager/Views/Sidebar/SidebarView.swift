@@ -19,11 +19,20 @@ struct SidebarView: View {
                             .lineLimit(1)
                         Spacer()
                         if item == .modpacks {
-                            Text("\(appState.modpacks.count + 1)")
+                            Text("\(appState.modpacks.count)")
                                 .font(.system(size: 11, weight: .medium, design: .rounded))
                                 .foregroundStyle(Color.accentGold.opacity(0.7))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 1)
+                                .background(Color.accentGold.opacity(0.15))
+                                .clipShape(Capsule())
+                        }
+                        if item == .installedMods {
+                            Text("\(appState.userModCount)")
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                .foregroundStyle(Color.accentGold.opacity(0.7))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 1)
                                 .background(Color.accentGold.opacity(0.15))
                                 .clipShape(Capsule())
                         }
@@ -31,19 +40,17 @@ struct SidebarView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 6)
                             .fill(appState.sidebarSelection == item
-                                ? Color.accentGold.opacity(0.2)
+                                ? Color.accentGold.opacity(0.25)
                                 : Color.clear)
                     )
-                    .overlay(alignment: .leading) {
-                        if appState.sidebarSelection == item {
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.accentGold)
-                                .frame(width: 3)
-                                .padding(.vertical, 6)
-                        }
-                    }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(appState.sidebarSelection == item
+                                ? Color.frameBorder
+                                : Color.clear, lineWidth: 2)
+                    )
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 8)
@@ -53,8 +60,8 @@ struct SidebarView: View {
 
             // Settings & Status (pinned to bottom)
             VStack(spacing: 8) {
-                Color.accentGold.opacity(0.2)
-                    .frame(height: 1)
+                Color.frameBorder
+                    .frame(height: 2)
 
                 Button {
                     openSettings()
@@ -90,6 +97,11 @@ struct SidebarView: View {
                            startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
         )
+        .overlay(alignment: .trailing) {
+            Color.frameBorder
+                .frame(width: 3)
+                .ignoresSafeArea()
+        }
         .foregroundStyle(Color.accentGold)
         .tint(.accentGold)
         .navigationTitle("")
@@ -118,8 +130,17 @@ struct SidebarView: View {
             } else {
                 StardewIcon(type: .globe, size: 20)
             }
-        case .importMods:
-            StardewIcon(type: .arrowBox, size: 20)
+        case .installedMods:
+            if let url = Bundle.module.url(forResource: "Chest", withExtension: "png"),
+               let nsImage = NSImage(contentsOf: url) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .interpolation(.none)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 20)
+            } else {
+                StardewIcon(type: .chest, size: 20)
+            }
         }
     }
 }

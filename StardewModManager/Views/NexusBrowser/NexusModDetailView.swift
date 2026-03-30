@@ -13,7 +13,7 @@ struct NexusModDetailView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text(mod.name)
+                Text(mod.displayName)
                     .font(.title2.weight(.bold))
                 Spacer()
                 Button("Done") { dismiss() }
@@ -39,8 +39,8 @@ struct NexusModDetailView: View {
                         }
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Label(mod.author, systemImage: "person")
-                            Label("v\(mod.version)", systemImage: "tag")
+                            Label(mod.author ?? "Unknown", systemImage: "person")
+                            Label("v\(mod.version ?? "?")", systemImage: "tag")
                             if let downloads = mod.modDownloads {
                                 Label("\(downloads) downloads", systemImage: "arrow.down.circle")
                             }
@@ -49,7 +49,7 @@ struct NexusModDetailView: View {
                         .foregroundStyle(.secondary)
                     }
 
-                    Text(mod.summary)
+                    Text(mod.summary ?? "")
                         .font(.body)
 
                     Divider()
