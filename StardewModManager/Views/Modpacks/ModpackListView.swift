@@ -9,6 +9,7 @@ struct ModpackListView: View {
     @State private var modpackToDelete: Modpack?
     @State private var applyResultMessage: String?
     @State private var showApplyAlert = false
+    @State private var showCompareSheet = false
 
     var body: some View {
         @Bindable var state = appState
@@ -117,6 +118,8 @@ struct ModpackListView: View {
 
                     Menu {
                         Button("From File...") { importFromFile() }
+                        Button("From Clipboard") { appState.importModpackFromClipboard() }
+                        Divider()
                         Button("From URL...") { showImportSheet = true }
                         Button("From Nexus Collection...") { showImportSheet = true }
                     } label: {
@@ -131,6 +134,25 @@ struct ModpackListView: View {
                         .background(Color.accentGold)
                         .foregroundStyle(Color.textDark)
                         .clipShape(Capsule())
+                    }
+
+                    if appState.modpacks.count >= 2 {
+                        Button {
+                            showCompareSheet = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.left.arrow.right")
+                                    .font(.system(size: 10))
+                                Text("Compare")
+                                    .font(.system(size: 11, weight: .medium))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.stardewBlue)
+                            .foregroundStyle(.white)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.vertical, 6)
@@ -155,6 +177,8 @@ struct ModpackListView: View {
                             onApply: { applyModpack(modpack) },
                             onExportJSON: { showExportPanel(modpack: modpack, asZIP: false) },
                             onExportZIP: { showExportPanel(modpack: modpack, asZIP: true) },
+                            onShareSMM: { showShareSMMPanel(modpack: modpack) },
+                            onCopyClipboard: { appState.copyModpackToClipboard(modpack) },
                             onDelete: {
                                 modpackToDelete = modpack
                                 showDeleteConfirmation = true
@@ -233,6 +257,10 @@ struct ModpackListView: View {
             appState.searchText = ""
             appState.filterMode = .all
         }
+        .sheet(isPresented: $showCompareSheet) {
+            CompareModpacksSheet()
+                .environment(appState)
+        }
     }
 
     // MARK: - Actions
@@ -250,7 +278,7 @@ struct ModpackListView: View {
     private func importFromFile() {
         let panel = NSOpenPanel()
         panel.title = "Import Modpack"
-        panel.allowedContentTypes = [.json, .zip]
+        panel.allowedContentTypes = [.json, .zip, .data]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
 
@@ -266,6 +294,16 @@ struct ModpackListView: View {
 
         if panel.runModal() == .OK, let url = panel.url {
             appState.exportModpack(modpack, asZIP: asZIP, to: url)
+        }
+    }
+
+    private func showShareSMMPanel(modpack: Modpack) {
+        let panel = NSSavePanel()
+        panel.title = "Share Modpack"
+        panel.nameFieldStringValue = "\(modpack.name).smm"
+
+        if panel.runModal() == .OK, let url = panel.url {
+            appState.shareModpackAsSMM(modpack, to: url)
         }
     }
 
@@ -290,5 +328,134 @@ struct ModpackListView: View {
         }
 
         return true
+    }
+}
+
+// MARK: - Compare Modpacks Sheet
+
+struct CompareModpacksSheet: View {
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
+    @State private var modpackA: Modpack?
+    @State private var modpackB: Modpack?
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Compare Profiles")
+                .font(.stardew(size: 22))
+                .foregroundStyle(Color.textDark)
+
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Profile A")
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(Color.textMuted)
+                    Picker("", selection: $modpackA) {
+                        Text("Select...").tag(nil as Modpack?)
+                        ForEach(appState.modpacks) { mp in
+                            Text(mp.name).tag(mp as Modpack?)
+                        }
+                    }
+                    .labelsHidden()
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Profile B")
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(Color.textMuted)
+                    Picker("", selection: $modpackB) {
+                        Text("Select...").tag(nil as Modpack?)
+                        ForEach(appState.modpacks) { mp in
+                            Text(mp.name).tag(mp as Modpack?)
+                        }
+                    }
+                    .labelsHidden()
+                }
+            }
+
+            if let a = modpackA, let b = modpackB {
+                let enabledA = Set(a.entries.filter(\.isEnabled).map(\.uniqueID))
+                let enabledB = Set(b.entries.filter(\.isEnabled).map(\.uniqueID))
+                let inBoth = enabledA.intersection(enabledB)
+                let onlyA = enabledA.subtracting(enabledB)
+                let onlyB = enabledB.subtracting(enabledA)
+
+                // Summary
+                HStack(spacing: 20) {
+                    Label("\(inBoth.count) shared", systemImage: "checkmark.circle")
+                        .foregroundStyle(Color.stardewGreen)
+                    Label("\(onlyA.count) only in A", systemImage: "a.circle")
+                        .foregroundStyle(Color.stardewOrange)
+                    Label("\(onlyB.count) only in B", systemImage: "b.circle")
+                        .foregroundStyle(Color.stardewBlue)
+                }
+                .font(.stardew(size: 14))
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if !inBoth.isEmpty {
+                            sectionHeader("In Both", color: .stardewGreen)
+                            ForEach(sortedNames(ids: inBoth, from: a, b), id: \.self) { name in
+                                modRow(name, color: .stardewGreen)
+                            }
+                        }
+                        if !onlyA.isEmpty {
+                            sectionHeader("Only in \(a.name)", color: .stardewOrange)
+                            ForEach(sortedNames(ids: onlyA, from: a, b), id: \.self) { name in
+                                modRow(name, color: .stardewOrange)
+                            }
+                        }
+                        if !onlyB.isEmpty {
+                            sectionHeader("Only in \(b.name)", color: .stardewBlue)
+                            ForEach(sortedNames(ids: onlyB, from: a, b), id: \.self) { name in
+                                modRow(name, color: .stardewBlue)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                }
+            } else {
+                Text("Select two profiles to compare")
+                    .font(.stardew(size: 14))
+                    .foregroundStyle(Color.textMuted)
+                    .frame(maxHeight: .infinity)
+            }
+
+            Button("Done") { dismiss() }
+                .font(.stardew(size: 16))
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.textMuted)
+        }
+        .padding(24)
+        .frame(width: 520, height: 500)
+        .background(Color.parchment)
+    }
+
+    private func sortedNames(ids: Set<String>, from a: Modpack, _ b: Modpack) -> [String] {
+        let allEntries = a.entries + b.entries
+        let nameMap = Dictionary(allEntries.map { ($0.uniqueID, $0.name) }, uniquingKeysWith: { first, _ in first })
+        return ids.map { nameMap[$0] ?? $0 }.sorted()
+    }
+
+    @ViewBuilder
+    private func sectionHeader(_ title: String, color: Color) -> some View {
+        Text(title)
+            .font(.stardew(size: 13))
+            .foregroundStyle(color)
+            .padding(.top, 8)
+            .padding(.bottom, 2)
+    }
+
+    @ViewBuilder
+    private func modRow(_ name: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+            Text(name)
+                .font(.system(size: 12))
+                .foregroundStyle(Color.textDark)
+        }
+        .padding(.vertical, 2)
     }
 }

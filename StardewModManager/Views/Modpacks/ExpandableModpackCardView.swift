@@ -8,6 +8,8 @@ struct ExpandableModpackCardView: View {
     let onApply: () -> Void
     let onExportJSON: () -> Void
     let onExportZIP: () -> Void
+    let onShareSMM: () -> Void
+    let onCopyClipboard: () -> Void
     let onDelete: () -> Void
 
     @State private var sortOrder = [KeyPathComparator(\Mod.manifest.name, order: .forward)]
@@ -116,8 +118,14 @@ struct ExpandableModpackCardView: View {
                 .buttonStyle(.plain)
 
                 Menu {
-                    Button("Export as JSON") { onExportJSON() }
-                    Button("Export as ZIP") { onExportZIP() }
+                    Section("Share") {
+                        Button("Share as .smm") { onShareSMM() }
+                        Button("Copy to Clipboard") { onCopyClipboard() }
+                    }
+                    Section("Export") {
+                        Button("Export as JSON") { onExportJSON() }
+                        Button("Export as ZIP") { onExportZIP() }
+                    }
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 11))

@@ -724,12 +724,68 @@ final class AppState {
         }
     }
 
+    func shareModpackAsSMM(_ modpack: Modpack, to url: URL) {
+        do {
+            let shareable = ShareableModpack.from(modpack)
+            let data = try shareable.toJSON()
+            try data.write(to: url, options: .atomic)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func copyModpackToClipboard(_ modpack: Modpack) {
+        do {
+            let shareable = ShareableModpack.from(modpack)
+            let data = try shareable.toJSON()
+            guard let json = String(data: data, encoding: .utf8) else { return }
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(json, forType: .string)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func importModpackFromClipboard() {
+        guard let string = NSPasteboard.general.string(forType: .string),
+              let data = string.data(using: .utf8),
+              let shareable = try? ShareableModpack.fromJSON(data) else {
+            errorMessage = "No valid modpack data found in clipboard."
+            return
+        }
+        let modpack = shareable.toModpack()
+        modpacks.append(modpack)
+        do {
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func importSMMFile(url: URL) {
+        do {
+            let securityScoped = url.startAccessingSecurityScopedResource()
+            defer { if securityScoped { url.stopAccessingSecurityScopedResource() } }
+            let data = try Data(contentsOf: url)
+            let shareable = try ShareableModpack.fromJSON(data)
+            let modpack = shareable.toModpack()
+            modpacks.append(modpack)
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func importModpackFromFile(url: URL) {
         do {
             let securityScoped = url.startAccessingSecurityScopedResource()
             defer { if securityScoped { url.stopAccessingSecurityScopedResource() } }
 
-            if url.pathExtension.lowercased() == "json" {
+            if url.pathExtension.lowercased() == "smm" {
+                let data = try Data(contentsOf: url)
+                let shareable = try ShareableModpack.fromJSON(data)
+                modpacks.append(shareable.toModpack())
+            } else if url.pathExtension.lowercased() == "json" {
                 let modpack = try ModpackService.importFromJSON(at: url)
                 modpacks.append(modpack)
             } else {
