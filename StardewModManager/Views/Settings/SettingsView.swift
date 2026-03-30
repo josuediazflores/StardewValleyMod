@@ -67,7 +67,7 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(Color.parchment)
-        .frame(width: 520, height: 400)
+        .frame(width: 520, height: 460)
     }
 }
 
@@ -222,6 +222,25 @@ struct GeneralSettingsTab: View {
             Text("Changes to game path take effect after reloading the mod list (\u{2318}R).")
                 .font(.stardew(size: 13))
                 .foregroundStyle(Color.textMuted)
+
+            Button {
+                appState.settings.hasCompletedOnboarding = false
+            } label: {
+                Text("Show Welcome Guide")
+                    .font(.stardew(size: 16))
+                    .foregroundStyle(Color.textDark)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.accentGold)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.accentGoldBorder, lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(.plain)
 
             Spacer()
         }

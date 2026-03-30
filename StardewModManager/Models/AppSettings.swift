@@ -28,6 +28,9 @@ final class AppSettings {
             }
         }
     }
+    var hasCompletedOnboarding: Bool {
+        didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
+    }
     var isAPIKeyValidated: Bool = false
     var nexusUserName: String?
     var isNexusPremium: Bool = false
@@ -58,8 +61,14 @@ final class AppSettings {
 
     init() {
         theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: "appTheme") ?? "Stardew") ?? .stardew
+        hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         if let saved = UserDefaults.standard.string(forKey: "gamePath"), !saved.isEmpty {
             gamePath = saved
+            // Existing users already have a game path — skip onboarding
+            if !hasCompletedOnboarding {
+                hasCompletedOnboarding = true
+                UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+            }
         } else {
             gamePath = GamePathDetector.detect() ?? ""
         }

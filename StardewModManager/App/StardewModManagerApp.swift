@@ -119,24 +119,32 @@ struct ContentView: View {
     var body: some View {
         @Bindable var state = appState
 
-        VStack(spacing: 0) {
-            // Main content
-            HStack(spacing: 0) {
-                SidebarView()
-                    .frame(width: 220)
+        ZStack {
+            VStack(spacing: 0) {
+                // Main content
+                HStack(spacing: 0) {
+                    SidebarView()
+                        .frame(width: 220)
 
-                switch appState.sidebarSelection {
-                case .modpacks:
-                    ModpackListView()
-                case .installedMods:
-                    InstalledModsView()
-                case .browseNexus:
-                    NexusBrowseView()
-                case nil:
-                    Text("Select an item from the sidebar")
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    switch appState.sidebarSelection {
+                    case .modpacks:
+                        ModpackListView()
+                    case .installedMods:
+                        InstalledModsView()
+                    case .browseNexus:
+                        NexusBrowseView()
+                    case nil:
+                        Text("Select an item from the sidebar")
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 }
+            }
+
+            if !appState.settings.hasCompletedOnboarding {
+                OnboardingView()
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
         .preferredColorScheme(.light)
