@@ -20,7 +20,7 @@ struct NexusModCardView: View {
                                 .foregroundStyle(Color.textMuted)
                         }
                 }
-                .frame(height: 140)
+                .frame(maxWidth: .infinity, maxHeight: 160)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }

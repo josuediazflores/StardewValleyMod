@@ -96,7 +96,23 @@ final class AppState {
     }
 
     func filteredEntriesForModpack(_ modpack: Modpack) -> [ModpackEntry] {
+        // Start with explicit modpack entries
+        let existingIDs = Set(modpack.entries.map(\.uniqueID))
         var result = modpack.entries
+
+        // Merge in all installed mods not already in the modpack (as disabled)
+        for mod in mods {
+            if !existingIDs.contains(mod.id) {
+                result.append(ModpackEntry(
+                    uniqueID: mod.id,
+                    name: mod.manifest.name,
+                    version: mod.manifest.version,
+                    nexusModID: mod.nexusModID,
+                    nexusFileID: nil,
+                    isEnabled: false
+                ))
+            }
+        }
 
         if !searchText.isEmpty {
             let query = searchText.lowercased()
@@ -224,6 +240,7 @@ final class AppState {
     }
 
     func importMods(from urls: [URL]) {
+        var allImported: [Mod] = []
         for url in urls {
             do {
                 let securityScoped = url.startAccessingSecurityScopedResource()
@@ -233,6 +250,7 @@ final class AppState {
                 for newMod in imported {
                     mods.removeAll { $0.id == newMod.id }
                     mods.append(newMod)
+                    allImported.append(newMod)
                 }
             } catch {
                 errorMessage = error.localizedDescription
@@ -240,6 +258,27 @@ final class AppState {
         }
         mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
         DependencyResolver.resolveAll(mods: mods)
+        addNewModsToActiveModpack(allImported)
+    }
+
+    /// Auto-adds newly installed mods to the active modpack as disabled entries
+    private func addNewModsToActiveModpack(_ newMods: [Mod]) {
+        guard !newMods.isEmpty, let activeID = activeModpackID,
+              let idx = modpacks.firstIndex(where: { $0.id == activeID }) else { return }
+        for mod in newMods {
+            guard !modpacks[idx].entries.contains(where: { $0.uniqueID == mod.id }) else { continue }
+            let entry = ModpackEntry(
+                uniqueID: mod.id,
+                name: mod.manifest.name,
+                version: mod.manifest.version,
+                nexusModID: mod.nexusModID,
+                nexusFileID: nil,
+                isEnabled: false
+            )
+            modpacks[idx].entries.append(entry)
+        }
+        modpacks[idx].updatedAt = Date()
+        try? ModpackService.saveModpacks(modpacks, settings: settings)
     }
 
     // MARK: - Update Checking
@@ -316,6 +355,7 @@ final class AppState {
             mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
             DependencyResolver.resolveAll(mods: mods)
             pendingNXMMods = imported
+            addNewModsToActiveModpack(imported)
         } catch {
             errorMessage = "Failed to install mod: \(error.localizedDescription)"
         }
@@ -764,9 +804,22 @@ final class AppState {
     // MARK: - Modpack Entry Mutations
 
     func toggleModpackEntry(modpackID: UUID, entryID: String) {
-        guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }),
-              let entryIdx = modpacks[idx].entries.firstIndex(where: { $0.uniqueID == entryID }) else { return }
-        modpacks[idx].entries[entryIdx].isEnabled.toggle()
+        guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
+
+        if let entryIdx = modpacks[idx].entries.firstIndex(where: { $0.uniqueID == entryID }) {
+            modpacks[idx].entries[entryIdx].isEnabled.toggle()
+        } else if let mod = mods.first(where: { $0.id == entryID }) {
+            // Entry was auto-merged from installed mods — persist it as enabled
+            modpacks[idx].entries.append(ModpackEntry(
+                uniqueID: mod.id,
+                name: mod.manifest.name,
+                version: mod.manifest.version,
+                nexusModID: mod.nexusModID,
+                nexusFileID: nil,
+                isEnabled: true
+            ))
+        }
+
         modpacks[idx].updatedAt = Date()
         try? ModpackService.saveModpacks(modpacks, settings: settings)
     }

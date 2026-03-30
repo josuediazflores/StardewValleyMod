@@ -5,7 +5,7 @@ APP_NAME="Stardew Mod Manager"
 BUNDLE_ID="com.stardewmodmanager.app"
 BUILD_DIR="$(pwd)/.build/release"
 APP_DIR="$(pwd)/build/${APP_NAME}.app"
-ICON_SRC="$HOME/Desktop/Stardew Valley Modded.app/Contents/Resources/AppIcon.icns"
+ICON_SRC="$(pwd)/StardewModManager/Resources/AppIcon.icns"
 
 echo "Building release..."
 swift build -c release

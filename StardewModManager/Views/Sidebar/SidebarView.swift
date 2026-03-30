@@ -136,8 +136,9 @@ struct SidebarView: View {
                 Image(nsImage: nsImage)
                     .resizable()
                     .interpolation(.none)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 20)
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 20, height: 20)
+                    .clipped()
             } else {
                 StardewIcon(type: .chest, size: 20)
             }

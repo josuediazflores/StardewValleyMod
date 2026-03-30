@@ -185,9 +185,14 @@ struct ExpandableModpackCardView: View {
                                     .foregroundStyle(Color.stardewRed)
                                     .clipShape(Capsule())
                             } else {
-                                Text(entry.isEnabled ? "Enabled" : "Disabled")
-                                    .font(.stardew(size: 12))
-                                    .foregroundStyle(entry.isEnabled ? Color.stardewGreen : Color.textMuted)
+                                Toggle("", isOn: Binding(
+                                    get: { entry.isEnabled },
+                                    set: { _ in
+                                        appState.toggleModpackEntry(modpackID: modpack.id, entryID: entry.uniqueID)
+                                    }
+                                ))
+                                .toggleStyle(StardewToggleStyle())
+                                .labelsHidden()
                             }
                         }
                         .padding(.horizontal, 16)
