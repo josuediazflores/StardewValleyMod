@@ -373,6 +373,10 @@ struct NexusSettingsTab: View {
 // MARK: - About Tab
 
 struct AboutSettingsTab: View {
+    @Environment(AppState.self) private var appState
+    @State private var isChecking = false
+    @State private var checkResult: String?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(spacing: 0) {
@@ -410,6 +414,73 @@ struct AboutSettingsTab: View {
                             .stroke(Color.stardewDivider, lineWidth: 1)
                     )
             )
+
+            HStack(spacing: 12) {
+                Button {
+                    isChecking = true
+                    checkResult = nil
+                    Task {
+                        let update = await UpdateService.checkForUpdate()
+                        appState.availableUpdate = update
+                        if let update {
+                            checkResult = "v\(update.version) available!"
+                        } else {
+                            checkResult = "You're up to date."
+                        }
+                        isChecking = false
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        if isChecking {
+                            ProgressView()
+                                .scaleEffect(0.6)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 12))
+                        }
+                        Text("Check for Updates")
+                            .font(.stardew(size: 16))
+                    }
+                    .foregroundStyle(Color.textDark)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.accentGold)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.accentGoldBorder, lineWidth: 1)
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(isChecking)
+
+                if let result = checkResult {
+                    Text(result)
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(appState.availableUpdate != nil ? Color.stardewOrange : Color.stardewGreen)
+                }
+            }
+
+            if let update = appState.availableUpdate {
+                Button {
+                    if let url = URL(string: update.htmlURL) {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    Text("Download v\(update.version)")
+                        .font(.stardew(size: 16))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.stardewOrange)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
 
             Spacer()
         }
