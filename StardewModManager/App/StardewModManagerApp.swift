@@ -251,19 +251,28 @@ private struct WindowAccessor: NSViewRepresentable {
         guard let window else { return }
         window.backgroundColor = NSColor(Color.parchmentHeader)
         window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.titlebarSeparatorStyle = .none
         window.toolbar?.isVisible = true
         window.toolbar?.showsBaselineSeparator = false
-        // Remove the sidebar toggle button from toolbar
+        // Hide non-essential toolbar items (sidebar toggle, separators, flexible space)
         if let toolbar = window.toolbar {
-            toolbar.items.forEach { item in
-                if item.itemIdentifier.rawValue.contains("sidebarTrackingSeparator") ||
-                   item.itemIdentifier.rawValue.contains("toggleSidebar") ||
-                   item.itemIdentifier == .toggleSidebar {
+            for item in toolbar.items {
+                let id = item.itemIdentifier.rawValue
+                if id.contains("toggleSidebar") ||
+                   id.contains("splitViewSeparator") ||
+                   id == "NSToolbarFlexibleSpaceItem" ||
+                   item.itemIdentifier == .toggleSidebar ||
+                   item.itemIdentifier == .space ||
+                   item.itemIdentifier == .flexibleSpace {
                     item.isEnabled = false
                     item.view?.isHidden = true
+                    item.minSize = NSSize(width: 0, height: 0)
+                    item.maxSize = NSSize(width: 0, height: 0)
                 }
             }
+            // Remove the split view separator appearance from the toolbar
+            toolbar.displayMode = .iconOnly
         }
         window.minSize = NSSize(width: 700, height: 450)
         window.collectionBehavior.insert(.fullScreenPrimary)
