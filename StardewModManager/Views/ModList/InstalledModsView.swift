@@ -10,6 +10,9 @@ struct InstalledModsView: View {
     @State private var isDropTargeted = false
     @State private var importedCount = 0
     @State private var showImportResult = false
+    @State private var showNexusURLSheet = false
+    @State private var nexusURLInput = ""
+    @State private var isDownloadingFromURL = false
 
     var body: some View {
         @Bindable var state = appState
@@ -82,6 +85,21 @@ struct InstalledModsView: View {
                             }
                             .buttonStyle(.borderless)
                             .help("Import mod folders")
+
+                            Button {
+                                nexusURLInput = ""
+                                showNexusURLSheet = true
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "link")
+                                        .font(.system(size: 11))
+                                    Text("Nexus URL")
+                                        .font(.system(size: 13, weight: .medium))
+                                }
+                                .foregroundStyle(Color.stardewBlue)
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Install from Nexus Mods URL")
                         }
 
                         Spacer()
@@ -206,6 +224,57 @@ struct InstalledModsView: View {
                 Button("OK") {}
             } message: {
                 Text("Successfully imported \(importedCount) mod(s).")
+            }
+            .sheet(isPresented: $showNexusURLSheet) {
+                VStack(spacing: 16) {
+                    Text("Install from Nexus URL")
+                        .font(.stardew(size: 22))
+                        .foregroundStyle(Color.textDark)
+
+                    Text("Paste a Nexus Mods link to download and install")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textMuted)
+
+                    TextField("https://www.nexusmods.com/stardewvalley/mods/...", text: $nexusURLInput)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 13))
+
+                    HStack(spacing: 12) {
+                        Button("Cancel") {
+                            showNexusURLSheet = false
+                        }
+                        .font(.stardew(size: 16))
+                        .foregroundStyle(Color.textMuted)
+                        .buttonStyle(.plain)
+
+                        Button {
+                            isDownloadingFromURL = true
+                            showNexusURLSheet = false
+                            appState.importFromNexusURL(nexusURLInput)
+                            isDownloadingFromURL = false
+                        } label: {
+                            if isDownloadingFromURL {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            } else {
+                                Text("Install")
+                                    .font(.stardew(size: 16))
+                            }
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(nexusURLInput.isEmpty ? Color.stardewGreen.opacity(0.4) : Color.stardewGreen)
+                        )
+                        .buttonStyle(.plain)
+                        .disabled(nexusURLInput.isEmpty)
+                    }
+                }
+                .padding(24)
+                .frame(width: 460)
+                .background(Color.parchment)
             }
             .onChange(of: appState.showImportPicker) { _, newValue in
                 if newValue {

@@ -382,6 +382,78 @@ final class AppState {
         try? ModpackService.saveModpacks(modpacks, settings: settings)
     }
 
+    // MARK: - Import from Nexus URL
+
+    static func parseNexusModURL(_ urlString: String) -> Int? {
+        guard let url = URL(string: urlString),
+              let host = url.host,
+              host.contains("nexusmods.com") else { return nil }
+        let components = url.pathComponents
+        guard let modsIndex = components.firstIndex(of: "mods"),
+              modsIndex + 1 < components.count,
+              let modId = Int(components[modsIndex + 1]) else { return nil }
+        return modId
+    }
+
+    func importFromNexusURL(_ urlString: String) {
+        guard let modId = Self.parseNexusModURL(urlString) else {
+            errorMessage = "Invalid Nexus Mods URL. Expected format: nexusmods.com/stardewvalley/mods/1234"
+            return
+        }
+
+        guard settings.nexusAPIKey != nil, settings.isAPIKeyValidated else {
+            errorMessage = "Nexus API key required. Set it up in Settings."
+            return
+        }
+
+        nxmDownloadStatus = "Fetching mod info..."
+
+        Task {
+            do {
+                if let key = settings.nexusAPIKey {
+                    await nexusAPI.setAPIKey(key)
+                }
+
+                let files = try await nexusAPI.modFiles(modId: modId)
+                guard let file = files.first(where: { $0.isPrimary == true })
+                    ?? files.first(where: { $0.categoryName == "MAIN" })
+                    ?? files.first else {
+                    nxmDownloadStatus = nil
+                    errorMessage = "No downloadable files found for this mod."
+                    return
+                }
+
+                if settings.isNexusPremium {
+                    nxmDownloadStatus = "Downloading..."
+                    let links = try await nexusAPI.downloadLinks(modId: modId, fileId: file.fileId)
+                    guard let link = links.first else {
+                        nxmDownloadStatus = nil
+                        errorMessage = "No download links available."
+                        return
+                    }
+
+                    let tempDir = FileManager.default.temporaryDirectory
+                    let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
+                    let names = ModManagementService.peekModNames(from: zipURL)
+
+                    nxmDownloadStatus = nil
+                    pendingNXMZipURL = zipURL
+                    pendingNXMModNames = names.isEmpty ? ["Downloaded mod"] : names
+                    showModpackPicker = true
+                } else {
+                    nxmDownloadStatus = nil
+                    errorMessage = "Direct download requires Nexus Premium. Opening mod page — click \"Mod Manager Download\" to install via the app."
+                    if let url = URL(string: "https://www.nexusmods.com/stardewvalley/mods/\(modId)?tab=files") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            } catch {
+                nxmDownloadStatus = nil
+                errorMessage = "Failed to download mod: \(error.localizedDescription)"
+            }
+        }
+    }
+
     // MARK: - Game Launch
 
     func launchGame() {
