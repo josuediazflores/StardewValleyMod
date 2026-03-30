@@ -7,6 +7,11 @@ BUILD_DIR="$(pwd)/.build/release"
 APP_DIR="$(pwd)/build/${APP_NAME}.app"
 ICON_SRC="$(pwd)/StardewModManager/Resources/AppIcon.icns"
 
+# Get version from git tag (e.g. v1.0.0 -> 1.0.0)
+GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0-dev")
+APP_VERSION="${GIT_TAG#v}"
+echo "Version: $APP_VERSION (from tag $GIT_TAG)"
+
 echo "Building release..."
 swift build -c release
 
@@ -35,7 +40,7 @@ else
 fi
 
 # Create Info.plist
-cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
+cat > "$APP_DIR/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -48,9 +53,9 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
     <key>CFBundleIdentifier</key>
     <string>com.stardewmodmanager.app</string>
     <key>CFBundleVersion</key>
-    <string>1.0.0</string>
+    <string>${APP_VERSION}</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>${APP_VERSION}</string>
     <key>CFBundleExecutable</key>
     <string>StardewModManager</string>
     <key>CFBundleIconFile</key>

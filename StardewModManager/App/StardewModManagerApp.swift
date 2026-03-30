@@ -16,6 +16,7 @@ struct StardewModManagerApp: App {
                 .onAppear {
                     appState.loadMods()
                     appState.revalidateAPIKeyIfNeeded()
+                    appState.checkForAppUpdate()
                 }
                 .onOpenURL { url in
                     appState.handleNXMLink(url)

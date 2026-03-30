@@ -63,6 +63,25 @@ struct SidebarView: View {
                 Color.frameBorder
                     .frame(height: 2)
 
+                if let update = appState.availableUpdate {
+                    Button {
+                        if let url = URL(string: update.htmlURL) {
+                            NSWorkspace.shared.open(url)
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 12))
+                            Text("v\(update.version) Available")
+                                .font(.stardew(size: 13))
+                        }
+                        .foregroundStyle(Color.stardewOrange)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 Button {
                     openSettings()
                 } label: {

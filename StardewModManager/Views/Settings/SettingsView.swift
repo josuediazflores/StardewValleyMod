@@ -395,7 +395,7 @@ struct AboutSettingsTab: View {
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textMuted)
                         .frame(width: 80, alignment: .leading)
-                    Text("1.0.0")
+                    Text(UpdateService.currentVersion)
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textDark)
                     Spacer()

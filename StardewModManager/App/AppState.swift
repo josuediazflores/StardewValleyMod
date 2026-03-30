@@ -43,6 +43,9 @@ final class AppState {
     var modUpdates: [String: ModUpdateInfo] = [:]
     var isCheckingUpdates = false
 
+    // App update state
+    var availableUpdate: AppUpdate?
+
     // NXM protocol state
     var nxmDownloadStatus: String?
     var showModpackPicker = false
@@ -491,6 +494,14 @@ final class AppState {
                 nxmDownloadStatus = nil
                 errorMessage = "Failed to download mod: \(error.localizedDescription)"
             }
+        }
+    }
+
+    // MARK: - App Update Check
+
+    func checkForAppUpdate() {
+        Task {
+            availableUpdate = await UpdateService.checkForUpdate()
         }
     }
 
