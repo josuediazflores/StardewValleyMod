@@ -15,6 +15,80 @@ struct ModpackListView: View {
 
         ScrollView {
             LazyVStack(spacing: 10) {
+                // Play button + filter/search (when profile expanded)
+                HStack(spacing: 12) {
+                    Button {
+                        appState.launchGame()
+                    } label: {
+                        HStack(spacing: 8) {
+                            JunimoIcon(name: appState.selectedJunimoName, size: 24)
+                                .frame(width: 24, height: 24)
+                            Text("Play")
+                                .font(.stardew(size: 24))
+                                .foregroundStyle(.white)
+                                .frame(height: 24)
+                        }
+                        .padding(.leading, 12)
+                        .padding(.trailing, 16)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(LinearGradient(colors: [.stardewGreen, .stardewGreenDark], startPoint: .top, endPoint: .bottom))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color(hex: 0x3E5C22), lineWidth: 2)
+                                )
+                        )
+                    }
+                    .buttonStyle(PlayButtonStyle())
+                    .disabled(!appState.settings.isSMAPIInstalled)
+                    .help("Launch Stardew Valley with SMAPI")
+
+                    if appState.expandedModpackID != nil {
+                        StardewSegmentedPicker(
+                            selection: $state.filterMode,
+                            label: { $0.shortLabel }
+                        )
+                        .fixedSize()
+
+                        Spacer()
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.textMuted)
+                            TextField("Search mods...", text: $state.searchText)
+                                .textFieldStyle(.plain)
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.textDark)
+                                .frame(width: 130)
+                            if !appState.searchText.isEmpty {
+                                Button {
+                                    appState.searchText = ""
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(Color.textMuted)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.parchmentAlt)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.frameBorder.opacity(0.5), lineWidth: 1)
+                                )
+                        )
+                    } else {
+                        Spacer()
+                    }
+                }
+                .padding(.bottom, 4)
+
                 // Profiles header
                 HStack(spacing: 8) {
                     Text("PROFILES")

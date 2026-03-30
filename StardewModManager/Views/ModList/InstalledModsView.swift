@@ -20,6 +20,51 @@ struct InstalledModsView: View {
         HSplitView {
             // Mod list
             VStack(spacing: 0) {
+                // Filter bar
+                HStack(spacing: 12) {
+                    StardewSegmentedPicker(
+                        selection: $state.filterMode,
+                        label: { $0.shortLabel }
+                    )
+                    .fixedSize()
+
+                    Spacer()
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.textMuted)
+                        TextField("Search mods...", text: $state.searchText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.textDark)
+                            .frame(width: 130)
+                        if !appState.searchText.isEmpty {
+                            Button {
+                                appState.searchText = ""
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Color.textMuted)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.parchmentAlt)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.frameBorder.opacity(0.5), lineWidth: 1)
+                            )
+                    )
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.parchmentHeader)
+
                 // Header bar with delete mode toggle
                 HStack {
                     if isDeleteMode {
