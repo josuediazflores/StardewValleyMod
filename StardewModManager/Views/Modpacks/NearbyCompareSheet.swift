@@ -13,17 +13,21 @@ struct NearbyCompareSheet: View {
                 .font(.stardew(size: 22))
                 .foregroundStyle(Color.textDark)
 
-            switch peerService.connectionState {
-            case .idle, .searching:
-                searchingView
-            case .connected(let peerName):
-                connectedView(peerName: peerName)
-            case .received:
-                resultsView
-            case .error(let message):
-                Text(message)
-                    .font(.stardew(size: 14))
-                    .foregroundStyle(Color.stardewRed)
+            if peerService.transferState != .idle {
+                transferView
+            } else {
+                switch peerService.connectionState {
+                case .idle, .searching:
+                    searchingView
+                case .connected(let peerName):
+                    connectedView(peerName: peerName)
+                case .received:
+                    resultsView
+                case .error(let message):
+                    Text(message)
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(Color.stardewRed)
+                }
             }
 
             Spacer()
@@ -37,10 +41,22 @@ struct NearbyCompareSheet: View {
             .foregroundStyle(Color.textMuted)
         }
         .padding(24)
-        .frame(width: 520, height: 520)
+        .frame(width: 520, height: 560)
         .background(Color.parchment)
         .onDisappear {
             peerService.stopSearching()
+        }
+        .onAppear {
+            peerService.onModsReceived = { [weak appState] zipURL in
+                guard let appState else { return }
+                Task { @MainActor in
+                    appState.importMods(from: [zipURL])
+                    try? FileManager.default.removeItem(at: zipURL)
+                    let count = appState.mods.count
+                    peerService.transferState = .complete(count)
+                    SoundService.play(.bigSelect)
+                }
+            }
         }
     }
 
@@ -149,28 +165,45 @@ struct NearbyCompareSheet: View {
             }
 
             if !hasSent {
-                Button {
-                    if let modpack = selectedModpack {
-                        let shareable = ShareableModpack.from(modpack)
-                        peerService.sendModpack(shareable)
-                        hasSent = true
+                VStack(spacing: 12) {
+                    Button {
+                        if let modpack = selectedModpack {
+                            let shareable = ShareableModpack.from(modpack)
+                            peerService.sendModpack(shareable)
+                            hasSent = true
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "paperplane.fill")
+                                .font(.system(size: 12))
+                            Text("Send My Modpack")
+                                .font(.stardew(size: 16))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.stardewGreen)
+                        )
                     }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "paperplane.fill")
-                            .font(.system(size: 12))
-                        Text("Send My Modpack")
-                            .font(.stardew(size: 16))
+                    .buttonStyle(.plain)
+
+                    // Send full modpack with files
+                    Button {
+                        sendFullModpack()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "shippingbox.fill")
+                                .font(.system(size: 12))
+                            Text("Send Full Modpack with Files")
+                                .font(.stardew(size: 14))
+                        }
+                        .foregroundStyle(Color.stardewBlue)
                     }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.stardewGreen)
-                    )
+                    .buttonStyle(.plain)
+                    .help("Send all mod files so your friend can install them")
                 }
-                .buttonStyle(.plain)
             } else {
                 VStack(spacing: 8) {
                     ProgressView()
@@ -226,12 +259,38 @@ struct NearbyCompareSheet: View {
                                 ForEach(sortedNames(ids: onlyMine, myEntries: myModpack.entries, theirMods: theirModpack.mods), id: \.self) { name in
                                     modRow(name, color: .stardewOrange)
                                 }
+
+                                // Send missing mods button
+                                Button {
+                                    sendMissingMods(ids: onlyMine, from: myModpack)
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "paperplane.fill")
+                                            .font(.system(size: 11))
+                                        Text("Send \(onlyMine.count) Missing Mod\(onlyMine.count == 1 ? "" : "s")")
+                                            .font(.stardew(size: 14))
+                                    }
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.stardewGreen)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.top, 6)
                             }
                             if !onlyTheirs.isEmpty {
                                 sectionHeader("They have, you don't", color: .stardewBlue)
                                 ForEach(sortedNames(ids: onlyTheirs, myEntries: myModpack.entries, theirMods: theirModpack.mods), id: \.self) { name in
                                     modRow(name, color: .stardewBlue)
                                 }
+
+                                Text("Ask your friend to send these from their side")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Color.textMuted.opacity(0.7))
+                                    .padding(.top, 4)
                             }
                             if !inBoth.isEmpty {
                                 sectionHeader("Matched (\(inBoth.count))", color: .stardewGreen)
@@ -243,6 +302,140 @@ struct NearbyCompareSheet: View {
                         .padding(.horizontal, 8)
                     }
                 }
+            }
+        }
+    }
+
+    // MARK: - Transfer Progress View
+
+    private var transferView: some View {
+        VStack(spacing: 20) {
+            switch peerService.transferState {
+            case .zipping:
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("Preparing mods...")
+                        .font(.stardew(size: 16))
+                        .foregroundStyle(Color.textMuted)
+                }
+
+            case .sending:
+                VStack(spacing: 16) {
+                    Text("Sending mods...")
+                        .font(.stardew(size: 18))
+                        .foregroundStyle(Color.textDark)
+                    StardewProgressBar(
+                        progress: peerService.transferProgress,
+                        label: "\(Int(peerService.transferProgress * 100))%"
+                    )
+                    Text("Keep both devices nearby")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textMuted.opacity(0.7))
+                }
+
+            case .receiving:
+                VStack(spacing: 16) {
+                    Text("Receiving mods...")
+                        .font(.stardew(size: 18))
+                        .foregroundStyle(Color.textDark)
+                    StardewProgressBar(
+                        progress: peerService.transferProgress,
+                        label: "\(Int(peerService.transferProgress * 100))%"
+                    )
+                    Text("Keep both devices nearby")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textMuted.opacity(0.7))
+                }
+
+            case .importing:
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("Importing mods...")
+                        .font(.stardew(size: 16))
+                        .foregroundStyle(Color.textMuted)
+                }
+
+            case .complete(let count):
+                VStack(spacing: 12) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(Color.stardewGreen)
+                    Text("Transfer Complete!")
+                        .font(.stardew(size: 20))
+                        .foregroundStyle(Color.stardewGreen)
+                    if count > 0 {
+                        Text("Mods imported successfully.")
+                            .font(.stardew(size: 14))
+                            .foregroundStyle(Color.textMuted)
+                    } else {
+                        Text("Mods sent successfully.")
+                            .font(.stardew(size: 14))
+                            .foregroundStyle(Color.textMuted)
+                    }
+                }
+
+            case .error(let message):
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(Color.stardewRed)
+                    Text("Transfer Failed")
+                        .font(.stardew(size: 20))
+                        .foregroundStyle(Color.stardewRed)
+                    Text(message)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textMuted)
+                        .multilineTextAlignment(.center)
+                }
+
+            case .idle:
+                EmptyView()
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Transfer Actions
+
+    private func sendMissingMods(ids: Set<String>, from modpack: Modpack) {
+        let modsToSend = appState.mods.filter { ids.contains($0.id) }
+        guard !modsToSend.isEmpty else { return }
+
+        peerService.transferState = .zipping
+
+        Task {
+            do {
+                let zipURL = try ModpackService.zipMods(modsToSend)
+                peerService.sendMods(zipURL: zipURL)
+                // Clean up ZIP after send completes
+                Task {
+                    try? await Task.sleep(for: .seconds(30))
+                    try? FileManager.default.removeItem(at: zipURL)
+                }
+            } catch {
+                peerService.transferState = .error("Failed to prepare mods: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func sendFullModpack() {
+        guard let modpack = selectedModpack else { return }
+        let enabledIDs = Set(modpack.entries.filter(\.isEnabled).map(\.uniqueID))
+        let modsToSend = appState.mods.filter { enabledIDs.contains($0.id) }
+        guard !modsToSend.isEmpty else { return }
+
+        peerService.transferState = .zipping
+
+        Task {
+            do {
+                let zipURL = try ModpackService.zipMods(modsToSend)
+                peerService.sendMods(zipURL: zipURL)
+                Task {
+                    try? await Task.sleep(for: .seconds(30))
+                    try? FileManager.default.removeItem(at: zipURL)
+                }
+            } catch {
+                peerService.transferState = .error("Failed to prepare mods: \(error.localizedDescription)")
             }
         }
     }
@@ -275,5 +468,41 @@ struct NearbyCompareSheet: View {
                 .foregroundStyle(Color.textDark)
         }
         .padding(.vertical, 2)
+    }
+}
+
+// MARK: - Progress Bar
+
+private struct StardewProgressBar: View {
+    let progress: Double
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    // Track
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.parchmentAlt)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.frameBorder, lineWidth: 2)
+                        )
+
+                    // Fill
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.stardewGreen)
+                        .frame(width: max(0, (geo.size.width - 4) * progress))
+                        .padding(2)
+                        .animation(.easeInOut(duration: 0.3), value: progress)
+                }
+            }
+            .frame(height: 24)
+            .frame(maxWidth: 350)
+
+            Text(label)
+                .font(.stardew(size: 16))
+                .foregroundStyle(Color.textMedium)
+        }
     }
 }

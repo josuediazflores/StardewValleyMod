@@ -1,5 +1,6 @@
 import Foundation
 import MultipeerConnectivity
+import Combine
 
 @MainActor
 class PeerSyncService: NSObject, ObservableObject {
@@ -15,11 +16,27 @@ class PeerSyncService: NSObject, ObservableObject {
     @Published var isSearching = false
     @Published var connectionState: ConnectionState = .idle
 
+    // File transfer state
+    @Published var transferState: TransferState = .idle
+    @Published var transferProgress: Double = 0
+    private var progressObservation: AnyCancellable?
+    var onModsReceived: ((URL) -> Void)?
+
     enum ConnectionState {
         case idle
         case searching
         case connected(String)
         case received
+        case error(String)
+    }
+
+    enum TransferState: Equatable {
+        case idle
+        case zipping
+        case sending
+        case receiving
+        case importing
+        case complete(Int)
         case error(String)
     }
 
@@ -48,6 +65,8 @@ class PeerSyncService: NSObject, ObservableObject {
         foundPeers = []
         connectedPeer = nil
         receivedModpack = nil
+        transferState = .idle
+        transferProgress = 0
     }
 
     func stopSearching() {
@@ -61,6 +80,7 @@ class PeerSyncService: NSObject, ObservableObject {
         connectionState = .idle
         foundPeers = []
         connectedPeer = nil
+        progressObservation = nil
     }
 
     func connectToPeer(_ peer: MCPeerID) {
@@ -72,6 +92,41 @@ class PeerSyncService: NSObject, ObservableObject {
         guard let session, !session.connectedPeers.isEmpty else { return }
         guard let data = try? modpack.toJSON() else { return }
         try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+    }
+
+    // MARK: - File Transfer
+
+    func sendMods(zipURL: URL) {
+        guard let session, let peer = session.connectedPeers.first else {
+            transferState = .error("No connected peer")
+            return
+        }
+
+        transferState = .sending
+        transferProgress = 0
+
+        let progress = session.sendResource(at: zipURL, withName: "mods-transfer.zip", toPeer: peer) { [weak self] error in
+            Task { @MainActor in
+                guard let self else { return }
+                self.progressObservation = nil
+                if let error {
+                    self.transferState = .error("Send failed: \(error.localizedDescription)")
+                } else {
+                    self.transferProgress = 1.0
+                    // Sender stays in .sending until they see completion
+                    // The count is unknown on sender side, just show complete
+                    self.transferState = .complete(0)
+                }
+            }
+        }
+
+        if let progress {
+            progressObservation = progress.publisher(for: \.fractionCompleted)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] fraction in
+                    self?.transferProgress = fraction
+                }
+        }
     }
 }
 
@@ -111,8 +166,42 @@ extension PeerSyncService: MCSessionDelegate {
     }
 
     nonisolated func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
-    nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
-    nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
+
+    nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {
+        Task { @MainActor in
+            transferState = .receiving
+            transferProgress = 0
+            progressObservation = progress.publisher(for: \.fractionCompleted)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] fraction in
+                    self?.transferProgress = fraction
+                }
+        }
+    }
+
+    nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {
+        Task { @MainActor in
+            progressObservation = nil
+            if let error {
+                transferState = .error("Receive failed: \(error.localizedDescription)")
+                return
+            }
+            guard let localURL else {
+                transferState = .error("No file received")
+                return
+            }
+
+            // Move to a stable temp location (MC's localURL is ephemeral)
+            let stableURL = FileManager.default.temporaryDirectory.appending(path: "received_mods_\(UUID().uuidString).zip")
+            do {
+                try FileManager.default.moveItem(at: localURL, to: stableURL)
+                transferState = .importing
+                onModsReceived?(stableURL)
+            } catch {
+                transferState = .error("Failed to save received file")
+            }
+        }
+    }
 }
 
 // MARK: - MCNearbyServiceAdvertiserDelegate

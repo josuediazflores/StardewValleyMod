@@ -252,6 +252,40 @@ enum ModpackService {
         }
     }
 
+    /// ZIP a subset of mods into a temp file for Bluetooth transfer
+    static func zipMods(_ mods: [Mod]) throws -> URL {
+        let fm = FileManager.default
+        let tempDir = fm.temporaryDirectory.appending(path: "transfer_\(UUID().uuidString)")
+
+        try fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
+
+        let modsStaging = tempDir.appending(path: "Mods")
+        try fm.createDirectory(at: modsStaging, withIntermediateDirectories: true)
+
+        for mod in mods {
+            let destination = modsStaging.appending(path: mod.folderName)
+            try fm.copyItem(at: mod.folderURL, to: destination)
+        }
+
+        let zipURL = fm.temporaryDirectory.appending(path: "mods_transfer_\(UUID().uuidString).zip")
+
+        let process = Process()
+        process.executableURL = URL(filePath: "/usr/bin/ditto")
+        process.arguments = ["-c", "-k", "--keepParent",
+                             tempDir.path(percentEncoded: false),
+                             zipURL.path(percentEncoded: false)]
+        try process.run()
+        process.waitUntilExit()
+
+        try? fm.removeItem(at: tempDir)
+
+        guard process.terminationStatus == 0 else {
+            throw ModpackError.exportFailed("Failed to create transfer ZIP")
+        }
+
+        return zipURL
+    }
+
     // MARK: - Import
 
     static func importFromJSON(at url: URL) throws -> Modpack {

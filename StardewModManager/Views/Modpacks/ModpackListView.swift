@@ -262,23 +262,6 @@ struct ModpackListView: View {
         }
         .scrollContentBackground(.hidden)
         .background(Color.parchment)
-        .inspector(isPresented: $state.showInspector) {
-            if let mod = appState.selectedMod {
-                ModDetailView(mod: mod)
-                    .inspectorColumnWidth(min: 250, ideal: 300, max: 400)
-            } else {
-                VStack(spacing: 12) {
-                    Image(systemName: "sidebar.right")
-                        .font(.system(size: 28))
-                        .foregroundStyle(Color.textMuted.opacity(0.3))
-                    Text("Select a mod to view details")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.textMuted)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.parchment)
-            }
-        }
         .safeAreaInset(edge: .bottom) {
             HStack {
                 Text("\(appState.modpacks.count) profiles \u{00B7} \(appState.mods.count) mods installed")
