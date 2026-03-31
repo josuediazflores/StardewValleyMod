@@ -8,7 +8,15 @@ APP_DIR="$(pwd)/build/${APP_NAME}.app"
 ICON_SRC="$(pwd)/StardewModManager/Resources/AppIcon.icns"
 
 # Get version from git tag (e.g. v1.0.0 -> 1.0.0)
-GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0-dev")
+# If HEAD is tagged, use that. Otherwise use latest tag + commit info.
+HEAD_TAG=$(git tag --points-at HEAD 2>/dev/null | head -1)
+if [ -n "$HEAD_TAG" ]; then
+    GIT_TAG="$HEAD_TAG"
+else
+    GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0-dev")
+    echo "⚠️  HEAD is not tagged. Using latest tag $GIT_TAG."
+    echo "   To set a new version: git tag v1.X.0 && git push --tags"
+fi
 APP_VERSION="${GIT_TAG#v}"
 echo "Version: $APP_VERSION (from tag $GIT_TAG)"
 
