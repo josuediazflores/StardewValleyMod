@@ -12,12 +12,12 @@ A native macOS mod manager for Stardew Valley with Nexus Mods integration, modpa
 
 1. Click the **Download for macOS** button above
 2. Unzip `Stardew Mod Manager.zip`
-3. Drag `Stardew Mod Manager.app` to your Applications folder
-4. On first launch, if macOS says the app "is damaged and can't be opened," open Terminal and run:
+3. If macOS says the app "is damaged and can't be opened," open Terminal and run:
    ```bash
-   xattr -cr "/Applications/Stardew Mod Manager.app"
+   xattr -cr ~/Downloads/Stardew\ Mod\ Manager.app
    ```
-   This is normal for unsigned apps downloaded from the internet.
+   (Adjust the path if you unzipped it elsewhere.) This is normal for unsigned apps downloaded from the internet.
+4. Drag `Stardew Mod Manager.app` to your Applications folder
 5. Launch and enjoy — future updates install automatically from within the app
 
 ---
