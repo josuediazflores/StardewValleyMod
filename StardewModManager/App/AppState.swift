@@ -897,6 +897,26 @@ final class AppState {
         modpacks = ModpackService.loadModpacks(settings: settings)
     }
 
+    /// Creates a default modpack from pre-existing mods on first launch
+    func createInitialModpackIfNeeded() {
+        guard modpacks.isEmpty else { return }
+        let userMods = mods.filter { !$0.isBuiltIn }
+        guard !userMods.isEmpty else { return }
+
+        let modpack = ModpackService.createModpack(
+            name: "My Mods",
+            description: "Auto-created from your existing mods",
+            from: userMods
+        )
+        modpacks.append(modpack)
+        activeModpackID = modpack.id
+        do {
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func createModpackFromCurrentState(name: String, description: String) {
         let modpack = ModpackService.createModpack(name: name, description: description, from: mods)
         modpacks.append(modpack)

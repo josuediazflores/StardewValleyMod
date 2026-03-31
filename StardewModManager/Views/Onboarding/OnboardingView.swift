@@ -77,6 +77,7 @@ struct OnboardingView: View {
                                 currentStep += 1
                             }
                         } else {
+                            appState.createInitialModpackIfNeeded()
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 appState.settings.hasCompletedOnboarding = true
                             }
