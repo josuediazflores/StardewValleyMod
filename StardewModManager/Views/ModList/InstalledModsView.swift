@@ -4,12 +4,10 @@ import UniformTypeIdentifiers
 struct InstalledModsView: View {
     @Environment(AppState.self) private var appState
     @State private var hoveredModID: String?
-    @State private var isDeleteMode = false
-    @State private var selectedForDeletion: Set<String> = []
+    @State private var isBatchMode = false
+    @State private var selectedModIDs: Set<String> = []
     @State private var showBatchDeleteConfirmation = false
     @State private var isDropTargeted = false
-    @State private var importedCount = 0
-    @State private var showImportResult = false
     @State private var showNexusURLSheet = false
     @State private var nexusURLInput = ""
     @State private var isDownloadingFromURL = false
@@ -65,22 +63,73 @@ struct InstalledModsView: View {
                 .padding(.vertical, 8)
                 .background(Color.parchmentHeader)
 
-                // Header bar with delete mode toggle
-                HStack {
-                    if isDeleteMode {
-                        let count = selectedForDeletion.count
+                // Header bar with batch mode toggle
+                HStack(spacing: 8) {
+                    if isBatchMode {
+                        let count = selectedModIDs.count
                         Text("\(count) mod\(count == 1 ? "" : "s") selected")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(count > 0 ? Color.stardewRed : Color.textMuted)
+                            .foregroundStyle(count > 0 ? Color.textDark : Color.textMuted)
+
+                        Button {
+                            let selectableIDs = Set(appState.filteredMods.filter { !$0.isBuiltIn }.map(\.id))
+                            if selectedModIDs == selectableIDs {
+                                selectedModIDs.removeAll()
+                            } else {
+                                selectedModIDs = selectableIDs
+                            }
+                        } label: {
+                            let allSelected = selectedModIDs == Set(appState.filteredMods.filter { !$0.isBuiltIn }.map(\.id))
+                            Text(allSelected ? "Deselect All" : "Select All")
+                                .font(.system(size: 12))
+                        }
+                        .buttonStyle(.borderless)
 
                         Spacer()
 
-                        Button("Cancel") {
-                            isDeleteMode = false
-                            selectedForDeletion.removeAll()
+                        Button {
+                            appState.batchEnableMods(selectedModIDs)
+                            selectedModIDs.removeAll()
+                            isBatchMode = false
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 11))
+                                Text("Enable")
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(count > 0 ? Color.stardewGreen : Color.stardewGreen.opacity(0.3))
+                            )
                         }
                         .buttonStyle(.borderless)
-                        .font(.system(size: 13))
+                        .disabled(count == 0)
+
+                        Button {
+                            appState.batchDisableMods(selectedModIDs)
+                            selectedModIDs.removeAll()
+                            isBatchMode = false
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 11))
+                                Text("Disable")
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(count > 0 ? Color.stardewOrange : Color.stardewOrange.opacity(0.3))
+                            )
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(count == 0)
 
                         Button {
                             showBatchDeleteConfirmation = true
@@ -88,7 +137,7 @@ struct InstalledModsView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "trash.fill")
                                     .font(.system(size: 11))
-                                Text("Delete Selected")
+                                Text("Delete")
                                     .font(.system(size: 13, weight: .medium))
                             }
                             .foregroundStyle(.white)
@@ -101,6 +150,13 @@ struct InstalledModsView: View {
                         }
                         .buttonStyle(.borderless)
                         .disabled(count == 0)
+
+                        Button("Cancel") {
+                            isBatchMode = false
+                            selectedModIDs.removeAll()
+                        }
+                        .buttonStyle(.borderless)
+                        .font(.system(size: 13))
                     } else {
                         HStack(spacing: 8) {
                             Button {
@@ -150,15 +206,19 @@ struct InstalledModsView: View {
                         Spacer()
 
                         Button {
-                            isDeleteMode = true
-                            selectedForDeletion.removeAll()
+                            isBatchMode = true
+                            selectedModIDs.removeAll()
                         } label: {
-                            Image(systemName: "trash")
-                                .font(.system(size: 14))
-                                .foregroundStyle(Color.stardewRed.opacity(0.7))
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.circle")
+                                    .font(.system(size: 14))
+                                Text("Select")
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(Color.textLight)
                         }
                         .buttonStyle(.borderless)
-                        .help("Enter delete mode")
+                        .help("Enter batch selection mode")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -246,30 +306,23 @@ struct InstalledModsView: View {
                 handleDrop(providers)
             }
             .confirmationDialog(
-                "Delete \(selectedForDeletion.count) Mod\(selectedForDeletion.count == 1 ? "" : "s")",
+                "Delete \(selectedModIDs.count) Mod\(selectedModIDs.count == 1 ? "" : "s")",
                 isPresented: $showBatchDeleteConfirmation
             ) {
-                Button("Delete \(selectedForDeletion.count) mod\(selectedForDeletion.count == 1 ? "" : "s")", role: .destructive) {
-                    let modsToDelete = appState.mods.filter { selectedForDeletion.contains($0.id) }
-                    for mod in modsToDelete {
-                        appState.deleteMod(mod)
-                    }
-                    selectedForDeletion.removeAll()
-                    isDeleteMode = false
+                Button("Delete \(selectedModIDs.count) mod\(selectedModIDs.count == 1 ? "" : "s")", role: .destructive) {
+                    let modsToDelete = appState.mods.filter { selectedModIDs.contains($0.id) }
+                    appState.softDeleteMods(modsToDelete)
+                    selectedModIDs.removeAll()
+                    isBatchMode = false
                 }
             } message: {
                 let names = appState.mods
-                    .filter { selectedForDeletion.contains($0.id) }
+                    .filter { selectedModIDs.contains($0.id) }
                     .map { $0.manifest.name }
                     .joined(separator: ", ")
                 Text("Are you sure you want to delete these mods? This will remove them from disk and cannot be undone.\n\n\(names)")
             }
 
-            .alert("Import Complete", isPresented: $showImportResult) {
-                Button("OK") {}
-            } message: {
-                Text("Successfully imported \(importedCount) mod(s).")
-            }
             .sheet(isPresented: $showNexusURLSheet) {
                 VStack(spacing: 16) {
                     Text("Install from Nexus URL")
@@ -329,7 +382,7 @@ struct InstalledModsView: View {
             }
 
             // Detail inspector
-            if !isDeleteMode, let mod = appState.selectedMod {
+            if !isBatchMode, let mod = appState.selectedMod {
                 ModDetailView(mod: mod)
                     .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
             }
@@ -340,22 +393,22 @@ struct InstalledModsView: View {
     private func modRow(_ mod: Mod) -> some View {
         HStack(spacing: 0) {
             // Checkbox in delete mode
-            if isDeleteMode {
+            if isBatchMode {
                 if mod.isBuiltIn {
                     // Empty space to keep alignment
                     Color.clear.frame(width: 24, height: 24)
                         .padding(.trailing, 8)
                 } else {
                     Button {
-                        if selectedForDeletion.contains(mod.id) {
-                            selectedForDeletion.remove(mod.id)
+                        if selectedModIDs.contains(mod.id) {
+                            selectedModIDs.remove(mod.id)
                         } else {
-                            selectedForDeletion.insert(mod.id)
+                            selectedModIDs.insert(mod.id)
                         }
                     } label: {
-                        Image(systemName: selectedForDeletion.contains(mod.id) ? "checkmark.circle.fill" : "circle")
+                        Image(systemName: selectedModIDs.contains(mod.id) ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 18))
-                            .foregroundStyle(selectedForDeletion.contains(mod.id) ? Color.stardewRed : Color.textMuted.opacity(0.4))
+                            .foregroundStyle(selectedModIDs.contains(mod.id) ? Color.accentGold : Color.textMuted.opacity(0.4))
                     }
                     .buttonStyle(.borderless)
                     .padding(.trailing, 8)
@@ -421,29 +474,29 @@ struct InstalledModsView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 9)
-        .opacity(isDeleteMode && mod.isBuiltIn ? 0.3 : mod.isEnabled ? 1.0 : 0.5)
+        .opacity(isBatchMode && mod.isBuiltIn ? 0.3 : mod.isEnabled ? 1.0 : 0.5)
         .background(
-            isDeleteMode && selectedForDeletion.contains(mod.id)
-                ? Color.stardewRed.opacity(0.08)
-                : appState.selectedModID == mod.id && !isDeleteMode
+            isBatchMode && selectedModIDs.contains(mod.id)
+                ? Color.accentGold.opacity(0.08)
+                : appState.selectedModID == mod.id && !isBatchMode
                     ? Color.rowSelected
                     : hoveredModID == mod.id
                         ? Color.rowHover
                         : Color.clear
         )
         .overlay(alignment: .leading) {
-            if !isDeleteMode && appState.selectedModID == mod.id {
+            if !isBatchMode && appState.selectedModID == mod.id {
                 Color.accentGold.frame(width: 3)
             }
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            if isDeleteMode {
+            if isBatchMode {
                 if !mod.isBuiltIn {
-                    if selectedForDeletion.contains(mod.id) {
-                        selectedForDeletion.remove(mod.id)
+                    if selectedModIDs.contains(mod.id) {
+                        selectedModIDs.remove(mod.id)
                     } else {
-                        selectedForDeletion.insert(mod.id)
+                        selectedModIDs.insert(mod.id)
                     }
                 }
             } else {
@@ -454,7 +507,7 @@ struct InstalledModsView: View {
             hoveredModID = hovering ? mod.id : nil
         }
         .contextMenu {
-            if !isDeleteMode {
+            if !isBatchMode {
                 if !mod.isBuiltIn {
                     Button(mod.isEnabled ? "Disable Mod" : "Enable Mod") {
                         toggleMod(mod)
@@ -491,8 +544,6 @@ struct InstalledModsView: View {
 
         if panel.runModal() == .OK {
             appState.importMods(from: panel.urls)
-            importedCount = panel.urls.count
-            showImportResult = true
         }
     }
 
@@ -505,8 +556,6 @@ struct InstalledModsView: View {
 
         if panel.runModal() == .OK {
             appState.importMods(from: panel.urls)
-            importedCount = panel.urls.count
-            showImportResult = true
         }
     }
 
@@ -527,8 +576,6 @@ struct InstalledModsView: View {
         group.notify(queue: .main) {
             if !urls.isEmpty {
                 appState.importMods(from: urls)
-                importedCount = urls.count
-                showImportResult = true
             }
         }
 

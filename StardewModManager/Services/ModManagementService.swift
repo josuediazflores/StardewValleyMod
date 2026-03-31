@@ -63,6 +63,47 @@ enum ModManagementService {
         }
     }
 
+    // MARK: - Trash Staging (for undo)
+
+    static var trashStagingURL: URL {
+        FileManager.default.temporaryDirectory.appending(path: "StardewModManager_trash")
+    }
+
+    static func trashMod(_ mod: Mod) throws -> URL {
+        let fm = FileManager.default
+        try ensureDirectoryExists(trashStagingURL, fm: fm)
+
+        let destination = trashStagingURL.appending(path: "\(UUID().uuidString)_\(mod.folderName)")
+        do {
+            try fm.moveItem(at: mod.folderURL, to: destination)
+            return destination
+        } catch {
+            throw ModManagementError.deleteError(error.localizedDescription)
+        }
+    }
+
+    static func restoreFromTrash(stagingURL: URL, to destinationURL: URL) throws {
+        let fm = FileManager.default
+        let parentDir = destinationURL.deletingLastPathComponent()
+        try ensureDirectoryExists(parentDir, fm: fm)
+
+        if fm.fileExists(atPath: destinationURL.path(percentEncoded: false)) {
+            try fm.removeItem(at: destinationURL)
+        }
+        do {
+            try fm.moveItem(at: stagingURL, to: destinationURL)
+        } catch {
+            throw ModManagementError.moveError(error.localizedDescription)
+        }
+    }
+
+    static func emptyTrash(stagingURLs: [URL]) {
+        let fm = FileManager.default
+        for url in stagingURLs {
+            try? fm.removeItem(at: url)
+        }
+    }
+
     static func importMod(from sourceURL: URL, settings: AppSettings) throws -> [Mod] {
         let fm = FileManager.default
         try ensureDirectoryExists(settings.modsDirectoryURL, fm: fm)

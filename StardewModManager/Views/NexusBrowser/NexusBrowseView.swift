@@ -1,6 +1,7 @@
 import SwiftUI
 
 enum NexusBrowseTab: String, CaseIterable, Identifiable {
+    case essentials = "Essentials"
     case trending = "Trending"
     case latest = "Latest"
     case search = "Search"
@@ -10,7 +11,7 @@ enum NexusBrowseTab: String, CaseIterable, Identifiable {
 
 struct NexusBrowseView: View {
     @Environment(AppState.self) private var appState
-    @State private var selectedTab: NexusBrowseTab = .trending
+    @State private var selectedTab: NexusBrowseTab = .essentials
 
     var body: some View {
         @Bindable var state = appState
@@ -134,7 +135,7 @@ struct NexusBrowseView: View {
                                         appState.openNexusModPage(modId: mod.modId)
                                     }
                                     .onAppear {
-                                        if mod.id == currentMods.last?.id {
+                                        if selectedTab != .essentials, mod.id == currentMods.last?.id {
                                             Task { await appState.loadMoreMods(tab: currentAppTab) }
                                         }
                                     }
@@ -154,6 +155,10 @@ struct NexusBrowseView: View {
             .task(id: selectedTab) {
                 appState.nexusHasMore = true
                 switch selectedTab {
+                case .essentials:
+                    if appState.nexusEssentialMods.isEmpty {
+                        await appState.loadEssentialMods()
+                    }
                 case .trending:
                     if appState.nexusTrendingMods.isEmpty {
                         await appState.loadTrendingMods()
@@ -171,6 +176,7 @@ struct NexusBrowseView: View {
 
     private var currentMods: [NexusModInfo] {
         switch selectedTab {
+        case .essentials: return appState.nexusEssentialMods
         case .trending: return appState.nexusTrendingMods
         case .latest: return appState.nexusLatestMods
         case .search: return appState.nexusSearchResults
@@ -179,6 +185,7 @@ struct NexusBrowseView: View {
 
     private var currentAppTab: AppState.NexusTab {
         switch selectedTab {
+        case .essentials: return .trending // no pagination needed
         case .trending: return .trending
         case .latest: return .latest
         case .search: return .search
@@ -189,6 +196,9 @@ struct NexusBrowseView: View {
         Task {
             appState.nexusError = nil
             switch selectedTab {
+            case .essentials:
+                appState.nexusEssentialMods = []
+                await appState.loadEssentialMods()
             case .trending:
                 appState.nexusTrendingMods = []
                 await appState.loadTrendingMods()

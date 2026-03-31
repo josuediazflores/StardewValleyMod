@@ -141,6 +141,9 @@ struct ContentView: View {
                 }
             }
 
+            ToastOverlayView()
+                .zIndex(0.5)
+
             if !appState.settings.hasCompletedOnboarding {
                 OnboardingView()
                     .transition(.opacity)
@@ -156,6 +159,11 @@ struct ContentView: View {
             Button("OK") { appState.errorMessage = nil }
         } message: {
             Text(appState.errorMessage ?? "")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            for pending in appState.pendingDeletions {
+                ModManagementService.emptyTrash(stagingURLs: pending.stagingURLs)
+            }
         }
     }
 }

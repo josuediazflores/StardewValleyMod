@@ -7,8 +7,6 @@ struct ModpackListView: View {
     @State private var showImportSheet = false
     @State private var showDeleteConfirmation = false
     @State private var modpackToDelete: Modpack?
-    @State private var applyResultMessage: String?
-    @State private var showApplyAlert = false
     @State private var showCompareSheet = false
     @State private var showNearbyCompareSheet = false
 
@@ -316,13 +314,6 @@ struct ModpackListView: View {
         } message: { modpack in
             Text("Are you sure you want to delete \"\(modpack.name)\"? This cannot be undone.")
         }
-        .alert("Profile Loaded", isPresented: $showApplyAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            if let msg = applyResultMessage {
-                Text(msg)
-            }
-        }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             handleDrop(providers)
         }
@@ -343,23 +334,20 @@ struct ModpackListView: View {
     // MARK: - Actions
 
     private func applyVanilla() {
-        // Disable all mods
+        var count = 0
         for mod in appState.mods where mod.isEnabled && !mod.isBuiltIn {
-            appState.performDisableMod(mod)
+            do {
+                try ModManagementService.disableMod(mod, settings: appState.settings)
+                count += 1
+            } catch {}
         }
+        DependencyResolver.resolveAll(mods: appState.mods)
         appState.activeModpackID = nil
-        applyResultMessage = "Vanilla profile loaded. All mods disabled."
-        showApplyAlert = true
+        appState.showToast("Vanilla profile loaded. \(count) mod\(count == 1 ? "" : "s") disabled.", type: .success)
     }
 
     private func applyModpack(_ modpack: Modpack) {
         appState.applyModpack(modpack)
-        if let error = appState.modpackError {
-            applyResultMessage = error
-        } else {
-            applyResultMessage = "Profile \"\(modpack.name)\" loaded successfully."
-        }
-        showApplyAlert = true
     }
 
     private func importFromFile() {

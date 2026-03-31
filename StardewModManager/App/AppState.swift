@@ -39,6 +39,9 @@ final class AppState {
     var showInspector = true
     var errorMessage: String?
 
+    // Toast notification state
+    var toasts: [ToastMessage] = []
+
     // Update checking state
     var modUpdates: [String: ModUpdateInfo] = [:]
     var isCheckingUpdates = false
@@ -54,6 +57,7 @@ final class AppState {
     var pendingNXMModNames: [String] = []
 
     // Nexus state
+    var nexusEssentialMods: [NexusModInfo] = []
     var nexusTrendingMods: [NexusModInfo] = []
     var nexusLatestMods: [NexusModInfo] = []
     var nexusSearchResults: [NexusModInfo] = []
@@ -217,6 +221,9 @@ final class AppState {
         do {
             try ModManagementService.enableMod(mod, settings: settings)
             DependencyResolver.resolveAll(mods: mods)
+            syncActiveModpackEntry(mod: mod, isEnabled: true)
+            showToast("\(mod.manifest.name) enabled", type: .success)
+            SoundService.play(.click)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -226,9 +233,33 @@ final class AppState {
         do {
             try ModManagementService.disableMod(mod, settings: settings)
             DependencyResolver.resolveAll(mods: mods)
+            syncActiveModpackEntry(mod: mod, isEnabled: false)
+            showToast("\(mod.manifest.name) disabled", type: .info)
+            SoundService.play(.click)
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    /// Keeps the active modpack in sync when a mod is toggled from the Mods tab
+    private func syncActiveModpackEntry(mod: Mod, isEnabled: Bool) {
+        guard let activeID = activeModpackID,
+              let idx = modpacks.firstIndex(where: { $0.id == activeID }) else { return }
+
+        if let entryIdx = modpacks[idx].entries.firstIndex(where: { $0.uniqueID == mod.id }) {
+            modpacks[idx].entries[entryIdx].isEnabled = isEnabled
+        } else {
+            modpacks[idx].entries.append(ModpackEntry(
+                uniqueID: mod.id,
+                name: mod.manifest.name,
+                version: mod.manifest.version,
+                nexusModID: mod.nexusModID,
+                nexusFileID: nil,
+                isEnabled: isEnabled
+            ))
+        }
+        modpacks[idx].updatedAt = Date()
+        try? ModpackService.saveModpacks(modpacks, settings: settings)
     }
 
     func deleteMod(_ mod: Mod) {
@@ -262,6 +293,10 @@ final class AppState {
         mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
         DependencyResolver.resolveAll(mods: mods)
         addNewModsToActiveModpack(allImported)
+        if !allImported.isEmpty {
+            showToast("Imported \(allImported.count) mod\(allImported.count == 1 ? "" : "s")", type: .success)
+            SoundService.play(.bigSelect)
+        }
     }
 
     /// Auto-adds newly installed mods to the active modpack as disabled entries
@@ -525,13 +560,175 @@ final class AppState {
     // MARK: - Game Launch
 
     func launchGame() {
-        if let soundURL = Bundle.module.url(forResource: "bigSelect", withExtension: "wav") {
-            NSSound(contentsOf: soundURL, byReference: true)?.play()
-        }
+        SoundService.play(.bigSelect)
         do {
             try GameLauncherService.launch(settings: settings)
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Soft Delete (with Undo)
+
+    struct PendingDeletion: Identifiable {
+        let id: UUID
+        let mods: [Mod]
+        let originalURLs: [URL]
+        let wasEnabled: [Bool]
+        let stagingURLs: [URL]
+    }
+
+    var pendingDeletions: [PendingDeletion] = []
+
+    func softDeleteMod(_ mod: Mod) {
+        softDeleteMods([mod])
+    }
+
+    func softDeleteMods(_ modsToDelete: [Mod]) {
+        let deletionID = UUID()
+        var originalURLs: [URL] = []
+        var wasEnabled: [Bool] = []
+        var stagingURLs: [URL] = []
+        var deletedMods: [Mod] = []
+
+        for mod in modsToDelete {
+            do {
+                let stagingURL = try ModManagementService.trashMod(mod)
+                originalURLs.append(mod.folderURL)
+                wasEnabled.append(mod.isEnabled)
+                stagingURLs.append(stagingURL)
+                deletedMods.append(mod)
+
+                mods.removeAll { $0.id == mod.id }
+                if selectedModID == mod.id { selectedModID = nil }
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+
+        guard !deletedMods.isEmpty else { return }
+
+        DependencyResolver.resolveAll(mods: mods)
+
+        let pending = PendingDeletion(
+            id: deletionID,
+            mods: deletedMods,
+            originalURLs: originalURLs,
+            wasEnabled: wasEnabled,
+            stagingURLs: stagingURLs
+        )
+        pendingDeletions.append(pending)
+
+        let modNames = deletedMods.count == 1
+            ? deletedMods[0].manifest.name
+            : "\(deletedMods.count) mods"
+
+        showToast("\(modNames) deleted", type: .warning) { [weak self] in
+            self?.undoDelete(id: deletionID)
+        }
+        SoundService.play(.warning)
+
+        // Finalize when toast expires
+        Task {
+            try? await Task.sleep(for: .seconds(6.0))
+            finalizeDeletion(id: deletionID)
+        }
+    }
+
+    func undoDelete(id: UUID) {
+        guard let pendingIndex = pendingDeletions.firstIndex(where: { $0.id == id }) else { return }
+        let pending = pendingDeletions[pendingIndex]
+
+        for i in pending.mods.indices {
+            let mod = pending.mods[i]
+            let targetURL: URL
+            if pending.wasEnabled[i] {
+                targetURL = settings.modsDirectoryURL.appending(path: mod.folderName)
+            } else {
+                targetURL = settings.disabledModsDirectoryURL.appending(path: mod.folderName)
+            }
+
+            do {
+                try ModManagementService.restoreFromTrash(stagingURL: pending.stagingURLs[i], to: targetURL)
+                mod.folderURL = targetURL
+                mod.isEnabled = pending.wasEnabled[i]
+                mods.append(mod)
+            } catch {
+                errorMessage = "Failed to restore \(mod.manifest.name): \(error.localizedDescription)"
+            }
+        }
+
+        mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+        DependencyResolver.resolveAll(mods: mods)
+        pendingDeletions.remove(at: pendingIndex)
+
+        let restoredName = pending.mods.count == 1
+            ? pending.mods[0].manifest.name
+            : "\(pending.mods.count) mods"
+        showToast("Restored \(restoredName)", type: .success)
+        SoundService.play(.click)
+    }
+
+    func finalizeDeletion(id: UUID) {
+        guard let pendingIndex = pendingDeletions.firstIndex(where: { $0.id == id }) else { return }
+        let pending = pendingDeletions[pendingIndex]
+        ModManagementService.emptyTrash(stagingURLs: pending.stagingURLs)
+        pendingDeletions.remove(at: pendingIndex)
+    }
+
+    // MARK: - Batch Operations
+
+    func batchEnableMods(_ ids: Set<String>) {
+        var enabledCount = 0
+        for id in ids {
+            guard let mod = mods.first(where: { $0.id == id }), !mod.isEnabled, !mod.isBuiltIn else { continue }
+            do {
+                try ModManagementService.enableMod(mod, settings: settings)
+                syncActiveModpackEntry(mod: mod, isEnabled: true)
+                enabledCount += 1
+            } catch {}
+        }
+        DependencyResolver.resolveAll(mods: mods)
+        if enabledCount > 0 {
+            showToast("\(enabledCount) mod\(enabledCount == 1 ? "" : "s") enabled", type: .success)
+            SoundService.play(.bigSelect)
+        }
+    }
+
+    func batchDisableMods(_ ids: Set<String>) {
+        var disabledCount = 0
+        for id in ids {
+            guard let mod = mods.first(where: { $0.id == id }), mod.isEnabled, !mod.isBuiltIn else { continue }
+            do {
+                syncActiveModpackEntry(mod: mod, isEnabled: false)
+                try ModManagementService.disableMod(mod, settings: settings)
+                disabledCount += 1
+            } catch {}
+        }
+        DependencyResolver.resolveAll(mods: mods)
+        if disabledCount > 0 {
+            showToast("\(disabledCount) mod\(disabledCount == 1 ? "" : "s") disabled", type: .info)
+            SoundService.play(.bigSelect)
+        }
+    }
+
+    // MARK: - Toasts
+
+    func showToast(_ message: String, type: ToastType = .info, undoAction: (() -> Void)? = nil) {
+        let toast = ToastMessage(message: message, type: type, undoAction: undoAction)
+        toasts.append(toast)
+
+        let toastID = toast.id
+        let duration = toast.displayDuration
+        Task {
+            try? await Task.sleep(for: .seconds(duration))
+            dismissToast(id: toastID)
+        }
+    }
+
+    func dismissToast(id: UUID) {
+        withAnimation {
+            toasts.removeAll { $0.id == id }
         }
     }
 
@@ -556,6 +753,28 @@ final class AppState {
             settings.isAPIKeyValidated = false
             nexusError = error.localizedDescription
         }
+    }
+
+    static let essentialModIDs = [1915, 5098, 1063, 541, 4, 239, 12747, 3753, 11115, 518]
+
+    func loadEssentialMods() async {
+        isNexusLoading = true
+        nexusError = nil
+        do {
+            if let key = settings.nexusAPIKey {
+                await nexusAPI.setAPIKey(key)
+            }
+            var mods: [NexusModInfo] = []
+            for modId in Self.essentialModIDs {
+                if let mod = try? await nexusAPI.modDetails(modId: modId) {
+                    mods.append(mod)
+                }
+            }
+            nexusEssentialMods = mods
+        } catch {
+            nexusError = error.localizedDescription
+        }
+        isNexusLoading = false
     }
 
     func loadTrendingMods() async {
@@ -698,8 +917,11 @@ final class AppState {
 
             if !result.missing.isEmpty {
                 let names = result.missing.map(\.name).joined(separator: ", ")
-                modpackError = "Applied profile. Missing mods: \(names)"
+                showToast("Profile applied. Missing: \(names)", type: .warning)
+            } else {
+                showToast("Profile \"\(modpack.name)\" applied", type: .success)
             }
+            SoundService.play(.bigSelect)
         } catch {
             modpackError = error.localizedDescription
         }

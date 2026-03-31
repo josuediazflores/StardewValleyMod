@@ -19,17 +19,31 @@ A native macOS mod manager for Stardew Valley with Nexus Mods integration, modpa
 
 ## Features
 
-- **Manage mods** — Enable, disable, and delete mods with one click
-- **Modpack profiles** — Save different mod configurations and switch between them instantly
-- **Browse Nexus Mods** — Search trending, latest, and popular mods with infinite scroll
-- **Install from Nexus URL** — Paste a mod link to auto-download and install
-- **NXM protocol support** — Click "Download with Manager" on Nexus and it installs automatically
-- **Import mods** — Drag & drop ZIP files or folders, or use the file picker
-- **Share modpacks** — Export as `.smm` files or copy to clipboard for friends
-- **Compare profiles** — See which mods differ between two profiles
-- **Auto-updates** — Check for and install updates from within the app
-- **Themed UI** — Stardew (golden) and Pink theme options
-- **Mac App Store + Steam + GOG** — Auto-detects game path from any store
+**Mod Management**
+- Enable, disable, and delete mods with one click
+- Bulk select to enable, disable, or delete multiple mods at once
+- Undo accidental deletes within 6 seconds
+- Drag & drop ZIP files or folders to import
+- Active modpack stays in sync when you toggle mods
+
+**Modpack Profiles**
+- Save different mod configurations and switch instantly
+- Export as `.smm` files or copy to clipboard to share with friends
+- Compare profiles side-by-side
+
+**Nexus Mods Integration**
+- Browse trending, latest, and search mods with infinite scroll
+- Essentials tab with curated must-have mods for new players
+- Paste a Nexus URL to auto-download and install
+- Click "Download with Manager" on Nexus (NXM protocol support)
+
+**Quality of Life**
+- Welcome guide walks you through setup on first launch
+- Toast notifications confirm every action
+- Sound effects for feedback (toggleable in Settings)
+- Auto-updates from within the app
+- Stardew and Pink theme options
+- Auto-detects game path from Steam, Mac App Store, or GOG
 
 ---
 

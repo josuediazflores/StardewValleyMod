@@ -119,6 +119,22 @@ struct GeneralSettingsTab: View {
                 Spacer()
             }
 
+            // Sound effects toggle
+            HStack(spacing: 12) {
+                Text("Sound Effects")
+                    .font(.stardew(size: 16))
+                    .foregroundStyle(Color.textDark)
+                    .frame(width: 160, alignment: .leading)
+
+                Toggle("", isOn: Binding(
+                    get: { appState.settings.enableSounds },
+                    set: { appState.settings.enableSounds = $0 }
+                ))
+                .toggleStyle(StardewToggleStyle())
+
+                Spacer()
+            }
+
             // Game path card
             VStack(spacing: 0) {
                 HStack(spacing: 12) {
