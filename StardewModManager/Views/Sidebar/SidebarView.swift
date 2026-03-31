@@ -140,7 +140,7 @@ struct SidebarView: View {
     private func stardewIcon(for item: SidebarItem) -> some View {
         switch item {
         case .modpacks:
-            if let url = Bundle.module.url(forResource: "Golden_Scroll", withExtension: "png"),
+            if let url = Bundle.appBundle.url(forResource: "Golden_Scroll", withExtension: "png"),
                let nsImage = NSImage(contentsOf: url) {
                 Image(nsImage: nsImage)
                     .resizable()
@@ -150,7 +150,7 @@ struct SidebarView: View {
                 StardewIcon(type: .chest, size: 20)
             }
         case .browseNexus:
-            if let url = Bundle.module.url(forResource: "Horse_The_Book", withExtension: "png"),
+            if let url = Bundle.appBundle.url(forResource: "Horse_The_Book", withExtension: "png"),
                let nsImage = NSImage(contentsOf: url) {
                 Image(nsImage: nsImage)
                     .resizable()
@@ -160,7 +160,7 @@ struct SidebarView: View {
                 StardewIcon(type: .globe, size: 20)
             }
         case .installedMods:
-            if let url = Bundle.module.url(forResource: "Chest", withExtension: "png"),
+            if let url = Bundle.appBundle.url(forResource: "Chest", withExtension: "png"),
                let nsImage = NSImage(contentsOf: url) {
                 Image(nsImage: nsImage)
                     .resizable()

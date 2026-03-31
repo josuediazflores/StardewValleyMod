@@ -20,7 +20,7 @@ final class SoundService {
 
     static func play(_ sound: StardewSound) {
         guard isEnabled else { return }
-        guard let url = Bundle.module.url(forResource: "bigSelect", withExtension: "wav") else { return }
+        guard let url = Bundle.appBundle.url(forResource: "bigSelect", withExtension: "wav") else { return }
 
         do {
             let player = try AVAudioPlayer(contentsOf: url)

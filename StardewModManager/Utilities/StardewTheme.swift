@@ -4,7 +4,7 @@ import CoreText
 // MARK: - Font Registration
 
 func registerStardewFonts() {
-    guard let fontURL = Bundle.module.url(forResource: "VT323-Regular", withExtension: "ttf") else {
+    guard let fontURL = Bundle.appBundle.url(forResource: "VT323-Regular", withExtension: "ttf") else {
         return
     }
     CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, nil)
@@ -283,7 +283,7 @@ struct JunimoIcon: View {
     var size: CGFloat = 20
 
     var body: some View {
-        if let url = Bundle.module.url(forResource: name, withExtension: "png"),
+        if let url = Bundle.appBundle.url(forResource: name, withExtension: "png"),
            let nsImage = NSImage(contentsOf: url) {
             Image(nsImage: nsImage)
                 .renderingMode(.original)

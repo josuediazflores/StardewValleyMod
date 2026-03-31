@@ -450,7 +450,7 @@ private struct OrientationStepView: View {
 
     private func orientationCard(imageName: String, title: String, description: String) -> some View {
         HStack(spacing: 14) {
-            if let url = Bundle.module.url(forResource: imageName, withExtension: "png"),
+            if let url = Bundle.appBundle.url(forResource: imageName, withExtension: "png"),
                let nsImage = NSImage(contentsOf: url) {
                 Image(nsImage: nsImage)
                     .resizable()
