@@ -23,6 +23,7 @@ extension Foundation.Bundle {
             return bundle
         }
 
-        fatalError("Could not find \(bundleName).bundle next to executable at \(nextToExecutable.path)")
+        // Last resort: use Bundle.main itself (resources may be embedded directly)
+        return Bundle.main
     }()
 }

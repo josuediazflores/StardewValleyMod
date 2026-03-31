@@ -20,23 +20,21 @@ final class SoundService {
 
     static func play(_ sound: StardewSound) {
         guard isEnabled else { return }
-        guard let url = Bundle.appBundle.url(forResource: "bigSelect", withExtension: "wav") else { return }
+
+        let (resourceName, volume): (String, Float) = switch sound {
+        case .bigSelect: ("bigSelect", 1.0)
+        case .click:     ("click", 0.5)
+        case .warning:   ("warning", 0.7)
+        }
+
+        guard let url = Bundle.appBundle.url(forResource: resourceName, withExtension: "wav") else { return }
 
         do {
             let player = try AVAudioPlayer(contentsOf: url)
-            switch sound {
-            case .bigSelect:
-                player.volume = 1.0
-            case .click:
-                player.volume = 0.5
-            case .warning:
-                player.volume = 0.7
-            }
+            player.volume = volume
             player.prepareToPlay()
             player.play()
             shared.player = player  // retain until playback finishes
-        } catch {
-            print("[SoundService] Failed to play: \(error)")
-        }
+        } catch {}
     }
 }

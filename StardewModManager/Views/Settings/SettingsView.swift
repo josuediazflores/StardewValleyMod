@@ -191,17 +191,62 @@ struct GeneralSettingsTab: View {
                     }
 
                     if !appState.settings.isSMAPIInstalled {
-                        Button("Install SMAPI") {
-                            if let url = URL(string: "https://smapi.io") {
-                                NSWorkspace.shared.open(url)
+                        if appState.isSMAPIInstalling {
+                            HStack(spacing: 6) {
+                                ProgressView()
+                                    .controlSize(.small)
+                                Text("Installing...")
+                                    .font(.stardew(size: 14))
+                                    .foregroundStyle(Color.textMuted)
                             }
+                        } else {
+                            Button {
+                                appState.installSMAPI()
+                            } label: {
+                                Text("Install SMAPI")
+                                    .font(.stardew(size: 14))
+                                    .foregroundStyle(Color.textDark)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 4)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.accentGold)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .stroke(Color.accentGoldBorder, lineWidth: 1)
+                                            )
+                                    )
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .font(.stardew(size: 14))
-                        .foregroundStyle(Color.stardewBlue)
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(12)
+
+                if let error = appState.smapiInstallError {
+                    VStack(spacing: 6) {
+                        Text(error)
+                            .font(.stardew(size: 12))
+                            .foregroundStyle(Color.stardewRed)
+                            .multilineTextAlignment(.center)
+                        HStack(spacing: 12) {
+                            Button("Retry") { appState.installSMAPI() }
+                                .font(.stardew(size: 12))
+                                .foregroundStyle(Color.stardewBlue)
+                                .buttonStyle(.plain)
+                            Button("Manual Install") {
+                                if let url = URL(string: "https://smapi.io") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            }
+                            .font(.stardew(size: 12))
+                            .foregroundStyle(Color.textMuted)
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                }
             }
             .background(
                 RoundedRectangle(cornerRadius: 6)

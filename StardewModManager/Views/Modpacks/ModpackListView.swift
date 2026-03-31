@@ -318,15 +318,20 @@ struct ModpackListView: View {
 
     private func applyVanilla() {
         var count = 0
+        var failedCount = 0
         for mod in appState.mods where mod.isEnabled && !mod.isBuiltIn {
             do {
                 try ModManagementService.disableMod(mod, settings: appState.settings)
                 count += 1
-            } catch {}
+            } catch { failedCount += 1 }
         }
         DependencyResolver.resolveAll(mods: appState.mods)
         appState.activeModpackID = nil
-        appState.showToast("Vanilla profile loaded. \(count) mod\(count == 1 ? "" : "s") disabled.", type: .success)
+        if failedCount > 0 {
+            appState.showToast("Vanilla profile loaded but \(failedCount) mod\(failedCount == 1 ? "" : "s") failed to disable.", type: .warning)
+        } else {
+            appState.showToast("Vanilla profile loaded. \(count) mod\(count == 1 ? "" : "s") disabled.", type: .success)
+        }
     }
 
     private func applyModpack(_ modpack: Modpack) {

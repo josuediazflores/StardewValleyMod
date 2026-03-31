@@ -37,6 +37,9 @@ enum ModpackService {
             decoder.dateDecodingStrategy = .iso8601
             return try decoder.decode([Modpack].self, from: data)
         } catch {
+            // Preserve corrupted file so the user can recover manually
+            let backupURL = fileURL.deletingLastPathComponent().appendingPathComponent("modpacks.json.corrupt")
+            try? FileManager.default.copyItem(at: fileURL, to: backupURL)
             return []
         }
     }

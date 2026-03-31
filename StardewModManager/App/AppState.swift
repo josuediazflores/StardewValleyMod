@@ -49,6 +49,10 @@ final class AppState {
     // App update state
     var availableUpdate: AppUpdate?
 
+    // SMAPI install state
+    var isSMAPIInstalling = false
+    var smapiInstallError: String?
+
     // NXM protocol state
     var nxmDownloadStatus: String?
     var showModpackPicker = false
@@ -328,9 +332,32 @@ final class AppState {
                 let updates = try await nexusAPI.checkForUpdates(mods: mods)
                 modUpdates = Dictionary(updates.map { ($0.modID, $0) }, uniquingKeysWith: { first, _ in first })
             } catch {
-                print("Update check failed: \(error.localizedDescription)")
+                // Silently ignore — callers handle stale data gracefully
             }
             isCheckingUpdates = false
+        }
+    }
+
+    // MARK: - SMAPI Installation
+
+    func installSMAPI() {
+        guard settings.isGamePathValid else {
+            showToast("Set your game path before installing SMAPI", type: .warning)
+            return
+        }
+        guard !isSMAPIInstalling else { return }
+        isSMAPIInstalling = true
+        smapiInstallError = nil
+        Task {
+            do {
+                try await SMAPIInstallService.downloadAndInstall(to: settings.gamePath)
+                showToast("SMAPI installed!", type: .success)
+                SoundService.play(.bigSelect)
+            } catch {
+                smapiInstallError = error.localizedDescription
+                showToast("SMAPI install failed", type: .warning)
+            }
+            isSMAPIInstalling = false
         }
     }
 
@@ -680,16 +707,19 @@ final class AppState {
 
     func batchEnableMods(_ ids: Set<String>) {
         var enabledCount = 0
+        var failedCount = 0
         for id in ids {
             guard let mod = mods.first(where: { $0.id == id }), !mod.isEnabled, !mod.isBuiltIn else { continue }
             do {
                 try ModManagementService.enableMod(mod, settings: settings)
                 syncActiveModpackEntry(mod: mod, isEnabled: true)
                 enabledCount += 1
-            } catch {}
+            } catch { failedCount += 1 }
         }
         DependencyResolver.resolveAll(mods: mods)
-        if enabledCount > 0 {
+        if failedCount > 0 {
+            showToast("\(failedCount) mod\(failedCount == 1 ? "" : "s") failed to enable", type: .warning)
+        } else if enabledCount > 0 {
             showToast("\(enabledCount) mod\(enabledCount == 1 ? "" : "s") enabled", type: .success)
             SoundService.play(.bigSelect)
         }
@@ -697,16 +727,19 @@ final class AppState {
 
     func batchDisableMods(_ ids: Set<String>) {
         var disabledCount = 0
+        var failedCount = 0
         for id in ids {
             guard let mod = mods.first(where: { $0.id == id }), mod.isEnabled, !mod.isBuiltIn else { continue }
             do {
                 syncActiveModpackEntry(mod: mod, isEnabled: false)
                 try ModManagementService.disableMod(mod, settings: settings)
                 disabledCount += 1
-            } catch {}
+            } catch { failedCount += 1 }
         }
         DependencyResolver.resolveAll(mods: mods)
-        if disabledCount > 0 {
+        if failedCount > 0 {
+            showToast("\(failedCount) mod\(failedCount == 1 ? "" : "s") failed to disable", type: .warning)
+        } else if disabledCount > 0 {
             showToast("\(disabledCount) mod\(disabledCount == 1 ? "" : "s") disabled", type: .info)
             SoundService.play(.bigSelect)
         }

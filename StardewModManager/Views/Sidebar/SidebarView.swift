@@ -160,14 +160,12 @@ struct SidebarView: View {
                 StardewIcon(type: .globe, size: 20)
             }
         case .installedMods:
-            if let url = Bundle.appBundle.url(forResource: "Chest", withExtension: "png"),
+            if let url = Bundle.appBundle.url(forResource: "Robins_Hammer", withExtension: "png"),
                let nsImage = NSImage(contentsOf: url) {
                 Image(nsImage: nsImage)
                     .resizable()
                     .interpolation(.none)
-                    .aspectRatio(contentMode: .fill)
                     .frame(width: 20, height: 20)
-                    .clipped()
             } else {
                 StardewIcon(type: .chest, size: 20)
             }

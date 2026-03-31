@@ -204,11 +204,36 @@ struct NearbyCompareSheet: View {
                     .buttonStyle(.plain)
                     .help("Send all mod files so your friend can install them")
                 }
+            } else if peerService.receivedModpack != nil {
+                // They sent theirs too — jump to results
+                Button {
+                    peerService.connectionState = .received
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 12))
+                        Text("Compare Modpacks")
+                            .font(.stardew(size: 16))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.stardewBlue)
+                    )
+                }
+                .buttonStyle(.plain)
             } else {
-                VStack(spacing: 8) {
-                    ProgressView()
-                    Text("Modpack sent! Waiting for their modpack...")
-                        .font(.stardew(size: 14))
+                VStack(spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(Color.stardewGreen)
+                    Text("Modpack sent!")
+                        .font(.stardew(size: 16))
+                        .foregroundStyle(Color.stardewGreen)
+                    Text("Waiting for their modpack to compare...")
+                        .font(.stardew(size: 13))
                         .foregroundStyle(Color.textMuted)
                 }
             }
