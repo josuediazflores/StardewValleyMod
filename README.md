@@ -54,7 +54,14 @@ A native macOS mod manager for Stardew Valley with Nexus Mods integration, modpa
 
 ## Screenshots
 
-*Coming soon*
+### Modpack Profiles
+![Modpacks](screenshots/modpacks.png)
+
+### Installed Mods
+![Mods](screenshots/mods.png)
+
+### Browse Nexus
+![Browse Nexus](screenshots/nexus.png)
 
 ---
 
