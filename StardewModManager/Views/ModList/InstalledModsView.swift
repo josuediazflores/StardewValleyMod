@@ -205,6 +205,25 @@ struct InstalledModsView: View {
 
                         Spacer()
 
+                        if !appState.modUpdates.isEmpty {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.system(size: 11))
+                                Text("\(appState.modUpdates.count) update\(appState.modUpdates.count == 1 ? "" : "s")")
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(Color.stardewOrange)
+                        } else if appState.isCheckingUpdates {
+                            HStack(spacing: 4) {
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 12, height: 12)
+                                Text("Checking...")
+                                    .font(.system(size: 12))
+                            }
+                            .foregroundStyle(Color.textMuted)
+                        }
+
                         Button {
                             isBatchMode = true
                             selectedModIDs.removeAll()
@@ -456,11 +475,34 @@ struct InstalledModsView: View {
 
             Spacer(minLength: 12)
 
-            // Right: version + type badge
+            // Right: version + update badge + type badge
             VStack(alignment: .trailing, spacing: 3) {
-                Text("v\(mod.manifest.version)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.textLight)
+                HStack(spacing: 6) {
+                    Text("v\(mod.manifest.version)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textLight)
+
+                    if let update = appState.modUpdates[mod.id] {
+                        Button {
+                            if let urlString = update.updateURL, let url = URL(string: urlString) {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "arrow.up.circle.fill")
+                                Text(update.newVersion)
+                            }
+                            .font(.system(size: 10, weight: .medium))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.stardewOrange.opacity(0.15))
+                            .foregroundStyle(Color.stardewOrange)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .help("Update available — click to open download page")
+                    }
+                }
 
                 let typeColor: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
                 Text(mod.modType.rawValue)

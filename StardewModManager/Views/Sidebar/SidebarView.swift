@@ -28,13 +28,23 @@ struct SidebarView: View {
                                 .clipShape(Capsule())
                         }
                         if item == .installedMods {
-                            Text("\(appState.userModCount)")
-                                .font(.system(size: 11, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.accentGold.opacity(0.7))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 1)
-                                .background(Color.accentGold.opacity(0.15))
-                                .clipShape(Capsule())
+                            if !appState.modUpdates.isEmpty {
+                                Text("\(appState.modUpdates.count)")
+                                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                                    .foregroundStyle(Color.stardewOrange)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 1)
+                                    .background(Color.stardewOrange.opacity(0.2))
+                                    .clipShape(Capsule())
+                            } else {
+                                Text("\(appState.userModCount)")
+                                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                                    .foregroundStyle(Color.accentGold.opacity(0.7))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 1)
+                                    .background(Color.accentGold.opacity(0.15))
+                                    .clipShape(Capsule())
+                            }
                         }
                     }
                     .padding(.horizontal, 12)
