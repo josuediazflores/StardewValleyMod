@@ -21,6 +21,13 @@ struct NexusModInfo: Codable, Identifiable {
     /// Display name: uses name if available, falls back to uploadedBy's mod
     var displayName: String { name ?? "Mod #\(modId)" }
 
+    /// Heuristic: checks name/summary for modpack-like keywords
+    var isLikelyModpack: Bool {
+        let text = ((name ?? "") + " " + (summary ?? "")).lowercased()
+        let keywords = ["modpack", "expansion", "overhaul", "collection of mods"]
+        return keywords.contains(where: { text.contains($0) })
+    }
+
     enum CodingKeys: String, CodingKey {
         case modId = "mod_id"
         case name, summary, description, version, author, status

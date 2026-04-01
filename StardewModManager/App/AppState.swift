@@ -48,6 +48,7 @@ final class AppState {
 
     // App update state
     var availableUpdate: AppUpdate?
+    var showAppUpdatePrompt = false
 
     // SMAPI install state
     var isSMAPIInstalling = false
@@ -59,6 +60,12 @@ final class AppState {
     var pendingNXMMods: [Mod] = []
     var pendingNXMZipURL: URL?
     var pendingNXMModNames: [String] = []
+    var pendingNXMSuggestedName: String?
+
+    // Web download sheet state
+    var showWebDownloadSheet = false
+    var webDownloadModName: String?
+    var webDownloadURL: URL?
 
     // Nexus state
     var nexusEssentialMods: [NexusModInfo] = []
@@ -400,6 +407,7 @@ final class AppState {
                 nxmDownloadStatus = nil
                 pendingNXMZipURL = zipURL
                 pendingNXMModNames = names.isEmpty ? ["Downloaded mod"] : names
+                pendingNXMSuggestedName = names.count > 1 ? names.first : nil
                 showModpackPicker = true
             } catch {
                 nxmDownloadStatus = nil
@@ -467,6 +475,7 @@ final class AppState {
         }
         pendingNXMZipURL = nil
         pendingNXMModNames = []
+        pendingNXMSuggestedName = nil
     }
 
     func addModsToModpack(_ modpackID: UUID, mods modsToAdd: [Mod]) {
@@ -544,13 +553,11 @@ final class AppState {
                     nxmDownloadStatus = nil
                     pendingNXMZipURL = zipURL
                     pendingNXMModNames = names.isEmpty ? ["Downloaded mod"] : names
+                    pendingNXMSuggestedName = names.count > 1 ? names.first : nil
                     showModpackPicker = true
                 } else {
                     nxmDownloadStatus = nil
-                    errorMessage = "Direct download requires Nexus Premium. Opening mod page — click \"Mod Manager Download\" to install via the app."
-                    if let url = URL(string: "https://www.nexusmods.com/stardewvalley/mods/\(modId)?tab=files") {
-                        NSWorkspace.shared.open(url)
-                    }
+                    openWebDownloadSheet(modId: modId, modName: "Mod #\(modId)")
                 }
             } catch {
                 nxmDownloadStatus = nil
@@ -567,6 +574,9 @@ final class AppState {
     func checkForAppUpdate() {
         Task {
             availableUpdate = await UpdateService.checkForUpdate()
+            if availableUpdate != nil {
+                showAppUpdatePrompt = true
+            }
         }
     }
 
@@ -898,6 +908,19 @@ final class AppState {
 
             let tempDir = FileManager.default.temporaryDirectory
             let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
+
+            // Check if multi-mod before installing
+            let names = ModManagementService.peekModNames(from: zipURL)
+            if names.count > 1 {
+                // Multi-mod: show modpack picker instead of silently installing
+                isNexusLoading = false
+                pendingNXMZipURL = zipURL
+                pendingNXMModNames = names
+                pendingNXMSuggestedName = names.first
+                showModpackPicker = true
+                return
+            }
+
             let imported = try ModManagementService.importMod(from: zipURL, settings: settings)
             try? FileManager.default.removeItem(at: zipURL)
 
@@ -908,10 +931,9 @@ final class AppState {
             mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
             DependencyResolver.resolveAll(mods: mods)
         } catch let error as NexusAPIError where error.localizedDescription == NexusAPIError.premiumRequired.localizedDescription {
-            nexusError = "Direct downloads require Nexus Premium. Opening mod page in browser instead."
-            if let url = URL(string: "https://www.nexusmods.com/stardewvalley/mods/\(modId)?tab=files") {
-                NSWorkspace.shared.open(url)
-            }
+            isNexusLoading = false
+            openWebDownloadSheet(modId: modId, modName: "Mod #\(modId)")
+            return
         } catch {
             nexusError = error.localizedDescription
         }
@@ -922,6 +944,13 @@ final class AppState {
         if let url = URL(string: "https://www.nexusmods.com/stardewvalley/mods/\(modId)") {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    func openWebDownloadSheet(modId: Int, modName: String) {
+        let url = URL(string: "https://www.nexusmods.com/stardewvalley/mods/\(modId)?tab=files")!
+        webDownloadModName = modName
+        webDownloadURL = url
+        showWebDownloadSheet = true
     }
 
     // MARK: - Modpack Operations

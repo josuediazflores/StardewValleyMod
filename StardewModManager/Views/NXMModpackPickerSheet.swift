@@ -4,9 +4,14 @@ struct NXMModpackPickerSheet: View {
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     let importedMods: [Mod]
+    var suggestedModpackName: String?
 
     @State private var showNewModpackField = false
     @State private var newModpackName = ""
+
+    private var isMultiMod: Bool {
+        appState.pendingNXMModNames.count > 1
+    }
 
     private var modNames: String {
         let names = appState.pendingNXMModNames
@@ -32,6 +37,23 @@ struct NXMModpackPickerSheet: View {
                 .foregroundStyle(Color.textMedium)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
+
+            if isMultiMod {
+                HStack(spacing: 6) {
+                    Image(systemName: "square.stack.3d.up")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.stardewPurple)
+                    Text("This download contains \(appState.pendingNXMModNames.count) mods")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.stardewPurple)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.stardewPurple.opacity(0.08))
+                )
+            }
 
             Color.stardewDivider.opacity(0.3).frame(height: 1)
 
@@ -171,6 +193,12 @@ struct NXMModpackPickerSheet: View {
         .padding(24)
         .frame(width: 420)
         .background(Color.parchment)
+        .onAppear {
+            if let suggested = suggestedModpackName {
+                showNewModpackField = true
+                newModpackName = suggested
+            }
+        }
     }
 
     private func createAndInstall() {

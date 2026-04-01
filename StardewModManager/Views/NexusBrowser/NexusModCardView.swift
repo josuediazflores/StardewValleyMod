@@ -2,27 +2,57 @@ import SwiftUI
 
 struct NexusModCardView: View {
     let mod: NexusModInfo
+    var isInstalled: Bool = false
+    var isLikelyModpack: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Thumbnail
-            if let urlString = mod.pictureUrl, let url = URL(string: urlString) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.parchmentHeader)
-                        .overlay {
-                            Image(systemName: "photo")
-                                .font(.title)
-                                .foregroundStyle(Color.textMuted)
-                        }
+            ZStack {
+                if let urlString = mod.pictureUrl, let url = URL(string: urlString) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.parchmentHeader)
+                            .overlay {
+                                Image(systemName: "photo")
+                                    .font(.title)
+                                    .foregroundStyle(Color.textMuted)
+                            }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 160)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
-                .frame(maxWidth: .infinity, maxHeight: 160)
-                .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                VStack {
+                    HStack {
+                        if isLikelyModpack {
+                            Text("Modpack")
+                                .font(.stardew(size: 12))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.stardewPurple.opacity(0.15))
+                                .foregroundStyle(Color.stardewPurple)
+                                .clipShape(Capsule())
+                        }
+                        Spacer()
+                        if isInstalled {
+                            Text("Installed")
+                                .font(.stardew(size: 12))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.stardewGreen.opacity(0.15))
+                                .foregroundStyle(Color.stardewGreen)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(6)
             }
 
             // Info

@@ -12,6 +12,7 @@ enum NexusBrowseTab: String, CaseIterable, Identifiable {
 struct NexusBrowseView: View {
     @Environment(AppState.self) private var appState
     @State private var selectedTab: NexusBrowseTab = .essentials
+    @State private var selectedModForDetail: NexusModInfo?
 
     var body: some View {
         @Bindable var state = appState
@@ -130,9 +131,9 @@ struct NexusBrowseView: View {
                             GridItem(.adaptive(minimum: 280, maximum: 400), spacing: 20)
                         ], spacing: 20) {
                             ForEach(currentMods) { mod in
-                                NexusModCardView(mod: mod)
-                                    .onTapGesture(count: 2) {
-                                        appState.openNexusModPage(modId: mod.modId)
+                                NexusModCardView(mod: mod, isInstalled: installedNexusIDs.contains(mod.modId), isLikelyModpack: mod.isLikelyModpack)
+                                    .onTapGesture {
+                                        selectedModForDetail = mod
                                     }
                                     .onAppear {
                                         if selectedTab != .essentials, mod.id == currentMods.last?.id {
@@ -152,6 +153,10 @@ struct NexusBrowseView: View {
                 }
             }
             .background(Color.parchment)
+            .sheet(item: $selectedModForDetail) { mod in
+                NexusModDetailView(mod: mod)
+                    .environment(appState)
+            }
             .task(id: selectedTab) {
                 appState.nexusHasMore = true
                 switch selectedTab {
@@ -172,6 +177,10 @@ struct NexusBrowseView: View {
                 }
             }
         }
+    }
+
+    private var installedNexusIDs: Set<Int> {
+        Set(appState.mods.compactMap { $0.nexusModID })
     }
 
     private var currentMods: [NexusModInfo] {

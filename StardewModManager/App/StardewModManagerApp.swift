@@ -26,7 +26,23 @@ struct StardewModManagerApp: App {
                     get: { appState.showModpackPicker },
                     set: { appState.showModpackPicker = $0 }
                 )) {
-                    NXMModpackPickerSheet(importedMods: appState.pendingNXMMods)
+                    NXMModpackPickerSheet(importedMods: appState.pendingNXMMods, suggestedModpackName: appState.pendingNXMSuggestedName)
+                        .environment(appState)
+                }
+                .sheet(isPresented: .init(
+                    get: { appState.showWebDownloadSheet },
+                    set: { appState.showWebDownloadSheet = $0 }
+                )) {
+                    if let name = appState.webDownloadModName, let url = appState.webDownloadURL {
+                        NexusWebDownloadView(modName: name, url: url)
+                            .environment(appState)
+                    }
+                }
+                .sheet(isPresented: .init(
+                    get: { appState.showAppUpdatePrompt },
+                    set: { appState.showAppUpdatePrompt = $0 }
+                )) {
+                    AppUpdatePromptSheet()
                         .environment(appState)
                 }
         }

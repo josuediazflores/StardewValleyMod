@@ -7,21 +7,31 @@ struct NexusModDetailView: View {
     @State private var files: [NexusModFileInfo] = []
     @State private var isLoadingFiles = false
     @State private var error: String?
-    @State private var isDownloading = false
+    @State private var downloadingFileId: Int?
 
     var body: some View {
         VStack(spacing: 0) {
             // Header
             HStack {
                 Text(mod.displayName)
-                    .font(.title2.weight(.bold))
+                    .font(.stardew(size: 22))
+                    .foregroundStyle(Color.textDark)
+                    .lineLimit(1)
                 Spacer()
-                Button("Done") { dismiss() }
-                    .buttonStyle(.bordered)
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Color.textMuted)
+                }
+                .buttonStyle(.plain)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.parchmentHeader)
 
-            Divider()
+            Color.frameBorder.frame(height: 2)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -31,28 +41,33 @@ struct NexusModDetailView: View {
                             AsyncImage(url: url) { image in
                                 image.resizable().aspectRatio(contentMode: .fill)
                             } placeholder: {
-                                Rectangle().fill(.fill.tertiary)
+                                Rectangle().fill(Color.parchmentHeader)
+                                    .overlay {
+                                        Image(systemName: "photo")
+                                            .foregroundStyle(Color.textMuted)
+                                    }
                             }
                             .frame(width: 120, height: 90)
                             .clipped()
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
 
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 6) {
                             Label(mod.author ?? "Unknown", systemImage: "person")
+                                .foregroundStyle(Color.textMedium)
                             Label("v\(mod.version ?? "?")", systemImage: "tag")
+                                .foregroundStyle(Color.textMedium)
                             if let downloads = mod.modDownloads {
                                 Label("\(downloads) downloads", systemImage: "arrow.down.circle")
+                                    .foregroundStyle(Color.textMedium)
                             }
                         }
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 13))
                     }
 
                     Text(mod.summary ?? "")
-                        .font(.body)
-
-                    Divider()
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.textLight)
 
                     // Actions
                     HStack(spacing: 12) {
@@ -60,35 +75,54 @@ struct NexusModDetailView: View {
                             appState.openNexusModPage(modId: mod.modId)
                         } label: {
                             Label("View on Nexus", systemImage: "globe")
+                                .font(.stardew(size: 14))
+                                .foregroundStyle(Color.textDark)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.accentGold)
+                                )
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.plain)
 
                         if !appState.settings.isNexusPremium {
-                            Text("Direct download requires Nexus Premium")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            Text("Downloads via Nexus web page")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.textMuted)
                         }
                     }
 
+                    Color.stardewDivider.opacity(0.3).frame(height: 1)
+
                     // Files
                     Text("Files")
-                        .font(.headline)
+                        .font(.stardew(size: 18))
+                        .foregroundStyle(Color.textDark)
 
                     if isLoadingFiles {
-                        ProgressView("Loading files...")
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Loading files...")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.textMuted)
+                        }
                     } else if let error {
                         Text(error)
-                            .foregroundStyle(.red)
-                            .font(.caption)
+                            .foregroundStyle(Color.stardewRed)
+                            .font(.system(size: 12))
                     } else if files.isEmpty {
                         Text("No files available")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.textMuted)
+                            .font(.system(size: 12))
                     } else {
                         ForEach(files) { file in
                             HStack {
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(file.name)
-                                        .font(.subheadline.weight(.medium))
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(Color.textDark)
                                     HStack(spacing: 8) {
                                         if let version = file.version {
                                             Text("v\(version)")
@@ -98,53 +132,77 @@ struct NexusModDetailView: View {
                                         }
                                         if let category = file.categoryName {
                                             Text(category)
-                                                .padding(.horizontal, 5)
-                                                .padding(.vertical, 1)
-                                                .background(.fill.tertiary)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(Color.accentGold.opacity(0.15))
+                                                .foregroundStyle(Color.accentGoldDark)
                                                 .clipShape(Capsule())
                                         }
                                     }
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Color.textMuted)
                                 }
 
                                 Spacer()
 
                                 if appState.settings.isNexusPremium {
                                     Button {
-                                        isDownloading = true
+                                        downloadingFileId = file.fileId
                                         Task {
                                             await appState.downloadAndInstallMod(modId: mod.modId, fileId: file.fileId)
-                                            isDownloading = false
+                                            downloadingFileId = nil
                                         }
                                     } label: {
-                                        if isDownloading {
+                                        if downloadingFileId == file.fileId {
                                             ProgressView()
-                                                .scaleEffect(0.7)
+                                                .controlSize(.small)
+                                                .frame(width: 80)
                                         } else {
                                             Label("Install", systemImage: "arrow.down.circle")
+                                                .font(.stardew(size: 14))
+                                                .foregroundStyle(.white)
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 4)
+                                                        .fill(Color.stardewGreen)
+                                                )
                                         }
                                     }
-                                    .buttonStyle(.borderedProminent)
-                                    .disabled(isDownloading)
+                                    .buttonStyle(.plain)
+                                    .disabled(downloadingFileId != nil)
                                 } else {
                                     Button {
-                                        appState.openNexusModPage(modId: mod.modId)
+                                        appState.openWebDownloadSheet(modId: mod.modId, modName: mod.displayName)
+                                        dismiss()
                                     } label: {
-                                        Label("Download", systemImage: "globe")
+                                        Label("Download", systemImage: "arrow.down.circle")
+                                            .font(.stardew(size: 14))
+                                            .foregroundStyle(.white)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .fill(Color.stardewGreen)
+                                            )
                                     }
-                                    .buttonStyle(.bordered)
+                                    .buttonStyle(.plain)
                                 }
                             }
-                            .padding(.vertical, 4)
-                            Divider()
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color.parchmentAlt)
+                            )
                         }
                     }
                 }
-                .padding()
+                .padding(20)
             }
         }
         .frame(minWidth: 550, minHeight: 500)
+        .background(Color.parchment)
         .task {
             isLoadingFiles = true
             do {
@@ -152,6 +210,12 @@ struct NexusModDetailView: View {
                     await appState.nexusAPI.setAPIKey(key)
                 }
                 files = try await appState.nexusAPI.modFiles(modId: mod.modId)
+                files.sort { a, b in
+                    let aIsMain = a.categoryName != "OLD_VERSION"
+                    let bIsMain = b.categoryName != "OLD_VERSION"
+                    if aIsMain != bIsMain { return aIsMain }
+                    return (a.fileId) > (b.fileId)
+                }
             } catch {
                 self.error = error.localizedDescription
             }
