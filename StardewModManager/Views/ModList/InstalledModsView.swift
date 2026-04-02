@@ -32,7 +32,7 @@ struct InstalledModsView: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 11))
                             .foregroundStyle(Color.textMuted)
-                        TextField("Search mods...", text: $state.searchText)
+                        TextField(L.s("installed_search"), text: $state.searchText)
                             .textFieldStyle(.plain)
                             .font(.system(size: 13))
                             .foregroundStyle(Color.textDark)
@@ -67,7 +67,7 @@ struct InstalledModsView: View {
                 HStack(spacing: 8) {
                     if isBatchMode {
                         let count = selectedModIDs.count
-                        Text("\(count) mod\(count == 1 ? "" : "s") selected")
+                        Text(L.s("installed_selected_count", count))
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(count > 0 ? Color.textDark : Color.textMuted)
 
@@ -80,7 +80,7 @@ struct InstalledModsView: View {
                             }
                         } label: {
                             let allSelected = selectedModIDs == Set(appState.filteredMods.filter { !$0.isBuiltIn }.map(\.id))
-                            Text(allSelected ? "Deselect All" : "Select All")
+                            Text(allSelected ? L.s("installed_deselect_all") : L.s("installed_select_all"))
                                 .font(.system(size: 12))
                         }
                         .buttonStyle(.borderless)
@@ -95,7 +95,7 @@ struct InstalledModsView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 11))
-                                Text("Enable")
+                                Text(L.s("installed_enable"))
                                     .font(.system(size: 13, weight: .medium))
                             }
                             .foregroundStyle(.white)
@@ -117,7 +117,7 @@ struct InstalledModsView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 11))
-                                Text("Disable")
+                                Text(L.s("installed_disable"))
                                     .font(.system(size: 13, weight: .medium))
                             }
                             .foregroundStyle(.white)
@@ -137,7 +137,7 @@ struct InstalledModsView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "trash.fill")
                                     .font(.system(size: 11))
-                                Text("Delete")
+                                Text(L.s("common_delete"))
                                     .font(.system(size: 13, weight: .medium))
                             }
                             .foregroundStyle(.white)
@@ -151,7 +151,7 @@ struct InstalledModsView: View {
                         .buttonStyle(.borderless)
                         .disabled(count == 0)
 
-                        Button("Cancel") {
+                        Button(L.s("common_cancel")) {
                             isBatchMode = false
                             selectedModIDs.removeAll()
                         }
@@ -165,13 +165,13 @@ struct InstalledModsView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "square.and.arrow.down")
                                         .font(.system(size: 11))
-                                    Text("Import")
+                                    Text(L.s("installed_import"))
                                         .font(.system(size: 13, weight: .medium))
                                 }
                                 .foregroundStyle(Color.stardewGreen)
                             }
                             .buttonStyle(.borderless)
-                            .help("Import mod ZIP files")
+                            .help(L.s("installed_import_help"))
 
                             Button {
                                 openFolderPicker()
@@ -179,13 +179,13 @@ struct InstalledModsView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "folder.badge.plus")
                                         .font(.system(size: 11))
-                                    Text("Add Folder")
+                                    Text(L.s("installed_add_folder"))
                                         .font(.system(size: 13, weight: .medium))
                                 }
                                 .foregroundStyle(Color.accentGold)
                             }
                             .buttonStyle(.borderless)
-                            .help("Import mod folders")
+                            .help(L.s("installed_add_folder_help"))
 
                             Button {
                                 nexusURLInput = ""
@@ -194,13 +194,13 @@ struct InstalledModsView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "link")
                                         .font(.system(size: 11))
-                                    Text("Nexus URL")
+                                    Text(L.s("installed_nexus_url"))
                                         .font(.system(size: 13, weight: .medium))
                                 }
                                 .foregroundStyle(Color.stardewBlue)
                             }
                             .buttonStyle(.borderless)
-                            .help("Install from Nexus Mods URL")
+                            .help(L.s("installed_nexus_url_help"))
                         }
 
                         Spacer()
@@ -209,7 +209,7 @@ struct InstalledModsView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "arrow.up.circle.fill")
                                     .font(.system(size: 11))
-                                Text("\(appState.modUpdates.count) update\(appState.modUpdates.count == 1 ? "" : "s")")
+                                Text(L.s("installed_update_count", appState.modUpdates.count))
                                     .font(.system(size: 13, weight: .medium))
                             }
                             .foregroundStyle(Color.stardewOrange)
@@ -218,7 +218,7 @@ struct InstalledModsView: View {
                                 ProgressView()
                                     .scaleEffect(0.5)
                                     .frame(width: 12, height: 12)
-                                Text("Checking...")
+                                Text(L.s("installed_checking"))
                                     .font(.system(size: 12))
                             }
                             .foregroundStyle(Color.textMuted)
@@ -231,13 +231,13 @@ struct InstalledModsView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "checkmark.circle")
                                     .font(.system(size: 14))
-                                Text("Select")
+                                Text(L.s("installed_select"))
                                     .font(.system(size: 13, weight: .medium))
                             }
                             .foregroundStyle(Color.textLight)
                         }
                         .buttonStyle(.borderless)
-                        .help("Enter batch selection mode")
+                        .help(L.s("installed_select_help"))
                     }
                 }
                 .padding(.horizontal, 16)
@@ -251,18 +251,18 @@ struct InstalledModsView: View {
                         VStack(spacing: 16) {
                             StardewIcon(type: .arrowBox, size: 48)
 
-                            Text("No mods installed")
+                            Text(L.s("installed_no_mods"))
                                 .font(.system(size: 15, weight: .medium))
                                 .foregroundStyle(Color.textDark)
 
-                            Text("Drag & drop mod folders or ZIP files here, or use the buttons above")
+                            Text(L.s("installed_no_mods_hint"))
                                 .font(.system(size: 13))
                                 .foregroundStyle(Color.textMuted)
                                 .multilineTextAlignment(.center)
 
                             HStack(spacing: 12) {
                                 Button { openFilePicker() } label: {
-                                    Text("Choose Files...")
+                                    Text(L.s("installed_choose_files"))
                                         .font(.stardew(size: 16))
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
@@ -273,7 +273,7 @@ struct InstalledModsView: View {
                                 .buttonStyle(.plain)
 
                                 Button { openFolderPicker() } label: {
-                                    Text("Choose Folder...")
+                                    Text(L.s("installed_choose_folder"))
                                         .font(.stardew(size: 16))
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
@@ -290,7 +290,7 @@ struct InstalledModsView: View {
                             Image(systemName: "tray")
                                 .font(.system(size: 28))
                                 .foregroundStyle(Color.textMuted.opacity(0.3))
-                            Text("No mods match your search")
+                            Text(L.s("installed_no_results"))
                                 .font(.system(size: 13))
                                 .foregroundStyle(Color.textMuted)
                         }
@@ -325,10 +325,10 @@ struct InstalledModsView: View {
                 handleDrop(providers)
             }
             .confirmationDialog(
-                "Delete \(selectedModIDs.count) Mod\(selectedModIDs.count == 1 ? "" : "s")",
+                L.s("installed_delete_title", selectedModIDs.count),
                 isPresented: $showBatchDeleteConfirmation
             ) {
-                Button("Delete \(selectedModIDs.count) mod\(selectedModIDs.count == 1 ? "" : "s")", role: .destructive) {
+                Button(L.s("installed_delete_title", selectedModIDs.count), role: .destructive) {
                     let modsToDelete = appState.mods.filter { selectedModIDs.contains($0.id) }
                     appState.softDeleteMods(modsToDelete)
                     selectedModIDs.removeAll()
@@ -339,25 +339,25 @@ struct InstalledModsView: View {
                     .filter { selectedModIDs.contains($0.id) }
                     .map { $0.manifest.name }
                     .joined(separator: ", ")
-                Text("Are you sure you want to delete these mods? This will remove them from disk and cannot be undone.\n\n\(names)")
+                Text(L.s("installed_delete_confirm") + "\n\n\(names)")
             }
 
             .sheet(isPresented: $showNexusURLSheet) {
                 VStack(spacing: 16) {
-                    Text("Install from Nexus URL")
+                    Text(L.s("installed_nexus_sheet_title"))
                         .font(.stardew(size: 22))
                         .foregroundStyle(Color.textDark)
 
-                    Text("Paste a Nexus Mods link to download and install")
+                    Text(L.s("installed_nexus_sheet_desc"))
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textMuted)
 
-                    TextField("https://www.nexusmods.com/stardewvalley/mods/...", text: $nexusURLInput)
+                    TextField(L.s("installed_nexus_placeholder"), text: $nexusURLInput)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 13))
 
                     HStack(spacing: 12) {
-                        Button("Cancel") {
+                        Button(L.s("common_cancel")) {
                             showNexusURLSheet = false
                         }
                         .font(.stardew(size: 16))
@@ -374,7 +374,7 @@ struct InstalledModsView: View {
                                 ProgressView()
                                     .scaleEffect(0.7)
                             } else {
-                                Text("Install")
+                                Text(L.s("installed_nexus_install"))
                                     .font(.stardew(size: 16))
                             }
                         }
@@ -449,7 +449,7 @@ struct InstalledModsView: View {
                             .lineLimit(1)
 
                         if mod.isBuiltIn {
-                            Text("Built-in")
+                            Text(L.s("row_built_in"))
                                 .font(.caption2)
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
@@ -462,7 +462,7 @@ struct InstalledModsView: View {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.yellow)
-                                .help("Missing or disabled dependencies")
+                                .help(L.s("row_missing_deps"))
                         }
                     }
 
@@ -500,12 +500,12 @@ struct InstalledModsView: View {
                             .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
-                        .help("Update available — click to open download page")
+                        .help(L.s("row_update_help"))
                     }
                 }
 
                 let typeColor: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
-                Text(mod.modType.rawValue)
+                Text(mod.modType.displayName)
                     .font(.system(size: 10, weight: .medium))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -551,15 +551,15 @@ struct InstalledModsView: View {
         .contextMenu {
             if !isBatchMode {
                 if !mod.isBuiltIn {
-                    Button(mod.isEnabled ? "Disable Mod" : "Enable Mod") {
+                    Button(mod.isEnabled ? L.s("installed_disable") : L.s("installed_enable")) {
                         toggleMod(mod)
                     }
                     Divider()
                 }
-                Button("Show in Finder") {
+                Button(L.s("detail_show_in_finder")) {
                     NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mod.folderURL.path)
                 }
-                Button("Copy Unique ID") {
+                Button(L.s("detail_unique_id")) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(mod.manifest.uniqueID, forType: .string)
                 }

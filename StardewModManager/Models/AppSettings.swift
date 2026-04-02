@@ -34,6 +34,9 @@ final class AppSettings {
     var enableSounds: Bool {
         didSet { UserDefaults.standard.set(enableSounds, forKey: "enableSounds") }
     }
+    var language: String {
+        didSet { UserDefaults.standard.set(language, forKey: "appLanguage") }
+    }
     var isAPIKeyValidated: Bool = false
     var nexusUserName: String?
     var isNexusPremium: Bool = false
@@ -66,6 +69,7 @@ final class AppSettings {
         theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: "appTheme") ?? "Stardew") ?? .stardew
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         enableSounds = UserDefaults.standard.object(forKey: "enableSounds") == nil ? true : UserDefaults.standard.bool(forKey: "enableSounds")
+        language = UserDefaults.standard.string(forKey: "appLanguage") ?? "system"
         if let saved = UserDefaults.standard.string(forKey: "gamePath"), !saved.isEmpty {
             gamePath = saved
             // Existing users already have a game path — skip onboarding

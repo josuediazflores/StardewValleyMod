@@ -82,7 +82,7 @@ struct SidebarView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "arrow.up.circle.fill")
                                 .font(.system(size: 12))
-                            Text("v\(update.version) Available")
+                            Text(L.s("settings_update_available", update.version))
                                 .font(.stardew(size: 13))
                         }
                         .foregroundStyle(Color.stardewOrange)
@@ -98,7 +98,7 @@ struct SidebarView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 12))
-                        Text("Settings")
+                        Text(L.s("sidebar_settings"))
                             .font(.stardew(size: 15))
                     }
                     .foregroundStyle(Color.accentGold.opacity(0.8))
@@ -111,7 +111,7 @@ struct SidebarView: View {
                     Circle()
                         .fill(appState.settings.isSMAPIInstalled ? Color.stardewGreen : Color.stardewRed)
                         .frame(width: 7, height: 7)
-                    Text(appState.settings.isSMAPIInstalled ? "SMAPI Ready" : "SMAPI Not Found")
+                    Text(appState.settings.isSMAPIInstalled ? L.s("sidebar_smapi_ready") : L.s("sidebar_smapi_not_found"))
                         .font(.system(size: 11))
                         .foregroundStyle(Color.accentGold.opacity(0.5))
                     Spacer()

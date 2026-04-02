@@ -81,7 +81,7 @@ struct GeneralSettingsTab: View {
         VStack(alignment: .leading, spacing: 16) {
             // Theme picker
             HStack(spacing: 12) {
-                Text("Theme")
+                Text(L.s("settings_theme"))
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.textDark)
                     .frame(width: 160, alignment: .leading)
@@ -119,9 +119,38 @@ struct GeneralSettingsTab: View {
                 Spacer()
             }
 
+            // Language picker
+            HStack(spacing: 12) {
+                Text(L.s("settings_language"))
+                    .font(.stardew(size: 16))
+                    .foregroundStyle(Color.textDark)
+                    .frame(width: 160, alignment: .leading)
+
+                Picker("", selection: Binding(
+                    get: { appState.settings.language },
+                    set: { appState.settings.language = $0 }
+                )) {
+                    Text(L.s("settings_language_system")).tag("system")
+                    Text("English").tag("en")
+                    Text("Español").tag("es")
+                    Text("Français").tag("fr")
+                    Text("Deutsch").tag("de")
+                    Text("Italiano").tag("it")
+                    Text("Português").tag("pt")
+                    Text("日本語").tag("ja")
+                    Text("한국어").tag("ko")
+                    Text("简体中文").tag("zh-Hans")
+                    Text("Русский").tag("ru")
+                }
+                .labelsHidden()
+                .frame(width: 160)
+
+                Spacer()
+            }
+
             // Sound effects toggle
             HStack(spacing: 12) {
-                Text("Sound Effects")
+                Text(L.s("settings_sounds"))
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.textDark)
                     .frame(width: 160, alignment: .leading)
@@ -138,7 +167,7 @@ struct GeneralSettingsTab: View {
             // Game path card
             VStack(spacing: 0) {
                 HStack(spacing: 12) {
-                    Text("Stardew Valley Location")
+                    Text(L.s("settings_game_location"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textDark)
                         .frame(width: 160, alignment: .leading)
@@ -150,7 +179,7 @@ struct GeneralSettingsTab: View {
                         .truncationMode(.middle)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Button("Browse...") {
+                    Button(L.s("common_browse")) {
                         browseGamePath()
                     }
                     .font(.stardew(size: 14))
@@ -176,7 +205,7 @@ struct GeneralSettingsTab: View {
                         Circle()
                             .fill(appState.settings.isGamePathValid ? Color.stardewGreen : Color.stardewRed)
                             .frame(width: 8, height: 8)
-                        Text(appState.settings.isGamePathValid ? "Game found" : "Game not found")
+                        Text(appState.settings.isGamePathValid ? L.s("settings_game_found") : L.s("settings_game_not_found"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(appState.settings.isGamePathValid ? Color.stardewGreen : Color.stardewRed)
                     }
@@ -185,7 +214,7 @@ struct GeneralSettingsTab: View {
                         Circle()
                             .fill(appState.settings.isSMAPIInstalled ? Color.stardewGreen : Color.stardewRed)
                             .frame(width: 8, height: 8)
-                        Text(appState.settings.isSMAPIInstalled ? "SMAPI installed" : "SMAPI not found")
+                        Text(appState.settings.isSMAPIInstalled ? L.s("settings_smapi_installed") : L.s("settings_smapi_not_found"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(appState.settings.isSMAPIInstalled ? Color.stardewGreen : Color.stardewRed)
                     }
@@ -195,7 +224,7 @@ struct GeneralSettingsTab: View {
                             HStack(spacing: 6) {
                                 ProgressView()
                                     .controlSize(.small)
-                                Text("Installing...")
+                                Text(L.s("settings_installing"))
                                     .font(.stardew(size: 14))
                                     .foregroundStyle(Color.textMuted)
                             }
@@ -203,7 +232,7 @@ struct GeneralSettingsTab: View {
                             Button {
                                 appState.installSMAPI()
                             } label: {
-                                Text("Install SMAPI")
+                                Text(L.s("settings_install_smapi"))
                                     .font(.stardew(size: 14))
                                     .foregroundStyle(Color.textDark)
                                     .padding(.horizontal, 12)
@@ -230,11 +259,11 @@ struct GeneralSettingsTab: View {
                             .foregroundStyle(Color.stardewRed)
                             .multilineTextAlignment(.center)
                         HStack(spacing: 12) {
-                            Button("Retry") { appState.installSMAPI() }
+                            Button(L.s("common_retry")) { appState.installSMAPI() }
                                 .font(.stardew(size: 12))
                                 .foregroundStyle(Color.stardewBlue)
                                 .buttonStyle(.plain)
-                            Button("Manual Install") {
+                            Button(L.s("settings_manual_install")) {
                                 if let url = URL(string: "https://smapi.io") {
                                     NSWorkspace.shared.open(url)
                                 }
@@ -264,7 +293,7 @@ struct GeneralSettingsTab: View {
                     appState.loadMods()
                 }
             } label: {
-                Text("Auto-Detect")
+                Text(L.s("settings_auto_detect"))
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.textDark)
                     .padding(.horizontal, 20)
@@ -280,14 +309,14 @@ struct GeneralSettingsTab: View {
             }
             .buttonStyle(.plain)
 
-            Text("Changes to game path take effect after reloading the mod list (\u{2318}R).")
+            Text(L.s("settings_reload_hint"))
                 .font(.stardew(size: 13))
                 .foregroundStyle(Color.textMuted)
 
             Button {
                 appState.settings.hasCompletedOnboarding = false
             } label: {
-                Text("Show Welcome Guide")
+                Text(L.s("settings_show_welcome"))
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.textDark)
                     .padding(.horizontal, 20)
@@ -313,8 +342,8 @@ struct GeneralSettingsTab: View {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.title = "Select Stardew Valley Game Directory"
-        panel.message = "Navigate to the folder containing StardewModdingAPI"
+        panel.title = L.s("onboarding_game_dir")
+        panel.message = L.s("onboarding_game_dir_hint")
 
         if panel.runModal() == .OK, let url = panel.url {
             appState.settings.gamePath = url.path(percentEncoded: false)
@@ -338,16 +367,16 @@ struct NexusSettingsTab: View {
                         Circle()
                             .fill(Color.stardewGreen)
                             .frame(width: 8, height: 8)
-                        Text("Connected")
+                        Text(L.s("onboarding_connected"))
                             .font(.stardew(size: 16))
                             .foregroundStyle(Color.stardewGreen)
                         if let name = appState.settings.nexusUserName {
-                            Text("as \(name)")
+                            Text(L.s("onboarding_nexus_as", name))
                                 .font(.stardew(size: 14))
                                 .foregroundStyle(Color.textMuted)
                         }
                         if appState.settings.isNexusPremium {
-                            Text("Premium")
+                            Text(L.s("onboarding_premium"))
                                 .font(.stardew(size: 12))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
@@ -367,7 +396,7 @@ struct NexusSettingsTab: View {
                             appState.settings.nexusUserName = nil
                             appState.settings.isNexusPremium = false
                         } label: {
-                            Text("Disconnect")
+                            Text(L.s("settings_disconnect"))
                                 .font(.stardew(size: 14))
                                 .foregroundStyle(Color.stardewRed)
                                 .padding(.horizontal, 14)
@@ -383,11 +412,11 @@ struct NexusSettingsTab: View {
                     .padding(14)
                 } else {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Nexus Mods API Key")
+                        Text(L.s("settings_nexus_api"))
                             .font(.stardew(size: 16))
                             .foregroundStyle(Color.textDark)
 
-                        SecureField("Enter API key...", text: $apiKeyInput)
+                        SecureField(L.s("settings_nexus_placeholder"), text: $apiKeyInput)
                             .font(.stardew(size: 14))
                             .textFieldStyle(.roundedBorder)
 
@@ -399,7 +428,7 @@ struct NexusSettingsTab: View {
                                     isValidating = false
                                 }
                             } label: {
-                                Text("Validate & Save")
+                                Text(L.s("nexus_validate"))
                                     .font(.stardew(size: 14))
                                     .foregroundStyle(Color.textDark)
                                     .padding(.horizontal, 14)
@@ -417,7 +446,7 @@ struct NexusSettingsTab: View {
                             .disabled(apiKeyInput.isEmpty || isValidating)
                             .opacity(apiKeyInput.isEmpty || isValidating ? 0.5 : 1)
 
-                            Button("Get API Key") {
+                            Button(L.s("nexus_get_key")) {
                                 if let url = URL(string: "https://www.nexusmods.com/users/myaccount?tab=api+access") {
                                     NSWorkspace.shared.open(url)
                                 }
@@ -461,11 +490,11 @@ struct AboutSettingsTab: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(spacing: 0) {
                 HStack {
-                    Text("App")
+                    Text(L.s("settings_app"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textMuted)
                         .frame(width: 80, alignment: .leading)
-                    Text("Stardew Mod Manager")
+                    Text(L.s("settings_app_name"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textDark)
                     Spacer()
@@ -475,7 +504,7 @@ struct AboutSettingsTab: View {
                 Divider().overlay(Color.stardewDivider)
 
                 HStack {
-                    Text("Version")
+                    Text(L.s("settings_version"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textMuted)
                         .frame(width: 80, alignment: .leading)
@@ -503,9 +532,9 @@ struct AboutSettingsTab: View {
                         let update = await UpdateService.checkForUpdate()
                         appState.availableUpdate = update
                         if let update {
-                            checkResult = "v\(update.version) available!"
+                            checkResult = L.s("settings_update_available", update.version)
                         } else {
-                            checkResult = "You're up to date."
+                            checkResult = L.s("settings_up_to_date")
                         }
                         isChecking = false
                     }
@@ -518,7 +547,7 @@ struct AboutSettingsTab: View {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: 12))
                         }
-                        Text("Check for Updates")
+                        Text(L.s("settings_check_updates"))
                             .font(.stardew(size: 16))
                     }
                     .foregroundStyle(Color.textDark)
@@ -548,7 +577,7 @@ struct AboutSettingsTab: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .scaleEffect(0.7)
-                        Text("Downloading update...")
+                        Text(L.s("update_downloading"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                     }
@@ -560,7 +589,7 @@ struct AboutSettingsTab: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "arrow.down.circle.fill")
                                     .font(.system(size: 12))
-                                Text("Update to v\(update.version)")
+                                Text(L.s("settings_update_to", update.version))
                                     .font(.stardew(size: 16))
                             }
                             .foregroundStyle(.white)
@@ -573,7 +602,7 @@ struct AboutSettingsTab: View {
                         }
                         .buttonStyle(.plain)
 
-                        Button("View Release Notes") {
+                        Button(L.s("settings_view_notes")) {
                             if let url = URL(string: update.htmlURL) {
                                 NSWorkspace.shared.open(url)
                             }

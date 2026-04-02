@@ -11,32 +11,32 @@ struct NexusAPIKeySetupView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
 
-            Text("Connect to Nexus Mods")
+            Text(L.s("nexus_connect_title"))
                 .font(.title2.weight(.bold))
 
-            Text("Enter your Nexus Mods API key to browse and download mods directly.")
+            Text(L.s("nexus_connect_desc"))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: 400)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("API Key")
+                Text(L.s("nexus_api_key"))
                     .font(.headline)
 
-                SecureField("Paste your API key here...", text: $apiKeyInput)
+                SecureField(L.s("nexus_api_placeholder"), text: $apiKeyInput)
                     .textFieldStyle(.roundedBorder)
                     .frame(maxWidth: 400)
             }
 
             HStack(spacing: 12) {
-                Button("Get API Key") {
+                Button(L.s("nexus_get_key")) {
                     if let url = URL(string: "https://www.nexusmods.com/users/myaccount?tab=api+access") {
                         NSWorkspace.shared.open(url)
                     }
                 }
                 .buttonStyle(.bordered)
 
-                Button("Validate & Save") {
+                Button(L.s("nexus_validate")) {
                     isValidating = true
                     Task {
                         await appState.validateNexusAPIKey(apiKeyInput)
@@ -48,7 +48,7 @@ struct NexusAPIKeySetupView: View {
             }
 
             if isValidating {
-                ProgressView("Validating...")
+                ProgressView()
             }
 
             if let error = appState.nexusError {

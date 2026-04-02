@@ -1,0 +1,337 @@
+/* 共通 */
+"common_cancel" = "キャンセル";
+"common_done" = "完了";
+"common_retry" = "再試行";
+"common_loading" = "読み込み中...";
+"common_ok" = "OK";
+"common_delete" = "削除";
+"common_error" = "エラー";
+"common_search" = "検索";
+"common_undo" = "元に戻す";
+"common_import" = "インポート";
+"common_export" = "エクスポート";
+"common_browse" = "参照...";
+
+/* アプリメニュー */
+"menu_import_mods" = "MODをインポート...";
+"menu_refresh_mod_list" = "MODリストを更新";
+"menu_launch_game" = "ゲームを起動";
+"menu_check_updates" = "アップデートを確認";
+"menu_toggle_mod" = "選択したMODを切り替え";
+"menu_show_in_finder" = "Finderで表示";
+"menu_show_all" = "すべてのMODを表示";
+"menu_show_enabled" = "有効なMODのみ表示";
+"menu_show_disabled" = "無効なMODのみ表示";
+
+/* サイドバー */
+"sidebar_modpacks" = "MODパック";
+"sidebar_mods" = "MOD";
+"sidebar_browse" = "ブラウズ";
+"sidebar_settings" = "設定";
+"sidebar_smapi_ready" = "SMAPI 準備完了";
+"sidebar_smapi_not_found" = "SMAPI が見つかりません";
+"sidebar_select_item" = "サイドバーから項目を選択してください";
+
+/* アプリ更新 */
+"update_available" = "アップデートあり";
+"update_version_message" = "Stardew Mod Managerの新しいバージョンがあります。";
+"update_downloading" = "ダウンロード中...";
+"update_now" = "今すぐ更新";
+"update_view_github" = "GitHubで見る";
+"update_later" = "後で";
+
+/* インストール済みMOD */
+"installed_search" = "MODを検索...";
+"installed_import" = "インポート";
+"installed_import_help" = "MODのZIPファイルをインポート";
+"installed_add_folder" = "フォルダ追加";
+"installed_add_folder_help" = "MODフォルダをインポート";
+"installed_nexus_url" = "Nexus URL";
+"installed_nexus_url_help" = "Nexus Mods URLからインストール";
+"installed_select" = "選択";
+"installed_select_help" = "一括選択モードに入る";
+"installed_deselect_all" = "すべて解除";
+"installed_select_all" = "すべて選択";
+"installed_enable" = "有効にする";
+"installed_disable" = "無効にする";
+"installed_checking" = "確認中...";
+"installed_selected_count" = "%d個のMODを選択中";
+"installed_update_count" = "%d件のアップデート";
+"installed_no_mods" = "MODがインストールされていません";
+"installed_no_mods_hint" = "MODフォルダやZIPファイルをここにドラッグ＆ドロップするか、上のボタンを使用してください";
+"installed_choose_files" = "ファイルを選択...";
+"installed_choose_folder" = "フォルダを選択...";
+"installed_no_results" = "検索に一致するMODはありません";
+"installed_delete_title" = "%d個のMODを削除";
+"installed_delete_confirm" = "これらのMODを削除しますか？ディスクから削除され、元に戻せません。";
+"installed_nexus_sheet_title" = "Nexus URLからインストール";
+"installed_nexus_sheet_desc" = "Nexus Modsのリンクを貼り付けてダウンロード・インストール";
+"installed_nexus_placeholder" = "https://www.nexusmods.com/stardewvalley/mods/...";
+"installed_nexus_install" = "インストール";
+
+/* MOD詳細 */
+"detail_enabled" = "有効";
+"detail_disabled" = "無効";
+"detail_description" = "説明";
+"detail_content_pack_for" = "コンテンツパックの対象";
+"detail_dependencies" = "依存関係";
+"detail_optional" = "任意";
+"detail_unique_id" = "固有ID";
+"detail_folder" = "フォルダ";
+"detail_show_in_finder" = "Finderで表示";
+"detail_view_on_nexus" = "Nexus Modsで見る";
+
+/* MOD行 */
+"row_built_in" = "組み込み";
+"row_update_help" = "アップデートあり — クリックでダウンロードページを開く";
+"row_missing_deps" = "依存MODが不足または無効です";
+"row_delete_help" = "MODを削除";
+
+/* MODパック */
+"modpack_load_profile" = "プロファイルを読み込む";
+"modpack_share" = "共有";
+"modpack_share_smm" = ".smmとして共有";
+"modpack_copy_clipboard" = "クリップボードにコピー";
+"modpack_export_json" = "JSONとしてエクスポート";
+"modpack_export_zip" = "ZIPとしてエクスポート";
+"modpack_active" = "アクティブ";
+"modpack_mods_count" = "%d個のMOD";
+"modpack_no_mods" = "このMODパックにMODはありません";
+"modpack_missing" = "不足";
+"modpack_enable" = "有効にする";
+"modpack_disable" = "無効にする";
+"modpack_remove" = "MODパックから削除";
+"modpack_manual" = "手動";
+"modpack_nexus_collection" = "Nexusコレクション";
+"modpack_imported" = "インポート済み";
+"modpack_external" = "外部";
+"modpack_live" = "ライブ";
+"modpack_download" = "ダウンロード";
+
+/* MODパック作成 */
+"modpack_create_title" = "MODパックを作成";
+"modpack_create_name" = "名前";
+"modpack_create_name_placeholder" = "マイMODパック";
+"modpack_create_description" = "説明";
+"modpack_create_desc_placeholder" = "任意の説明...";
+"modpack_create_preview" = "現在のMOD構成を保存します（有効: %d、無効: %d）";
+"modpack_create_button" = "作成";
+
+/* MODパック詳細 */
+"modpack_detail_apply" = "プロファイルを適用";
+"modpack_detail_delete" = "MODパックを削除";
+"modpack_detail_created" = "作成日:";
+"modpack_detail_updated" = "更新日:";
+"modpack_detail_mods" = "MOD (%d)";
+"modpack_detail_delete_confirm" = "\"%@\" を削除";
+"modpack_detail_delete_message" = "\"%@\" を削除しますか？この操作は元に戻せません。";
+"modpack_detail_applied" = "MODパックを適用しました";
+"modpack_detail_applied_message" = "MODパック \"%@\" を適用しました。";
+
+/* MODパックインポート */
+"modpack_import_title" = "MODパックをインポート";
+"modpack_import_url" = "URL";
+"modpack_import_url_placeholder" = "https://...";
+"modpack_import_detected" = "検出:";
+"modpack_import_downloading" = "ダウンロード中...";
+"modpack_import_button" = "インポート";
+"modpack_import_nexus" = "Nexusコレクション";
+"modpack_import_google" = "Google Drive";
+"modpack_import_zip" = "アーカイブ直接";
+"modpack_import_unknown" = "不明なソース";
+"modpack_import_security" = "セキュリティ警告";
+"modpack_import_warning" = "信頼できるソースのMODパックのみをインポートしてください。MODパックには悪意のあるコードが含まれる可能性があります。";
+"modpack_import_risk_code" = "悪意のあるコードの実行";
+"modpack_import_risk_privacy" = "外部URLによるプライバシーの懸念";
+"modpack_import_trust" = "リスクを理解しました";
+
+/* MODパックリスト */
+"modpack_list_play" = "プレイ";
+"modpack_list_play_help" = "SMAPIでStardew Valleyを起動";
+"modpack_list_profiles" = "プロファイル";
+"modpack_list_new" = "新規";
+"modpack_list_from_file" = "ファイルから...";
+"modpack_list_from_clipboard" = "クリップボードから";
+"modpack_list_from_url" = "URLから...";
+"modpack_list_from_nexus" = "Nexusコレクションから...";
+"modpack_list_compare" = "比較";
+"modpack_list_nearby" = "近くの端末";
+"modpack_list_vanilla" = "バニラ";
+"modpack_list_zero_mods" = "MODなし";
+"modpack_list_no_profiles" = "保存されたプロファイルはありません";
+"modpack_list_status" = "%dプロファイル · %d個のMODをインストール済み";
+"modpack_list_delete_confirm" = "MODパックを削除";
+"modpack_list_delete_message" = "\"%@\" を削除しますか？この操作は元に戻せません。";
+
+/* プロファイル比較 */
+"compare_title" = "プロファイルを比較";
+"compare_profile_a" = "プロファイル A";
+"compare_profile_b" = "プロファイル B";
+"compare_select" = "選択...";
+"compare_shared" = "%d個が共通";
+"compare_only_a" = "%d個がAのみ";
+"compare_only_b" = "%d個がBのみ";
+"compare_in_both" = "両方に含まれる";
+"compare_only_in" = "%@ のみ";
+"compare_select_hint" = "比較する2つのプロファイルを選択してください";
+
+/* NXMピッカー */
+"nxm_downloaded" = "MODをダウンロードしました";
+"nxm_where_install" = "このMODをどこにインストールしますか？";
+"nxm_contains_mods" = "このダウンロードには%d個のMODが含まれています";
+"nxm_current_profile" = "現在のプロファイル";
+"nxm_install_now" = "今すぐインストール";
+"nxm_new_modpack" = "新しいMODパック";
+"nxm_modpack_name" = "MODパック名";
+"nxm_create" = "作成";
+
+/* 近くの端末 */
+"nearby_title" = "近くのプレイヤーと比較";
+"nearby_select_modpack" = "比較するMODパックを選択:";
+"nearby_start" = "検索を開始";
+"nearby_searching" = "近くのプレイヤーを探しています...";
+"nearby_ensure" = "相手も「近くの端末で比較」を開いていることを確認してください";
+"nearby_found" = "検出:";
+"nearby_pick_first" = "先にMODパックを選択してください";
+"nearby_connected" = "%@ に接続しました";
+"nearby_send" = "MODパックを送信";
+"nearby_send_full" = "ファイル付きでMODパックを送信";
+"nearby_send_full_help" = "相手がインストールできるようにすべてのMODファイルを送信";
+"nearby_compare" = "MODパックを比較";
+"nearby_sent" = "MODパックを送信しました！";
+"nearby_waiting" = "相手のMODパックを待っています...";
+"nearby_preparing" = "MODを準備中...";
+"nearby_sending" = "MODを送信中...";
+"nearby_keep_near" = "両方のデバイスを近くに置いてください";
+"nearby_receiving" = "MODを受信中...";
+"nearby_importing" = "MODをインポート中...";
+"nearby_transfer_done" = "転送完了！";
+"nearby_mods_imported" = "MODのインポートに成功しました。";
+"nearby_mods_sent" = "MODの送信に成功しました。";
+"nearby_transfer_failed" = "転送に失敗しました";
+"nearby_perfect_match" = "完全一致！";
+"nearby_all_match" = "有効な%d個のMODがすべて一致しています。";
+"nearby_you_have" = "自分のみ";
+"nearby_send_missing" = "不足している%d個のMODを送信";
+"nearby_they_have" = "相手のみ";
+"nearby_ask_friend" = "相手に送信を依頼してください";
+"nearby_matched" = "一致 (%d)";
+"nearby_shared" = "%d個が共通";
+"nearby_only_you" = "%d個が自分のみ";
+"nearby_only_them" = "%d個が相手のみ";
+"nearby_close" = "閉じる";
+
+/* Nexus APIキー */
+"nexus_connect_title" = "Nexus Modsに接続";
+"nexus_connect_desc" = "Nexus Mods APIキーを入力して、MODを直接ブラウズ・ダウンロードできます。";
+"nexus_api_key" = "APIキー";
+"nexus_api_placeholder" = "APIキーを貼り付けてください...";
+"nexus_get_key" = "APIキーを取得";
+"nexus_validate" = "検証して保存";
+
+/* Nexusブラウズ */
+"nexus_essentials" = "定番";
+"nexus_trending" = "トレンド";
+"nexus_latest" = "最新";
+"nexus_search" = "検索";
+"nexus_refresh" = "更新";
+"nexus_search_placeholder" = "Nexus Modsを検索...";
+"nexus_search_button" = "検索";
+"nexus_loading" = "読み込み中...";
+
+/* Nexusカード */
+"nexus_modpack" = "MODパック";
+"nexus_installed" = "インストール済み";
+
+/* Nexus詳細 */
+"nexus_detail_view" = "Nexusで見る";
+"nexus_detail_web_downloads" = "NexusのWebページからダウンロード";
+"nexus_detail_files" = "ファイル";
+"nexus_detail_loading" = "ファイルを読み込み中...";
+"nexus_detail_no_files" = "利用可能なファイルはありません";
+"nexus_detail_install" = "インストール";
+"nexus_detail_download" = "ダウンロード";
+
+/* Nexus Webダウンロード */
+"nexus_web_hint" = "必要に応じてログインし、「Mod Manager Download」をクリックしてください";
+
+/* オンボーディング */
+"onboarding_welcome" = "Stardew Mod Managerへようこそ";
+"onboarding_welcome_desc" = "MacでStardew ValleyのMODを管理するアプリです。";
+"onboarding_welcome_hint" = "数ステップでセットアップしましょう。";
+"onboarding_find_game" = "ゲームを探す";
+"onboarding_game_location" = "Stardew Valleyのインストール場所を指定してください。";
+"onboarding_no_path" = "パスが検出されません";
+"onboarding_game_found" = "ゲームが見つかりました";
+"onboarding_game_not_found" = "ゲームが見つかりません";
+"onboarding_smapi_installed" = "SMAPI インストール済み";
+"onboarding_smapi_not_found" = "SMAPI が見つかりません";
+"onboarding_install_smapi" = "SMAPI をインストール";
+"onboarding_installing" = "インストール中...";
+"onboarding_auto_detect" = "自動検出";
+"onboarding_nexus_title" = "Nexus Modsに接続";
+"onboarding_nexus_desc" = "Nexus Modsアカウントと連携して、MODを直接ブラウズ・ダウンロードできます（任意）。";
+"onboarding_connected" = "接続済み";
+"onboarding_nexus_as" = "%@として";
+"onboarding_premium" = "プレミアム";
+"onboarding_setup_later" = "この設定は後から設定画面で変更できます。";
+"onboarding_all_set" = "準備完了！";
+"onboarding_all_set_hint" = "できること:";
+"onboarding_profiles_title" = "MODパック";
+"onboarding_profiles_desc" = "プレイスタイルに合わせてMODプロファイルを作成・切り替え。";
+"onboarding_mods_title" = "MOD";
+"onboarding_mods_desc" = "インストール済みMODの表示、有効化、無効化、インポート。";
+"onboarding_browse_title" = "Nexusをブラウズ";
+"onboarding_browse_desc" = "Nexus ModsからMODを検索して直接ダウンロード。";
+"onboarding_back" = "戻る";
+"onboarding_next" = "次へ";
+"onboarding_skip" = "スキップ";
+"onboarding_get_started" = "はじめる";
+"onboarding_game_dir" = "Stardew Valleyのゲームディレクトリを選択";
+"onboarding_game_dir_hint" = "StardewModdingAPIが含まれるフォルダに移動してください";
+
+/* 設定 */
+"settings_general" = "一般";
+"settings_nexus" = "Nexus";
+"settings_about" = "このアプリについて";
+"settings_language" = "言語";
+"settings_language_system" = "システム";
+"settings_theme" = "テーマ";
+"settings_sounds" = "効果音";
+"settings_game_location" = "Stardew Valleyの場所";
+"settings_game_found" = "ゲームが見つかりました";
+"settings_game_not_found" = "ゲームが見つかりません";
+"settings_smapi_installed" = "SMAPI インストール済み";
+"settings_smapi_not_found" = "SMAPI が見つかりません";
+"settings_install_smapi" = "SMAPI をインストール";
+"settings_installing" = "インストール中...";
+"settings_auto_detect" = "自動検出";
+"settings_reload_hint" = "ゲームパスの変更はMODリストを再読み込み（⌘R）すると反映されます。";
+"settings_show_welcome" = "ウェルカムガイドを表示";
+"settings_manual_install" = "手動インストール";
+"settings_nexus_api" = "Nexus Mods APIキー";
+"settings_nexus_placeholder" = "APIキーを入力...";
+"settings_disconnect" = "接続解除";
+"settings_app" = "アプリ";
+"settings_app_name" = "Stardew Mod Manager";
+"settings_version" = "バージョン";
+"settings_check_updates" = "アップデートを確認";
+"settings_checking" = "確認中...";
+"settings_up_to_date" = "最新バージョンです。";
+"settings_update_available" = "v%@ が利用可能です！";
+"settings_update_to" = "v%@ にアップデート";
+"settings_view_notes" = "リリースノートを見る";
+
+/* 列挙型 */
+"mod_type_code" = "コードMOD";
+"mod_type_content" = "コンテンツパック";
+"mod_type_unknown" = "不明";
+"filter_all" = "すべて";
+"filter_enabled" = "有効";
+"filter_disabled" = "無効";
+"filter_code_mods" = "コードMOD";
+"filter_content_packs" = "コンテンツパック";
+"filter_code_short" = "コード";
+"filter_packs_short" = "パック";
+"theme_stardew" = "Stardew";
+"theme_pink" = "ピンク";

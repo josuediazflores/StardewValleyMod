@@ -106,6 +106,10 @@ cat > "$APP_DIR/Contents/Info.plist" << PLIST
 </plist>
 PLIST
 
+# Re-sign the entire bundle with proper adhoc signature + sealed resources
+# This prevents Gatekeeper from showing "app is damaged" on other machines
+codesign --force --deep -s - "$APP_DIR" 2>/dev/null || true
+
 echo ""
 echo "Build complete: $APP_DIR"
 echo "You can now double-click it to launch, or drag it to /Applications."

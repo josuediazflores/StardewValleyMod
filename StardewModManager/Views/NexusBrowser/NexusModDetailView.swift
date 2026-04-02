@@ -74,7 +74,7 @@ struct NexusModDetailView: View {
                         Button {
                             appState.openNexusModPage(modId: mod.modId)
                         } label: {
-                            Label("View on Nexus", systemImage: "globe")
+                            Label(L.s("nexus_detail_view"), systemImage: "globe")
                                 .font(.stardew(size: 14))
                                 .foregroundStyle(Color.textDark)
                                 .padding(.horizontal, 12)
@@ -87,7 +87,7 @@ struct NexusModDetailView: View {
                         .buttonStyle(.plain)
 
                         if !appState.settings.isNexusPremium {
-                            Text("Downloads via Nexus web page")
+                            Text(L.s("nexus_detail_web_downloads"))
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.textMuted)
                         }
@@ -96,7 +96,7 @@ struct NexusModDetailView: View {
                     Color.stardewDivider.opacity(0.3).frame(height: 1)
 
                     // Files
-                    Text("Files")
+                    Text(L.s("nexus_detail_files"))
                         .font(.stardew(size: 18))
                         .foregroundStyle(Color.textDark)
 
@@ -104,7 +104,7 @@ struct NexusModDetailView: View {
                         HStack(spacing: 8) {
                             ProgressView()
                                 .controlSize(.small)
-                            Text("Loading files...")
+                            Text(L.s("nexus_detail_loading"))
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.textMuted)
                         }
@@ -113,7 +113,7 @@ struct NexusModDetailView: View {
                             .foregroundStyle(Color.stardewRed)
                             .font(.system(size: 12))
                     } else if files.isEmpty {
-                        Text("No files available")
+                        Text(L.s("nexus_detail_no_files"))
                             .foregroundStyle(Color.textMuted)
                             .font(.system(size: 12))
                     } else {
@@ -158,7 +158,7 @@ struct NexusModDetailView: View {
                                                 .controlSize(.small)
                                                 .frame(width: 80)
                                         } else {
-                                            Label("Install", systemImage: "arrow.down.circle")
+                                            Label(L.s("nexus_detail_install"), systemImage: "arrow.down.circle")
                                                 .font(.stardew(size: 14))
                                                 .foregroundStyle(.white)
                                                 .padding(.horizontal, 12)
@@ -176,7 +176,7 @@ struct NexusModDetailView: View {
                                         appState.openWebDownloadSheet(modId: mod.modId, modName: mod.displayName)
                                         dismiss()
                                     } label: {
-                                        Label("Download", systemImage: "arrow.down.circle")
+                                        Label(L.s("nexus_detail_download"), systemImage: "arrow.down.circle")
                                             .font(.stardew(size: 14))
                                             .foregroundStyle(.white)
                                             .padding(.horizontal, 12)

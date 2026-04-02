@@ -1,0 +1,337 @@
+/* Comune */
+"common_cancel" = "Annulla";
+"common_done" = "Fatto";
+"common_retry" = "Riprova";
+"common_loading" = "Caricamento...";
+"common_ok" = "OK";
+"common_delete" = "Elimina";
+"common_error" = "Errore";
+"common_search" = "Cerca";
+"common_undo" = "Annulla";
+"common_import" = "Importa";
+"common_export" = "Esporta";
+"common_browse" = "Sfoglia...";
+
+/* Menu App */
+"menu_import_mods" = "Importa mod...";
+"menu_refresh_mod_list" = "Aggiorna elenco mod";
+"menu_launch_game" = "Avvia gioco";
+"menu_check_updates" = "Controlla aggiornamenti";
+"menu_toggle_mod" = "Attiva/Disattiva mod selezionata";
+"menu_show_in_finder" = "Mostra nel Finder";
+"menu_show_all" = "Mostra tutte le mod";
+"menu_show_enabled" = "Solo attive";
+"menu_show_disabled" = "Solo disattivate";
+
+/* Barra laterale */
+"sidebar_modpacks" = "Modpack";
+"sidebar_mods" = "Mod";
+"sidebar_browse" = "Esplora";
+"sidebar_settings" = "Impostazioni";
+"sidebar_smapi_ready" = "SMAPI pronto";
+"sidebar_smapi_not_found" = "SMAPI non trovato";
+"sidebar_select_item" = "Seleziona un elemento dalla barra laterale";
+
+/* Aggiornamento app */
+"update_available" = "Aggiornamento disponibile";
+"update_version_message" = "Una nuova versione di Stardew Mod Manager è disponibile.";
+"update_downloading" = "Download aggiornamento...";
+"update_now" = "Aggiorna ora";
+"update_view_github" = "Vedi su GitHub";
+"update_later" = "Più tardi";
+
+/* Mod installate */
+"installed_search" = "Cerca mod...";
+"installed_import" = "Importa";
+"installed_import_help" = "Importa file ZIP di mod";
+"installed_add_folder" = "Aggiungi cartella";
+"installed_add_folder_help" = "Importa cartelle di mod";
+"installed_nexus_url" = "URL Nexus";
+"installed_nexus_url_help" = "Installa da URL Nexus Mods";
+"installed_select" = "Seleziona";
+"installed_select_help" = "Attiva selezione multipla";
+"installed_deselect_all" = "Deseleziona tutto";
+"installed_select_all" = "Seleziona tutto";
+"installed_enable" = "Attiva";
+"installed_disable" = "Disattiva";
+"installed_checking" = "Controllo...";
+"installed_selected_count" = "%d mod selezionate";
+"installed_update_count" = "%d aggiornamenti";
+"installed_no_mods" = "Nessuna mod installata";
+"installed_no_mods_hint" = "Trascina cartelle o file ZIP qui, oppure usa i pulsanti sopra";
+"installed_choose_files" = "Scegli file...";
+"installed_choose_folder" = "Scegli cartella...";
+"installed_no_results" = "Nessuna mod corrisponde alla ricerca";
+"installed_delete_title" = "Elimina %d mod";
+"installed_delete_confirm" = "Vuoi davvero eliminare queste mod? Verranno rimosse dal disco e non sarà possibile annullare.";
+"installed_nexus_sheet_title" = "Installa da URL Nexus";
+"installed_nexus_sheet_desc" = "Incolla un link di Nexus Mods per scaricare e installare";
+"installed_nexus_placeholder" = "https://www.nexusmods.com/stardewvalley/mods/...";
+"installed_nexus_install" = "Installa";
+
+/* Dettagli mod */
+"detail_enabled" = "Attiva";
+"detail_disabled" = "Disattivata";
+"detail_description" = "Descrizione";
+"detail_content_pack_for" = "Content Pack per";
+"detail_dependencies" = "Dipendenze";
+"detail_optional" = "Opzionale";
+"detail_unique_id" = "ID univoco";
+"detail_folder" = "Cartella";
+"detail_show_in_finder" = "Mostra nel Finder";
+"detail_view_on_nexus" = "Vedi su Nexus Mods";
+
+/* Riga mod */
+"row_built_in" = "Integrata";
+"row_update_help" = "Aggiornamento disponibile — clicca per aprire la pagina di download";
+"row_missing_deps" = "Dipendenze mancanti o disattivate";
+"row_delete_help" = "Elimina mod";
+
+/* Modpack */
+"modpack_load_profile" = "Carica profilo";
+"modpack_share" = "Condividi";
+"modpack_share_smm" = "Condividi come .smm";
+"modpack_copy_clipboard" = "Copia negli appunti";
+"modpack_export_json" = "Esporta come JSON";
+"modpack_export_zip" = "Esporta come ZIP";
+"modpack_active" = "Attivo";
+"modpack_mods_count" = "%d mod";
+"modpack_no_mods" = "Nessuna mod in questo modpack";
+"modpack_missing" = "Mancante";
+"modpack_enable" = "Attiva";
+"modpack_disable" = "Disattiva";
+"modpack_remove" = "Rimuovi dal modpack";
+"modpack_manual" = "Manuale";
+"modpack_nexus_collection" = "Collezione Nexus";
+"modpack_imported" = "Importato";
+"modpack_external" = "Esterno";
+"modpack_live" = "Live";
+"modpack_download" = "Scarica";
+
+/* Creazione modpack */
+"modpack_create_title" = "Crea modpack";
+"modpack_create_name" = "Nome";
+"modpack_create_name_placeholder" = "Il mio modpack";
+"modpack_create_description" = "Descrizione";
+"modpack_create_desc_placeholder" = "Descrizione opzionale...";
+"modpack_create_preview" = "Verrà salvata la configurazione attuale (%d attive, %d disattivate)";
+"modpack_create_button" = "Crea";
+
+/* Dettagli modpack */
+"modpack_detail_apply" = "Applica profilo";
+"modpack_detail_delete" = "Elimina modpack";
+"modpack_detail_created" = "Creato:";
+"modpack_detail_updated" = "Aggiornato:";
+"modpack_detail_mods" = "Mod (%d)";
+"modpack_detail_delete_confirm" = "Elimina \"%@\"";
+"modpack_detail_delete_message" = "Vuoi davvero eliminare \"%@\"? Non sarà possibile annullare.";
+"modpack_detail_applied" = "Modpack applicato";
+"modpack_detail_applied_message" = "Modpack \"%@\" applicato con successo.";
+
+/* Importazione modpack */
+"modpack_import_title" = "Importa modpack";
+"modpack_import_url" = "URL";
+"modpack_import_url_placeholder" = "https://...";
+"modpack_import_detected" = "Rilevato:";
+"modpack_import_downloading" = "Download in corso...";
+"modpack_import_button" = "Importa";
+"modpack_import_nexus" = "Collezione Nexus";
+"modpack_import_google" = "Google Drive";
+"modpack_import_zip" = "Archivio diretto";
+"modpack_import_unknown" = "Fonte sconosciuta";
+"modpack_import_security" = "Avviso di sicurezza";
+"modpack_import_warning" = "Importa modpack solo da fonti affidabili. I modpack possono contenere codice malevolo.";
+"modpack_import_risk_code" = "Esecuzione di codice malevolo";
+"modpack_import_risk_privacy" = "Rischi per la privacy con URL esterni";
+"modpack_import_trust" = "Comprendo i rischi";
+
+/* Elenco modpack */
+"modpack_list_play" = "Gioca";
+"modpack_list_play_help" = "Avvia Stardew Valley con SMAPI";
+"modpack_list_profiles" = "PROFILI";
+"modpack_list_new" = "Nuovo";
+"modpack_list_from_file" = "Da file...";
+"modpack_list_from_clipboard" = "Dagli appunti";
+"modpack_list_from_url" = "Da URL...";
+"modpack_list_from_nexus" = "Da collezione Nexus...";
+"modpack_list_compare" = "Confronta";
+"modpack_list_nearby" = "Vicino";
+"modpack_list_vanilla" = "Vanilla";
+"modpack_list_zero_mods" = "0 mod";
+"modpack_list_no_profiles" = "Nessun profilo salvato";
+"modpack_list_status" = "%d profili · %d mod installate";
+"modpack_list_delete_confirm" = "Elimina modpack";
+"modpack_list_delete_message" = "Vuoi davvero eliminare \"%@\"? Non sarà possibile annullare.";
+
+/* Confronta modpack */
+"compare_title" = "Confronta profili";
+"compare_profile_a" = "Profilo A";
+"compare_profile_b" = "Profilo B";
+"compare_select" = "Seleziona...";
+"compare_shared" = "%d in comune";
+"compare_only_a" = "%d solo in A";
+"compare_only_b" = "%d solo in B";
+"compare_in_both" = "In entrambi";
+"compare_only_in" = "Solo in %@";
+"compare_select_hint" = "Seleziona due profili da confrontare";
+
+/* Scelta NXM */
+"nxm_downloaded" = "Mod scaricata";
+"nxm_where_install" = "Dove vuoi installare questa mod?";
+"nxm_contains_mods" = "Questo download contiene %d mod";
+"nxm_current_profile" = "Profilo attuale";
+"nxm_install_now" = "Installa ora";
+"nxm_new_modpack" = "Nuovo modpack";
+"nxm_modpack_name" = "Nome modpack";
+"nxm_create" = "Crea";
+
+/* Vicino */
+"nearby_title" = "Confronta con un giocatore vicino";
+"nearby_select_modpack" = "Seleziona il modpack da confrontare:";
+"nearby_start" = "Avvia ricerca";
+"nearby_searching" = "Ricerca giocatori vicini...";
+"nearby_ensure" = "Assicurati che anche l'altro giocatore abbia aperto Confronta vicino";
+"nearby_found" = "Trovati nelle vicinanze:";
+"nearby_pick_first" = "Seleziona prima un modpack";
+"nearby_connected" = "Connesso a %@";
+"nearby_send" = "Invia il mio modpack";
+"nearby_send_full" = "Invia modpack completo con file";
+"nearby_send_full_help" = "Invia tutti i file delle mod per permettere l'installazione";
+"nearby_compare" = "Confronta modpack";
+"nearby_sent" = "Modpack inviato!";
+"nearby_waiting" = "In attesa del modpack per il confronto...";
+"nearby_preparing" = "Preparazione mod...";
+"nearby_sending" = "Invio mod...";
+"nearby_keep_near" = "Mantieni entrambi i dispositivi vicini";
+"nearby_receiving" = "Ricezione mod...";
+"nearby_importing" = "Importazione mod...";
+"nearby_transfer_done" = "Trasferimento completato!";
+"nearby_mods_imported" = "Mod importate con successo.";
+"nearby_mods_sent" = "Mod inviate con successo.";
+"nearby_transfer_failed" = "Trasferimento non riuscito";
+"nearby_perfect_match" = "Corrispondenza perfetta!";
+"nearby_all_match" = "Tutte le %d mod attive corrispondono.";
+"nearby_you_have" = "Tu hai, loro no";
+"nearby_send_missing" = "Invia %d mod mancanti";
+"nearby_they_have" = "Loro hanno, tu no";
+"nearby_ask_friend" = "Chiedi al tuo amico di inviarle dal suo dispositivo";
+"nearby_matched" = "Corrispondenti (%d)";
+"nearby_shared" = "%d in comune";
+"nearby_only_you" = "%d solo tu";
+"nearby_only_them" = "%d solo loro";
+"nearby_close" = "Chiudi";
+
+/* Chiave API Nexus */
+"nexus_connect_title" = "Connetti a Nexus Mods";
+"nexus_connect_desc" = "Inserisci la tua chiave API di Nexus Mods per esplorare e scaricare mod direttamente.";
+"nexus_api_key" = "Chiave API";
+"nexus_api_placeholder" = "Incolla qui la tua chiave API...";
+"nexus_get_key" = "Ottieni chiave API";
+"nexus_validate" = "Verifica e salva";
+
+/* Esplora Nexus */
+"nexus_essentials" = "Essenziali";
+"nexus_trending" = "Di tendenza";
+"nexus_latest" = "Recenti";
+"nexus_search" = "Cerca";
+"nexus_refresh" = "Aggiorna";
+"nexus_search_placeholder" = "Cerca su Nexus Mods...";
+"nexus_search_button" = "Cerca";
+"nexus_loading" = "Caricamento...";
+
+/* Scheda Nexus */
+"nexus_modpack" = "Modpack";
+"nexus_installed" = "Installata";
+
+/* Dettagli Nexus */
+"nexus_detail_view" = "Vedi su Nexus";
+"nexus_detail_web_downloads" = "Download tramite pagina web Nexus";
+"nexus_detail_files" = "File";
+"nexus_detail_loading" = "Caricamento file...";
+"nexus_detail_no_files" = "Nessun file disponibile";
+"nexus_detail_install" = "Installa";
+"nexus_detail_download" = "Scarica";
+
+/* Download web Nexus */
+"nexus_web_hint" = "Accedi se necessario, poi clicca \"Mod Manager Download\"";
+
+/* Configurazione iniziale */
+"onboarding_welcome" = "Benvenuto in Stardew Mod Manager";
+"onboarding_welcome_desc" = "Il tuo angolo accogliente per gestire le mod di Stardew Valley su Mac.";
+"onboarding_welcome_hint" = "Ti guideremo nella configurazione in pochi passi.";
+"onboarding_find_game" = "Trova il gioco";
+"onboarding_game_location" = "Dobbiamo sapere dove è installato Stardew Valley.";
+"onboarding_no_path" = "Nessun percorso rilevato";
+"onboarding_game_found" = "Gioco trovato";
+"onboarding_game_not_found" = "Gioco non trovato";
+"onboarding_smapi_installed" = "SMAPI installato";
+"onboarding_smapi_not_found" = "SMAPI non trovato";
+"onboarding_install_smapi" = "Installa SMAPI";
+"onboarding_installing" = "Installazione...";
+"onboarding_auto_detect" = "Rileva automaticamente";
+"onboarding_nexus_title" = "Connetti a Nexus Mods";
+"onboarding_nexus_desc" = "Collega il tuo account Nexus Mods per esplorare e scaricare mod direttamente.";
+"onboarding_connected" = "Connesso";
+"onboarding_nexus_as" = "come %@";
+"onboarding_premium" = "Premium";
+"onboarding_setup_later" = "Puoi sempre configurarlo più tardi nelle Impostazioni.";
+"onboarding_all_set" = "Tutto pronto!";
+"onboarding_all_set_hint" = "Ecco cosa puoi fare:";
+"onboarding_profiles_title" = "Modpack";
+"onboarding_profiles_desc" = "Crea e alterna profili di mod per diverse partite.";
+"onboarding_mods_title" = "Mod";
+"onboarding_mods_desc" = "Visualizza, attiva, disattiva e importa le mod installate.";
+"onboarding_browse_title" = "Esplora Nexus";
+"onboarding_browse_desc" = "Cerca e scarica mod direttamente da Nexus Mods.";
+"onboarding_back" = "Indietro";
+"onboarding_next" = "Avanti";
+"onboarding_skip" = "Salta";
+"onboarding_get_started" = "Inizia";
+"onboarding_game_dir" = "Seleziona la cartella di Stardew Valley";
+"onboarding_game_dir_hint" = "Vai alla cartella contenente StardewModdingAPI";
+
+/* Impostazioni */
+"settings_general" = "Generali";
+"settings_nexus" = "Nexus";
+"settings_about" = "Info";
+"settings_language" = "Lingua";
+"settings_language_system" = "Sistema";
+"settings_theme" = "Tema";
+"settings_sounds" = "Effetti sonori";
+"settings_game_location" = "Posizione di Stardew Valley";
+"settings_game_found" = "Gioco trovato";
+"settings_game_not_found" = "Gioco non trovato";
+"settings_smapi_installed" = "SMAPI installato";
+"settings_smapi_not_found" = "SMAPI non trovato";
+"settings_install_smapi" = "Installa SMAPI";
+"settings_installing" = "Installazione...";
+"settings_auto_detect" = "Rileva automaticamente";
+"settings_reload_hint" = "Le modifiche al percorso del gioco avranno effetto dopo l'aggiornamento dell'elenco mod (⌘R).";
+"settings_show_welcome" = "Mostra guida di benvenuto";
+"settings_manual_install" = "Installazione manuale";
+"settings_nexus_api" = "Chiave API Nexus Mods";
+"settings_nexus_placeholder" = "Inserisci chiave API...";
+"settings_disconnect" = "Disconnetti";
+"settings_app" = "App";
+"settings_app_name" = "Stardew Mod Manager";
+"settings_version" = "Versione";
+"settings_check_updates" = "Controlla aggiornamenti";
+"settings_checking" = "Controllo...";
+"settings_up_to_date" = "Sei aggiornato.";
+"settings_update_available" = "v%@ disponibile!";
+"settings_update_to" = "Aggiorna a v%@";
+"settings_view_notes" = "Vedi note di rilascio";
+
+/* Enumerazioni */
+"mod_type_code" = "Mod con codice";
+"mod_type_content" = "Content Pack";
+"mod_type_unknown" = "Sconosciuto";
+"filter_all" = "Tutte";
+"filter_enabled" = "Attive";
+"filter_disabled" = "Disattivate";
+"filter_code_mods" = "Mod con codice";
+"filter_content_packs" = "Content Pack";
+"filter_code_short" = "Codice";
+"filter_packs_short" = "Pack";
+"theme_stardew" = "Stardew";
+"theme_pink" = "Rosa";

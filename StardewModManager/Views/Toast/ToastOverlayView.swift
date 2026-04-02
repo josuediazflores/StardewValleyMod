@@ -63,7 +63,7 @@ struct ToastBannerView: View {
                 .lineLimit(2)
 
             if let undoAction = toast.undoAction {
-                Button("Undo") {
+                Button(L.s("common_undo")) {
                     undoAction()
                     appState.dismissToast(id: toast.id)
                 }

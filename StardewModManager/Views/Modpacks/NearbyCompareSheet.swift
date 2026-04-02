@@ -9,7 +9,7 @@ struct NearbyCompareSheet: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Text("Compare with Nearby Player")
+            Text(L.s("nearby_title"))
                 .font(.stardew(size: 22))
                 .foregroundStyle(Color.textDark)
 
@@ -32,7 +32,7 @@ struct NearbyCompareSheet: View {
 
             Spacer()
 
-            Button("Close") {
+            Button(L.s("nearby_close")) {
                 peerService.stopSearching()
                 dismiss()
             }
@@ -66,11 +66,11 @@ struct NearbyCompareSheet: View {
         VStack(spacing: 16) {
             // Modpack picker
             VStack(alignment: .leading, spacing: 4) {
-                Text("Select your modpack to compare:")
+                Text(L.s("nearby_select_modpack"))
                     .font(.stardew(size: 14))
                     .foregroundStyle(Color.textMuted)
                 Picker("", selection: $selectedModpack) {
-                    Text("Select...").tag(nil as Modpack?)
+                    Text(L.s("compare_select")).tag(nil as Modpack?)
                     ForEach(appState.modpacks) { mp in
                         Text(mp.name).tag(mp as Modpack?)
                     }
@@ -86,7 +86,7 @@ struct NearbyCompareSheet: View {
                         HStack(spacing: 6) {
                             Image(systemName: "antenna.radiowaves.left.and.right")
                                 .font(.system(size: 12))
-                            Text("Start Searching")
+                            Text(L.s("nearby_start"))
                                 .font(.stardew(size: 16))
                         }
                         .foregroundStyle(.white)
@@ -101,18 +101,18 @@ struct NearbyCompareSheet: View {
                 } else {
                     VStack(spacing: 12) {
                         ProgressView()
-                        Text("Looking for nearby players...")
+                        Text(L.s("nearby_searching"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
 
                         if peerService.foundPeers.isEmpty {
-                            Text("Make sure the other player also has Compare Nearby open")
+                            Text(L.s("nearby_ensure"))
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.textMuted.opacity(0.7))
                                 .multilineTextAlignment(.center)
                         } else {
                             VStack(spacing: 6) {
-                                Text("Found nearby:")
+                                Text(L.s("nearby_found"))
                                     .font(.stardew(size: 13))
                                     .foregroundStyle(Color.textMuted)
                                 ForEach(peerService.foundPeers, id: \.self) { peer in
@@ -145,7 +145,7 @@ struct NearbyCompareSheet: View {
                     }
                 }
             } else {
-                Text("Pick a modpack first")
+                Text(L.s("nearby_pick_first"))
                     .font(.stardew(size: 14))
                     .foregroundStyle(Color.textMuted)
             }
@@ -159,7 +159,7 @@ struct NearbyCompareSheet: View {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(Color.stardewGreen)
-                Text("Connected to \(peerName)")
+                Text(L.s("nearby_connected", peerName))
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.stardewGreen)
             }
@@ -176,7 +176,7 @@ struct NearbyCompareSheet: View {
                         HStack(spacing: 6) {
                             Image(systemName: "paperplane.fill")
                                 .font(.system(size: 12))
-                            Text("Send My Modpack")
+                            Text(L.s("nearby_send"))
                                 .font(.stardew(size: 16))
                         }
                         .foregroundStyle(.white)
@@ -196,13 +196,13 @@ struct NearbyCompareSheet: View {
                         HStack(spacing: 6) {
                             Image(systemName: "shippingbox.fill")
                                 .font(.system(size: 12))
-                            Text("Send Full Modpack with Files")
+                            Text(L.s("nearby_send_full"))
                                 .font(.stardew(size: 14))
                         }
                         .foregroundStyle(Color.stardewBlue)
                     }
                     .buttonStyle(.plain)
-                    .help("Send all mod files so your friend can install them")
+                    .help(L.s("nearby_send_full_help"))
                 }
             } else if peerService.receivedModpack != nil {
                 // They sent theirs too — jump to results
@@ -212,7 +212,7 @@ struct NearbyCompareSheet: View {
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.triangle.2.circlepath")
                             .font(.system(size: 12))
-                        Text("Compare Modpacks")
+                        Text(L.s("nearby_compare"))
                             .font(.stardew(size: 16))
                     }
                     .foregroundStyle(.white)
@@ -229,10 +229,10 @@ struct NearbyCompareSheet: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 28))
                         .foregroundStyle(Color.stardewGreen)
-                    Text("Modpack sent!")
+                    Text(L.s("nearby_sent"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.stardewGreen)
-                    Text("Waiting for their modpack to compare...")
+                    Text(L.s("nearby_waiting"))
                         .font(.stardew(size: 13))
                         .foregroundStyle(Color.textMuted)
                 }
@@ -258,21 +258,21 @@ struct NearbyCompareSheet: View {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 36))
                             .foregroundStyle(Color.stardewGreen)
-                        Text("Perfect Match!")
+                        Text(L.s("nearby_perfect_match"))
                             .font(.stardew(size: 20))
                             .foregroundStyle(Color.stardewGreen)
-                        Text("All \(inBoth.count) enabled mods match.")
+                        Text(L.s("nearby_all_match", inBoth.count))
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                     }
                 } else {
                     // Mismatch summary
                     HStack(spacing: 20) {
-                        Label("\(inBoth.count) shared", systemImage: "checkmark.circle")
+                        Label(L.s("nearby_shared", inBoth.count), systemImage: "checkmark.circle")
                             .foregroundStyle(Color.stardewGreen)
-                        Label("\(onlyMine.count) only you", systemImage: "person")
+                        Label(L.s("nearby_only_you", onlyMine.count), systemImage: "person")
                             .foregroundStyle(Color.stardewOrange)
-                        Label("\(onlyTheirs.count) only them", systemImage: "person.2")
+                        Label(L.s("nearby_only_them", onlyTheirs.count), systemImage: "person.2")
                             .foregroundStyle(Color.stardewBlue)
                     }
                     .font(.stardew(size: 13))
@@ -280,7 +280,7 @@ struct NearbyCompareSheet: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 2) {
                             if !onlyMine.isEmpty {
-                                sectionHeader("You have, they don't", color: .stardewOrange)
+                                sectionHeader(L.s("nearby_you_have"), color: .stardewOrange)
                                 ForEach(sortedNames(ids: onlyMine, myEntries: myModpack.entries, theirMods: theirModpack.mods), id: \.self) { name in
                                     modRow(name, color: .stardewOrange)
                                 }
@@ -292,7 +292,7 @@ struct NearbyCompareSheet: View {
                                     HStack(spacing: 6) {
                                         Image(systemName: "paperplane.fill")
                                             .font(.system(size: 11))
-                                        Text("Send \(onlyMine.count) Missing Mod\(onlyMine.count == 1 ? "" : "s")")
+                                        Text(L.s("nearby_send_missing", onlyMine.count))
                                             .font(.stardew(size: 14))
                                     }
                                     .foregroundStyle(.white)
@@ -307,18 +307,18 @@ struct NearbyCompareSheet: View {
                                 .padding(.top, 6)
                             }
                             if !onlyTheirs.isEmpty {
-                                sectionHeader("They have, you don't", color: .stardewBlue)
+                                sectionHeader(L.s("nearby_they_have"), color: .stardewBlue)
                                 ForEach(sortedNames(ids: onlyTheirs, myEntries: myModpack.entries, theirMods: theirModpack.mods), id: \.self) { name in
                                     modRow(name, color: .stardewBlue)
                                 }
 
-                                Text("Ask your friend to send these from their side")
+                                Text(L.s("nearby_ask_friend"))
                                     .font(.system(size: 11))
                                     .foregroundStyle(Color.textMuted.opacity(0.7))
                                     .padding(.top, 4)
                             }
                             if !inBoth.isEmpty {
-                                sectionHeader("Matched (\(inBoth.count))", color: .stardewGreen)
+                                sectionHeader(L.s("nearby_matched", inBoth.count), color: .stardewGreen)
                                 ForEach(sortedNames(ids: inBoth, myEntries: myModpack.entries, theirMods: theirModpack.mods), id: \.self) { name in
                                     modRow(name, color: .stardewGreen)
                                 }
@@ -339,35 +339,35 @@ struct NearbyCompareSheet: View {
             case .zipping:
                 VStack(spacing: 12) {
                     ProgressView()
-                    Text("Preparing mods...")
+                    Text(L.s("nearby_preparing"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textMuted)
                 }
 
             case .sending:
                 VStack(spacing: 16) {
-                    Text("Sending mods...")
+                    Text(L.s("nearby_sending"))
                         .font(.stardew(size: 18))
                         .foregroundStyle(Color.textDark)
                     StardewProgressBar(
                         progress: peerService.transferProgress,
                         label: "\(Int(peerService.transferProgress * 100))%"
                     )
-                    Text("Keep both devices nearby")
+                    Text(L.s("nearby_keep_near"))
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textMuted.opacity(0.7))
                 }
 
             case .receiving:
                 VStack(spacing: 16) {
-                    Text("Receiving mods...")
+                    Text(L.s("nearby_receiving"))
                         .font(.stardew(size: 18))
                         .foregroundStyle(Color.textDark)
                     StardewProgressBar(
                         progress: peerService.transferProgress,
                         label: "\(Int(peerService.transferProgress * 100))%"
                     )
-                    Text("Keep both devices nearby")
+                    Text(L.s("nearby_keep_near"))
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textMuted.opacity(0.7))
                 }
@@ -375,7 +375,7 @@ struct NearbyCompareSheet: View {
             case .importing:
                 VStack(spacing: 12) {
                     ProgressView()
-                    Text("Importing mods...")
+                    Text(L.s("nearby_importing"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textMuted)
                 }
@@ -385,15 +385,15 @@ struct NearbyCompareSheet: View {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 36))
                         .foregroundStyle(Color.stardewGreen)
-                    Text("Transfer Complete!")
+                    Text(L.s("nearby_transfer_done"))
                         .font(.stardew(size: 20))
                         .foregroundStyle(Color.stardewGreen)
                     if count > 0 {
-                        Text("Mods imported successfully.")
+                        Text(L.s("nearby_mods_imported"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                     } else {
-                        Text("Mods sent successfully.")
+                        Text(L.s("nearby_mods_sent"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                     }
@@ -404,7 +404,7 @@ struct NearbyCompareSheet: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 36))
                         .foregroundStyle(Color.stardewRed)
-                    Text("Transfer Failed")
+                    Text(L.s("nearby_transfer_failed"))
                         .font(.stardew(size: 20))
                         .foregroundStyle(Color.stardewRed)
                     Text(message)

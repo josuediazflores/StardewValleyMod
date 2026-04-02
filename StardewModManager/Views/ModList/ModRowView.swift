@@ -22,7 +22,7 @@ struct ModRowView: View {
                         .lineLimit(1)
 
                     if mod.isBuiltIn {
-                        Text("Built-in")
+                        Text(L.s("row_built_in"))
                             .font(.caption2)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
@@ -59,10 +59,10 @@ struct ModRowView: View {
                             .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
-                        .help("Update available — click to open download page")
+                        .help(L.s("row_update_help"))
                     }
 
-                    Text(mod.modType.rawValue)
+                    Text(mod.modType.displayName)
                         .font(.caption2)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
@@ -78,7 +78,7 @@ struct ModRowView: View {
             if mod.resolvedDependencies.contains(where: { $0.status != .satisfied && $0.entry.isRequired }) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.yellow)
-                    .help("Missing or disabled dependencies")
+                    .help(L.s("row_missing_deps"))
             }
 
             if !mod.isBuiltIn {
@@ -89,7 +89,7 @@ struct ModRowView: View {
                         .font(.caption)
                 }
                 .buttonStyle(.borderless)
-                .help("Delete mod")
+                .help(L.s("row_delete_help"))
             }
         }
         .padding(.vertical, 4)

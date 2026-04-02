@@ -26,7 +26,7 @@ struct ModDetailView: View {
                 // Status
                 HStack {
                     Label(
-                        mod.isEnabled ? "Enabled" : "Disabled",
+                        mod.isEnabled ? L.s("detail_enabled") : L.s("detail_disabled"),
                         systemImage: mod.isEnabled ? "checkmark.circle.fill" : "xmark.circle"
                     )
                     .font(.system(size: 12, weight: .medium))
@@ -35,7 +35,7 @@ struct ModDetailView: View {
                     Spacer()
 
                     let typeColor: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
-                    Text(mod.modType.rawValue)
+                    Text(mod.modType.displayName)
                         .font(.system(size: 11, weight: .medium))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
@@ -47,7 +47,7 @@ struct ModDetailView: View {
                 // Description
                 if let desc = mod.manifest.description, !desc.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Description")
+                        Text(L.s("detail_description"))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Color.textMuted)
                             .tracking(0.5)
@@ -60,7 +60,7 @@ struct ModDetailView: View {
                 // Content Pack info
                 if let cpf = mod.manifest.contentPackFor {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Content Pack For")
+                        Text(L.s("detail_content_pack_for"))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Color.textMuted)
                             .tracking(0.5)
@@ -73,7 +73,7 @@ struct ModDetailView: View {
                 // Dependencies
                 if !mod.resolvedDependencies.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Dependencies")
+                        Text(L.s("detail_dependencies"))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Color.textMuted)
                             .tracking(0.5)
@@ -89,7 +89,7 @@ struct ModDetailView: View {
                                         .font(.system(size: 12))
                                         .foregroundStyle(Color.textDark)
                                     if !dep.entry.isRequired {
-                                        Text("Optional")
+                                        Text(L.s("detail_optional"))
                                             .font(.system(size: 10))
                                             .foregroundStyle(Color.textMuted)
                                     }
@@ -101,7 +101,7 @@ struct ModDetailView: View {
 
                 // Unique ID
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Unique ID")
+                    Text(L.s("detail_unique_id"))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Color.textMuted)
                         .tracking(0.5)
@@ -113,7 +113,7 @@ struct ModDetailView: View {
 
                 // Folder
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Folder")
+                    Text(L.s("detail_folder"))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Color.textMuted)
                         .tracking(0.5)
@@ -121,7 +121,7 @@ struct ModDetailView: View {
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textLight)
 
-                    Button("Show in Finder") {
+                    Button(L.s("detail_show_in_finder")) {
                         NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mod.folderURL.path(percentEncoded: false))
                     }
                     .buttonStyle(.link)
@@ -133,7 +133,7 @@ struct ModDetailView: View {
                     Button {
                         appState.openNexusModPage(modId: nexusId)
                     } label: {
-                        Label("View on Nexus Mods", systemImage: "globe")
+                        Label(L.s("detail_view_on_nexus"), systemImage: "globe")
                             .font(.system(size: 12))
                     }
                     .buttonStyle(.link)

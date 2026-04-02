@@ -36,7 +36,7 @@ struct ModpackDetailView: View {
                     sourceBadge
 
                     if appState.activeModpackID == modpack.id {
-                        Text("Active")
+                        Text(L.s("modpack_active"))
                             .font(.stardew(size: 12))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -49,7 +49,7 @@ struct ModpackDetailView: View {
                 // Dates
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
-                        Text("Created:")
+                        Text(L.s("modpack_detail_created"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                         Text(Self.dateFormatter.string(from: modpack.createdAt))
@@ -57,7 +57,7 @@ struct ModpackDetailView: View {
                             .foregroundStyle(Color.textLight)
                     }
                     HStack(spacing: 6) {
-                        Text("Updated:")
+                        Text(L.s("modpack_detail_updated"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                         Text(Self.dateFormatter.string(from: modpack.updatedAt))
@@ -76,7 +76,7 @@ struct ModpackDetailView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "play.fill")
                             .font(.system(size: 12))
-                        Text("Apply Profile")
+                        Text(L.s("modpack_detail_apply"))
                             .font(.stardew(size: 18))
                     }
                     .frame(maxWidth: .infinity)
@@ -89,17 +89,17 @@ struct ModpackDetailView: View {
 
                 // Export dropdown
                 Menu {
-                    Button("Export as JSON") {
+                    Button(L.s("modpack_export_json")) {
                         exportModpack(asZIP: false)
                     }
-                    Button("Export as ZIP") {
+                    Button(L.s("modpack_export_zip")) {
                         exportModpack(asZIP: true)
                     }
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 12))
-                        Text("Export")
+                        Text(L.s("common_export"))
                             .font(.stardew(size: 16))
                     }
                     .frame(maxWidth: .infinity)
@@ -114,7 +114,7 @@ struct ModpackDetailView: View {
 
                 // Mod entries
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Mods (\(modpack.entries.count))")
+                    Text(L.s("modpack_detail_mods", modpack.entries.count))
                         .font(.stardew(size: 18))
                         .foregroundStyle(Color.textDark)
 
@@ -133,7 +133,7 @@ struct ModpackDetailView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "trash")
                             .font(.system(size: 12))
-                        Text("Delete Modpack")
+                        Text(L.s("modpack_detail_delete"))
                             .font(.stardew(size: 16))
                     }
                     .frame(maxWidth: .infinity)
@@ -151,17 +151,17 @@ struct ModpackDetailView: View {
         .scrollContentBackground(.hidden)
         .background(Color.parchment)
         .confirmationDialog(
-            "Delete Modpack",
+            L.s("modpack_list_delete_confirm"),
             isPresented: $showDeleteConfirmation
         ) {
-            Button("Delete \"\(modpack.name)\"", role: .destructive) {
+            Button(L.s("modpack_detail_delete_confirm", modpack.name), role: .destructive) {
                 appState.deleteModpack(modpack)
             }
         } message: {
-            Text("Are you sure you want to delete \"\(modpack.name)\"? This cannot be undone.")
+            Text(L.s("modpack_detail_delete_message", modpack.name))
         }
-        .alert("Modpack Applied", isPresented: $showApplyAlert) {
-            Button("OK", role: .cancel) {}
+        .alert(L.s("modpack_detail_applied"), isPresented: $showApplyAlert) {
+            Button(L.s("common_ok"), role: .cancel) {}
         } message: {
             if let msg = applyResultMessage {
                 Text(msg)
@@ -186,15 +186,15 @@ struct ModpackDetailView: View {
     private var sourceInfo: (String, Color) {
         switch modpack.source {
         case .manual:
-            return ("Manual", Color.stardewPurple)
+            return (L.s("modpack_manual"), Color.stardewPurple)
         case .nexusCollection:
-            return ("Nexus Collection", Color.stardewOrange)
+            return (L.s("modpack_nexus_collection"), Color.stardewOrange)
         case .imported:
-            return ("Imported", Color.stardewBlue)
+            return (L.s("modpack_imported"), Color.stardewBlue)
         case .externalURL:
-            return ("External", Color.textMuted)
+            return (L.s("modpack_external"), Color.textMuted)
         case .currentProfile:
-            return ("Live", Color.stardewGreen)
+            return (L.s("modpack_live"), Color.stardewGreen)
         }
     }
 
@@ -229,7 +229,7 @@ struct ModpackDetailView: View {
                 Button {
                     downloadMissingMod(entry)
                 } label: {
-                    Text("Download")
+                    Text(L.s("modpack_download"))
                         .font(.stardew(size: 12))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -286,14 +286,14 @@ struct ModpackDetailView: View {
         if let error = appState.modpackError {
             applyResultMessage = error
         } else {
-            applyResultMessage = "Modpack \"\(modpack.name)\" applied successfully."
+            applyResultMessage = L.s("modpack_detail_applied_message", modpack.name)
         }
         showApplyAlert = true
     }
 
     private func exportModpack(asZIP: Bool) {
         let panel = NSSavePanel()
-        panel.title = "Export Modpack"
+        panel.title = L.s("common_export")
         panel.nameFieldStringValue = "\(modpack.name).\(asZIP ? "zip" : "json")"
 
         if panel.runModal() == .OK, let url = panel.url {

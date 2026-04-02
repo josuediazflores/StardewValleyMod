@@ -23,7 +23,7 @@ struct ModpackListView: View {
                         HStack(spacing: 8) {
                             JunimoIcon(name: appState.selectedJunimoName, size: 24)
                                 .frame(width: 24, height: 24)
-                            Text("Play")
+                            Text(L.s("modpack_list_play"))
                                 .font(.stardew(size: 24))
                                 .foregroundStyle(Color.textDark)
                                 .frame(height: 24)
@@ -42,7 +42,7 @@ struct ModpackListView: View {
                     }
                     .buttonStyle(PlayButtonStyle())
                     .disabled(!appState.settings.isSMAPIInstalled)
-                    .help("Launch Stardew Valley with SMAPI")
+                    .help(L.s("modpack_list_play_help"))
 
                     if appState.expandedModpackID != nil {
                         StardewSegmentedPicker(
@@ -57,7 +57,7 @@ struct ModpackListView: View {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.textMuted)
-                            TextField("Search mods...", text: $state.searchText)
+                            TextField(L.s("installed_search"), text: $state.searchText)
                                 .textFieldStyle(.plain)
                                 .font(.system(size: 13))
                                 .foregroundStyle(Color.textDark)
@@ -91,7 +91,7 @@ struct ModpackListView: View {
 
                 // Profiles header
                 HStack(spacing: 8) {
-                    Text("PROFILES")
+                    Text(L.s("modpack_list_profiles"))
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(Color.textMuted.opacity(0.7))
                         .tracking(0.8)
@@ -104,7 +104,7 @@ struct ModpackListView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "plus")
                                 .font(.system(size: 10))
-                            Text("New")
+                            Text(L.s("modpack_list_new"))
                                 .font(.system(size: 11, weight: .medium))
                         }
                         .padding(.horizontal, 10)
@@ -116,16 +116,16 @@ struct ModpackListView: View {
                     .buttonStyle(.plain)
 
                     Menu {
-                        Button("From File...") { importFromFile() }
-                        Button("From Clipboard") { appState.importModpackFromClipboard() }
+                        Button(L.s("modpack_list_from_file")) { importFromFile() }
+                        Button(L.s("modpack_list_from_clipboard")) { appState.importModpackFromClipboard() }
                         Divider()
-                        Button("From URL...") { showImportSheet = true }
-                        Button("From Nexus Collection...") { showImportSheet = true }
+                        Button(L.s("modpack_list_from_url")) { showImportSheet = true }
+                        Button(L.s("modpack_list_from_nexus")) { showImportSheet = true }
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "square.and.arrow.down")
                                 .font(.system(size: 10))
-                            Text("Import")
+                            Text(L.s("common_import"))
                                 .font(.system(size: 11, weight: .medium))
                         }
                         .padding(.horizontal, 10)
@@ -142,7 +142,7 @@ struct ModpackListView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "arrow.left.arrow.right")
                                     .font(.system(size: 10))
-                                Text("Compare")
+                                Text(L.s("modpack_list_compare"))
                                     .font(.system(size: 11, weight: .medium))
                             }
                             .padding(.horizontal, 10)
@@ -160,7 +160,7 @@ struct ModpackListView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "antenna.radiowaves.left.and.right")
                                 .font(.system(size: 10))
-                            Text("Nearby")
+                            Text(L.s("modpack_list_nearby"))
                                 .font(.system(size: 11, weight: .medium))
                         }
                         .padding(.horizontal, 10)
@@ -179,11 +179,11 @@ struct ModpackListView: View {
                         .font(.system(size: 14))
                         .foregroundStyle(Color.stardewGreen)
 
-                    Text("Vanilla")
+                    Text(L.s("modpack_list_vanilla"))
                         .font(.stardew(size: 18))
                         .foregroundStyle(Color.textDark)
 
-                    Text("Vanilla")
+                    Text(L.s("modpack_list_vanilla"))
                         .font(.stardew(size: 12))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -191,7 +191,7 @@ struct ModpackListView: View {
                         .foregroundStyle(Color.stardewGreen)
                         .clipShape(Capsule())
 
-                    Text("0 mods")
+                    Text(L.s("modpack_list_zero_mods"))
                         .font(.stardew(size: 14))
                         .foregroundStyle(Color.textMuted)
 
@@ -203,7 +203,7 @@ struct ModpackListView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "play.fill")
                                 .font(.system(size: 10))
-                            Text("Load Profile")
+                            Text(L.s("modpack_load_profile"))
                                 .font(.system(size: 11, weight: .medium))
                         }
                         .padding(.horizontal, 10)
@@ -234,7 +234,7 @@ struct ModpackListView: View {
                         Image(systemName: "archivebox")
                             .font(.system(size: 20))
                             .foregroundStyle(Color.textMuted.opacity(0.3))
-                        Text("No saved profiles yet")
+                        Text(L.s("modpack_list_no_profiles"))
                             .font(.system(size: 12))
                             .foregroundStyle(Color.textMuted)
                     }
@@ -264,7 +264,7 @@ struct ModpackListView: View {
         .background(Color.parchment)
         .safeAreaInset(edge: .bottom) {
             HStack {
-                Text("\(appState.modpacks.count) profiles \u{00B7} \(appState.mods.count) mods installed")
+                Text(L.s("modpack_list_status", appState.modpacks.count, appState.mods.count))
                 Spacer()
             }
             .font(.system(size: 11))
@@ -287,15 +287,15 @@ struct ModpackListView: View {
                 .environment(appState)
         }
         .confirmationDialog(
-            "Delete Modpack",
+            L.s("modpack_list_delete_confirm"),
             isPresented: $showDeleteConfirmation,
             presenting: modpackToDelete
         ) { modpack in
-            Button("Delete \"\(modpack.name)\"", role: .destructive) {
+            Button(L.s("modpack_detail_delete_confirm", modpack.name), role: .destructive) {
                 appState.deleteModpack(modpack)
             }
         } message: { modpack in
-            Text("Are you sure you want to delete \"\(modpack.name)\"? This cannot be undone.")
+            Text(L.s("modpack_list_delete_message", modpack.name))
         }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             handleDrop(providers)
@@ -340,7 +340,7 @@ struct ModpackListView: View {
 
     private func importFromFile() {
         let panel = NSOpenPanel()
-        panel.title = "Import Modpack"
+        panel.title = L.s("modpack_import_title")
         panel.allowedContentTypes = [.json, .zip, .data]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
@@ -352,7 +352,7 @@ struct ModpackListView: View {
 
     private func showExportPanel(modpack: Modpack, asZIP: Bool) {
         let panel = NSSavePanel()
-        panel.title = "Export Modpack"
+        panel.title = L.s("common_export")
         panel.nameFieldStringValue = "\(modpack.name).\(asZIP ? "zip" : "json")"
 
         if panel.runModal() == .OK, let url = panel.url {
@@ -362,7 +362,7 @@ struct ModpackListView: View {
 
     private func showShareSMMPanel(modpack: Modpack) {
         let panel = NSSavePanel()
-        panel.title = "Share Modpack"
+        panel.title = L.s("modpack_share")
         panel.nameFieldStringValue = "\(modpack.name).smm"
 
         if panel.runModal() == .OK, let url = panel.url {
@@ -404,17 +404,17 @@ struct CompareModpacksSheet: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Text("Compare Profiles")
+            Text(L.s("compare_title"))
                 .font(.stardew(size: 22))
                 .foregroundStyle(Color.textDark)
 
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Profile A")
+                    Text(L.s("compare_profile_a"))
                         .font(.stardew(size: 14))
                         .foregroundStyle(Color.textMuted)
                     Picker("", selection: $modpackA) {
-                        Text("Select...").tag(nil as Modpack?)
+                        Text(L.s("compare_select")).tag(nil as Modpack?)
                         ForEach(appState.modpacks) { mp in
                             Text(mp.name).tag(mp as Modpack?)
                         }
@@ -423,11 +423,11 @@ struct CompareModpacksSheet: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Profile B")
+                    Text(L.s("compare_profile_b"))
                         .font(.stardew(size: 14))
                         .foregroundStyle(Color.textMuted)
                     Picker("", selection: $modpackB) {
-                        Text("Select...").tag(nil as Modpack?)
+                        Text(L.s("compare_select")).tag(nil as Modpack?)
                         ForEach(appState.modpacks) { mp in
                             Text(mp.name).tag(mp as Modpack?)
                         }
@@ -445,11 +445,11 @@ struct CompareModpacksSheet: View {
 
                 // Summary
                 HStack(spacing: 20) {
-                    Label("\(inBoth.count) shared", systemImage: "checkmark.circle")
+                    Label(L.s("compare_shared", inBoth.count), systemImage: "checkmark.circle")
                         .foregroundStyle(Color.stardewGreen)
-                    Label("\(onlyA.count) only in A", systemImage: "a.circle")
+                    Label(L.s("compare_only_a", onlyA.count), systemImage: "a.circle")
                         .foregroundStyle(Color.stardewOrange)
-                    Label("\(onlyB.count) only in B", systemImage: "b.circle")
+                    Label(L.s("compare_only_b", onlyB.count), systemImage: "b.circle")
                         .foregroundStyle(Color.stardewBlue)
                 }
                 .font(.stardew(size: 14))
@@ -457,19 +457,19 @@ struct CompareModpacksSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 2) {
                         if !inBoth.isEmpty {
-                            sectionHeader("In Both", color: .stardewGreen)
+                            sectionHeader(L.s("compare_in_both"), color: .stardewGreen)
                             ForEach(sortedNames(ids: inBoth, from: a, b), id: \.self) { name in
                                 modRow(name, color: .stardewGreen)
                             }
                         }
                         if !onlyA.isEmpty {
-                            sectionHeader("Only in \(a.name)", color: .stardewOrange)
+                            sectionHeader(L.s("compare_only_in", a.name), color: .stardewOrange)
                             ForEach(sortedNames(ids: onlyA, from: a, b), id: \.self) { name in
                                 modRow(name, color: .stardewOrange)
                             }
                         }
                         if !onlyB.isEmpty {
-                            sectionHeader("Only in \(b.name)", color: .stardewBlue)
+                            sectionHeader(L.s("compare_only_in", b.name), color: .stardewBlue)
                             ForEach(sortedNames(ids: onlyB, from: a, b), id: \.self) { name in
                                 modRow(name, color: .stardewBlue)
                             }
@@ -478,13 +478,13 @@ struct CompareModpacksSheet: View {
                     .padding(.horizontal, 8)
                 }
             } else {
-                Text("Select two profiles to compare")
+                Text(L.s("compare_select_hint"))
                     .font(.stardew(size: 14))
                     .foregroundStyle(Color.textMuted)
                     .frame(maxHeight: .infinity)
             }
 
-            Button("Done") { dismiss() }
+            Button(L.s("common_done")) { dismiss() }
                 .font(.stardew(size: 16))
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.textMuted)

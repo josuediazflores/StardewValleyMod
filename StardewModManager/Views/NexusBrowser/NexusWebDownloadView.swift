@@ -17,7 +17,7 @@ struct NexusWebDownloadView: View {
                         .foregroundStyle(Color.textDark)
                         .lineLimit(1)
 
-                    Text("Log in if needed, then click \"Mod Manager Download\"")
+                    Text(L.s("nexus_web_hint"))
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textMuted)
                 }

@@ -50,33 +50,33 @@ struct StardewModManagerApp: App {
         .defaultSize(width: 1100, height: 700)
         .commands {
             CommandGroup(after: .newItem) {
-                Button("Import Mods...") {
+                Button(L.s("menu_import_mods")) {
                     appState.sidebarSelection = .installedMods
                     appState.showImportPicker = true
                 }
                 .keyboardShortcut("i", modifiers: .command)
 
-                Button("Refresh Mod List") {
+                Button(L.s("menu_refresh_mod_list")) {
                     appState.loadMods()
                 }
                 .keyboardShortcut("r", modifiers: .command)
             }
 
             CommandMenu("Mods") {
-                Button("Launch Game") {
+                Button(L.s("menu_launch_game")) {
                     appState.launchGame()
                 }
                 .keyboardShortcut("l", modifiers: .command)
                 .disabled(!appState.settings.isSMAPIInstalled)
 
-                Button("Check for Updates") {
+                Button(L.s("menu_check_updates")) {
                     appState.checkForUpdates()
                 }
                 .keyboardShortcut("u", modifiers: .command)
 
                 Divider()
 
-                Button("Toggle Selected Mod") {
+                Button(L.s("menu_toggle_mod")) {
                     if let mod = appState.selectedMod, !mod.isBuiltIn {
                         if mod.isEnabled {
                             appState.performDisableMod(mod)
@@ -88,7 +88,7 @@ struct StardewModManagerApp: App {
                 .keyboardShortcut("e", modifiers: .command)
                 .disabled(appState.selectedMod == nil || appState.selectedMod?.isBuiltIn == true)
 
-                Button("Show in Finder") {
+                Button(L.s("menu_show_in_finder")) {
                     if let mod = appState.selectedMod {
                         NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mod.folderURL.path)
                     }
@@ -98,17 +98,17 @@ struct StardewModManagerApp: App {
             }
 
             CommandGroup(before: .toolbar) {
-                Button("Show All Mods") {
+                Button(L.s("menu_show_all")) {
                     appState.filterMode = .all
                 }
                 .keyboardShortcut("0", modifiers: .command)
 
-                Button("Show Enabled Only") {
+                Button(L.s("menu_show_enabled")) {
                     appState.filterMode = .enabled
                 }
                 .keyboardShortcut("1", modifiers: .command)
 
-                Button("Show Disabled Only") {
+                Button(L.s("menu_show_disabled")) {
                     appState.filterMode = .disabled
                 }
                 .keyboardShortcut("2", modifiers: .command)
@@ -151,7 +151,7 @@ struct ContentView: View {
                     case .browseNexus:
                         NexusBrowseView()
                     case nil:
-                        Text("Select an item from the sidebar")
+                        Text(L.s("sidebar_select_item"))
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
@@ -169,11 +169,11 @@ struct ContentView: View {
         }
         .preferredColorScheme(.light)
         .background(WindowAccessor())
-        .alert("Error", isPresented: .init(
+        .alert(L.s("common_error"), isPresented: .init(
             get: { appState.errorMessage != nil },
             set: { if !$0 { appState.errorMessage = nil } }
         )) {
-            Button("OK") { appState.errorMessage = nil }
+            Button(L.s("common_ok")) { appState.errorMessage = nil }
         } message: {
             Text(appState.errorMessage ?? "")
         }

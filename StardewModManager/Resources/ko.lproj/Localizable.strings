@@ -1,0 +1,337 @@
+/* 공통 */
+"common_cancel" = "취소";
+"common_done" = "완료";
+"common_retry" = "재시도";
+"common_loading" = "로딩 중...";
+"common_ok" = "OK";
+"common_delete" = "삭제";
+"common_error" = "오류";
+"common_search" = "검색";
+"common_undo" = "실행 취소";
+"common_import" = "가져오기";
+"common_export" = "내보내기";
+"common_browse" = "찾아보기...";
+
+/* 앱 메뉴 */
+"menu_import_mods" = "모드 가져오기...";
+"menu_refresh_mod_list" = "모드 목록 새로고침";
+"menu_launch_game" = "게임 실행";
+"menu_check_updates" = "업데이트 확인";
+"menu_toggle_mod" = "선택한 모드 전환";
+"menu_show_in_finder" = "Finder에서 보기";
+"menu_show_all" = "모든 모드 보기";
+"menu_show_enabled" = "활성화된 모드만 보기";
+"menu_show_disabled" = "비활성화된 모드만 보기";
+
+/* 사이드바 */
+"sidebar_modpacks" = "모드팩";
+"sidebar_mods" = "모드";
+"sidebar_browse" = "탐색";
+"sidebar_settings" = "설정";
+"sidebar_smapi_ready" = "SMAPI 준비됨";
+"sidebar_smapi_not_found" = "SMAPI 없음";
+"sidebar_select_item" = "사이드바에서 항목을 선택하세요";
+
+/* 앱 업데이트 */
+"update_available" = "업데이트 가능";
+"update_version_message" = "새로운 버전의 Stardew Mod Manager가 있습니다.";
+"update_downloading" = "다운로드 중...";
+"update_now" = "지금 업데이트";
+"update_view_github" = "GitHub에서 보기";
+"update_later" = "나중에";
+
+/* 설치된 모드 */
+"installed_search" = "모드 검색...";
+"installed_import" = "가져오기";
+"installed_import_help" = "모드 ZIP 파일 가져오기";
+"installed_add_folder" = "폴더 추가";
+"installed_add_folder_help" = "모드 폴더 가져오기";
+"installed_nexus_url" = "Nexus URL";
+"installed_nexus_url_help" = "Nexus Mods URL로 설치";
+"installed_select" = "선택";
+"installed_select_help" = "일괄 선택 모드 시작";
+"installed_deselect_all" = "모두 해제";
+"installed_select_all" = "모두 선택";
+"installed_enable" = "활성화";
+"installed_disable" = "비활성화";
+"installed_checking" = "확인 중...";
+"installed_selected_count" = "%d개 모드 선택됨";
+"installed_update_count" = "%d개 업데이트";
+"installed_no_mods" = "설치된 모드가 없습니다";
+"installed_no_mods_hint" = "모드 폴더 또는 ZIP 파일을 여기에 드래그하거나 위의 버튼을 사용하세요";
+"installed_choose_files" = "파일 선택...";
+"installed_choose_folder" = "폴더 선택...";
+"installed_no_results" = "검색 결과와 일치하는 모드가 없습니다";
+"installed_delete_title" = "%d개 모드 삭제";
+"installed_delete_confirm" = "이 모드를 삭제하시겠습니까? 디스크에서 제거되며 되돌릴 수 없습니다.";
+"installed_nexus_sheet_title" = "Nexus URL로 설치";
+"installed_nexus_sheet_desc" = "Nexus Mods 링크를 붙여넣어 다운로드 및 설치";
+"installed_nexus_placeholder" = "https://www.nexusmods.com/stardewvalley/mods/...";
+"installed_nexus_install" = "설치";
+
+/* 모드 상세 */
+"detail_enabled" = "활성화됨";
+"detail_disabled" = "비활성화됨";
+"detail_description" = "설명";
+"detail_content_pack_for" = "콘텐츠 팩 대상";
+"detail_dependencies" = "의존성";
+"detail_optional" = "선택 사항";
+"detail_unique_id" = "고유 ID";
+"detail_folder" = "폴더";
+"detail_show_in_finder" = "Finder에서 보기";
+"detail_view_on_nexus" = "Nexus Mods에서 보기";
+
+/* 모드 행 */
+"row_built_in" = "기본 제공";
+"row_update_help" = "업데이트 가능 — 클릭하여 다운로드 페이지 열기";
+"row_missing_deps" = "필수 의존 모드가 누락되었거나 비활성화됨";
+"row_delete_help" = "모드 삭제";
+
+/* 모드팩 */
+"modpack_load_profile" = "프로필 불러오기";
+"modpack_share" = "공유";
+"modpack_share_smm" = ".smm으로 공유";
+"modpack_copy_clipboard" = "클립보드에 복사";
+"modpack_export_json" = "JSON으로 내보내기";
+"modpack_export_zip" = "ZIP으로 내보내기";
+"modpack_active" = "활성";
+"modpack_mods_count" = "%d개 모드";
+"modpack_no_mods" = "이 모드팩에 모드가 없습니다";
+"modpack_missing" = "누락";
+"modpack_enable" = "활성화";
+"modpack_disable" = "비활성화";
+"modpack_remove" = "모드팩에서 제거";
+"modpack_manual" = "수동";
+"modpack_nexus_collection" = "Nexus 컬렉션";
+"modpack_imported" = "가져옴";
+"modpack_external" = "외부";
+"modpack_live" = "라이브";
+"modpack_download" = "다운로드";
+
+/* 모드팩 만들기 */
+"modpack_create_title" = "모드팩 만들기";
+"modpack_create_name" = "이름";
+"modpack_create_name_placeholder" = "내 모드팩";
+"modpack_create_description" = "설명";
+"modpack_create_desc_placeholder" = "선택 사항 설명...";
+"modpack_create_preview" = "현재 모드 구성을 저장합니다 (활성: %d, 비활성: %d)";
+"modpack_create_button" = "만들기";
+
+/* 모드팩 상세 */
+"modpack_detail_apply" = "프로필 적용";
+"modpack_detail_delete" = "모드팩 삭제";
+"modpack_detail_created" = "생성일:";
+"modpack_detail_updated" = "수정일:";
+"modpack_detail_mods" = "모드 (%d)";
+"modpack_detail_delete_confirm" = "\"%@\" 삭제";
+"modpack_detail_delete_message" = "\"%@\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.";
+"modpack_detail_applied" = "모드팩 적용 완료";
+"modpack_detail_applied_message" = "모드팩 \"%@\"이(가) 적용되었습니다.";
+
+/* 모드팩 가져오기 */
+"modpack_import_title" = "모드팩 가져오기";
+"modpack_import_url" = "URL";
+"modpack_import_url_placeholder" = "https://...";
+"modpack_import_detected" = "감지됨:";
+"modpack_import_downloading" = "다운로드 중...";
+"modpack_import_button" = "가져오기";
+"modpack_import_nexus" = "Nexus 컬렉션";
+"modpack_import_google" = "Google Drive";
+"modpack_import_zip" = "직접 다운로드";
+"modpack_import_unknown" = "알 수 없는 소스";
+"modpack_import_security" = "보안 경고";
+"modpack_import_warning" = "신뢰할 수 있는 소스의 모드팩만 가져오세요. 모드팩에 악성 코드가 포함될 수 있습니다.";
+"modpack_import_risk_code" = "악성 코드 실행 위험";
+"modpack_import_risk_privacy" = "외부 URL로 인한 개인정보 우려";
+"modpack_import_trust" = "위험을 이해합니다";
+
+/* 모드팩 목록 */
+"modpack_list_play" = "플레이";
+"modpack_list_play_help" = "SMAPI로 Stardew Valley 실행";
+"modpack_list_profiles" = "프로필";
+"modpack_list_new" = "새로 만들기";
+"modpack_list_from_file" = "파일에서...";
+"modpack_list_from_clipboard" = "클립보드에서";
+"modpack_list_from_url" = "URL에서...";
+"modpack_list_from_nexus" = "Nexus 컬렉션에서...";
+"modpack_list_compare" = "비교";
+"modpack_list_nearby" = "근처";
+"modpack_list_vanilla" = "바닐라";
+"modpack_list_zero_mods" = "모드 없음";
+"modpack_list_no_profiles" = "저장된 프로필이 없습니다";
+"modpack_list_status" = "%d개 프로필 · %d개 모드 설치됨";
+"modpack_list_delete_confirm" = "모드팩 삭제";
+"modpack_list_delete_message" = "\"%@\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.";
+
+/* 프로필 비교 */
+"compare_title" = "프로필 비교";
+"compare_profile_a" = "프로필 A";
+"compare_profile_b" = "프로필 B";
+"compare_select" = "선택...";
+"compare_shared" = "%d개 공통";
+"compare_only_a" = "%d개 A에만";
+"compare_only_b" = "%d개 B에만";
+"compare_in_both" = "양쪽 모두";
+"compare_only_in" = "%@에만";
+"compare_select_hint" = "비교할 두 프로필을 선택하세요";
+
+/* NXM 선택 */
+"nxm_downloaded" = "모드 다운로드 완료";
+"nxm_where_install" = "이 모드를 어디에 설치하시겠습니까?";
+"nxm_contains_mods" = "이 다운로드에 %d개의 모드가 포함되어 있습니다";
+"nxm_current_profile" = "현재 프로필";
+"nxm_install_now" = "지금 설치";
+"nxm_new_modpack" = "새 모드팩";
+"nxm_modpack_name" = "모드팩 이름";
+"nxm_create" = "만들기";
+
+/* 근처 */
+"nearby_title" = "근처 플레이어와 비교";
+"nearby_select_modpack" = "비교할 모드팩을 선택하세요:";
+"nearby_start" = "검색 시작";
+"nearby_searching" = "근처 플레이어를 찾는 중...";
+"nearby_ensure" = "상대방도 '근처 비교' 화면을 열어야 합니다";
+"nearby_found" = "근처에서 발견:";
+"nearby_pick_first" = "먼저 모드팩을 선택하세요";
+"nearby_connected" = "%@에 연결됨";
+"nearby_send" = "내 모드팩 보내기";
+"nearby_send_full" = "파일 포함 모드팩 보내기";
+"nearby_send_full_help" = "친구가 설치할 수 있도록 모든 모드 파일 전송";
+"nearby_compare" = "모드팩 비교";
+"nearby_sent" = "모드팩을 보냈습니다!";
+"nearby_waiting" = "상대방의 모드팩을 기다리는 중...";
+"nearby_preparing" = "모드 준비 중...";
+"nearby_sending" = "모드 전송 중...";
+"nearby_keep_near" = "두 기기를 가까이 유지하세요";
+"nearby_receiving" = "모드 수신 중...";
+"nearby_importing" = "모드 가져오는 중...";
+"nearby_transfer_done" = "전송 완료!";
+"nearby_mods_imported" = "모드를 가져왔습니다.";
+"nearby_mods_sent" = "모드를 보냈습니다.";
+"nearby_transfer_failed" = "전송 실패";
+"nearby_perfect_match" = "완벽 일치!";
+"nearby_all_match" = "활성화된 %d개 모드가 모두 일치합니다.";
+"nearby_you_have" = "나만 가진 모드";
+"nearby_send_missing" = "누락된 %d개 모드 보내기";
+"nearby_they_have" = "상대방만 가진 모드";
+"nearby_ask_friend" = "상대방에게 보내달라고 요청하세요";
+"nearby_matched" = "일치 (%d)";
+"nearby_shared" = "%d개 공통";
+"nearby_only_you" = "%d개 나만";
+"nearby_only_them" = "%d개 상대방만";
+"nearby_close" = "닫기";
+
+/* Nexus API 키 */
+"nexus_connect_title" = "Nexus Mods 연결";
+"nexus_connect_desc" = "Nexus Mods API 키를 입력하면 모드를 직접 탐색하고 다운로드할 수 있습니다.";
+"nexus_api_key" = "API 키";
+"nexus_api_placeholder" = "API 키를 붙여넣으세요...";
+"nexus_get_key" = "API 키 받기";
+"nexus_validate" = "확인 후 저장";
+
+/* Nexus 탐색 */
+"nexus_essentials" = "필수 모드";
+"nexus_trending" = "인기";
+"nexus_latest" = "최신";
+"nexus_search" = "검색";
+"nexus_refresh" = "새로고침";
+"nexus_search_placeholder" = "Nexus Mods 검색...";
+"nexus_search_button" = "검색";
+"nexus_loading" = "로딩 중...";
+
+/* Nexus 카드 */
+"nexus_modpack" = "모드팩";
+"nexus_installed" = "설치됨";
+
+/* Nexus 상세 */
+"nexus_detail_view" = "Nexus에서 보기";
+"nexus_detail_web_downloads" = "Nexus 웹페이지에서 다운로드";
+"nexus_detail_files" = "파일";
+"nexus_detail_loading" = "파일 로딩 중...";
+"nexus_detail_no_files" = "사용 가능한 파일이 없습니다";
+"nexus_detail_install" = "설치";
+"nexus_detail_download" = "다운로드";
+
+/* Nexus 웹 다운로드 */
+"nexus_web_hint" = "필요 시 로그인한 후 \"Mod Manager Download\"를 클릭하세요";
+
+/* 온보딩 */
+"onboarding_welcome" = "Stardew Mod Manager에 오신 것을 환영합니다";
+"onboarding_welcome_desc" = "Mac에서 Stardew Valley 모드를 관리하는 앱입니다.";
+"onboarding_welcome_hint" = "몇 단계만 거치면 설정이 완료됩니다.";
+"onboarding_find_game" = "게임 찾기";
+"onboarding_game_location" = "Stardew Valley 설치 위치를 지정해야 합니다.";
+"onboarding_no_path" = "경로를 찾을 수 없음";
+"onboarding_game_found" = "게임 발견";
+"onboarding_game_not_found" = "게임을 찾을 수 없음";
+"onboarding_smapi_installed" = "SMAPI 설치됨";
+"onboarding_smapi_not_found" = "SMAPI 없음";
+"onboarding_install_smapi" = "SMAPI 설치";
+"onboarding_installing" = "설치 중...";
+"onboarding_auto_detect" = "자동 감지";
+"onboarding_nexus_title" = "Nexus Mods 연결";
+"onboarding_nexus_desc" = "Nexus Mods 계정을 연결하면 모드를 직접 탐색하고 다운로드할 수 있습니다 (선택 사항).";
+"onboarding_connected" = "연결됨";
+"onboarding_nexus_as" = "%@(으)로";
+"onboarding_premium" = "프리미엄";
+"onboarding_setup_later" = "나중에 설정에서 변경할 수 있습니다.";
+"onboarding_all_set" = "준비 완료!";
+"onboarding_all_set_hint" = "할 수 있는 것들:";
+"onboarding_profiles_title" = "모드팩";
+"onboarding_profiles_desc" = "플레이 스타일에 맞게 모드 프로필을 만들고 전환하세요.";
+"onboarding_mods_title" = "모드";
+"onboarding_mods_desc" = "설치된 모드를 보고, 활성화/비활성화하고, 가져올 수 있습니다.";
+"onboarding_browse_title" = "Nexus 탐색";
+"onboarding_browse_desc" = "Nexus Mods에서 모드를 검색하고 직접 다운로드하세요.";
+"onboarding_back" = "뒤로";
+"onboarding_next" = "다음";
+"onboarding_skip" = "건너뛰기";
+"onboarding_get_started" = "시작하기";
+"onboarding_game_dir" = "Stardew Valley 게임 디렉토리 선택";
+"onboarding_game_dir_hint" = "StardewModdingAPI가 포함된 폴더로 이동하세요";
+
+/* 설정 */
+"settings_general" = "일반";
+"settings_nexus" = "Nexus";
+"settings_about" = "정보";
+"settings_language" = "언어";
+"settings_language_system" = "시스템";
+"settings_theme" = "테마";
+"settings_sounds" = "효과음";
+"settings_game_location" = "Stardew Valley 위치";
+"settings_game_found" = "게임 발견";
+"settings_game_not_found" = "게임을 찾을 수 없음";
+"settings_smapi_installed" = "SMAPI 설치됨";
+"settings_smapi_not_found" = "SMAPI 없음";
+"settings_install_smapi" = "SMAPI 설치";
+"settings_installing" = "설치 중...";
+"settings_auto_detect" = "자동 감지";
+"settings_reload_hint" = "게임 경로 변경은 모드 목록을 새로고침(⌘R)하면 적용됩니다.";
+"settings_show_welcome" = "환영 가이드 보기";
+"settings_manual_install" = "수동 설치";
+"settings_nexus_api" = "Nexus Mods API 키";
+"settings_nexus_placeholder" = "API 키 입력...";
+"settings_disconnect" = "연결 해제";
+"settings_app" = "앱";
+"settings_app_name" = "Stardew Mod Manager";
+"settings_version" = "버전";
+"settings_check_updates" = "업데이트 확인";
+"settings_checking" = "확인 중...";
+"settings_up_to_date" = "최신 버전입니다.";
+"settings_update_available" = "v%@ 사용 가능!";
+"settings_update_to" = "v%@(으)로 업데이트";
+"settings_view_notes" = "릴리스 노트 보기";
+
+/* 열거형 */
+"mod_type_code" = "코드 모드";
+"mod_type_content" = "콘텐츠 팩";
+"mod_type_unknown" = "알 수 없음";
+"filter_all" = "전체";
+"filter_enabled" = "활성화";
+"filter_disabled" = "비활성화";
+"filter_code_mods" = "코드 모드";
+"filter_content_packs" = "콘텐츠 팩";
+"filter_code_short" = "코드";
+"filter_packs_short" = "팩";
+"theme_stardew" = "Stardew";
+"theme_pink" = "핑크";

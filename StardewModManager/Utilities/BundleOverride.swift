@@ -26,4 +26,15 @@ extension Foundation.Bundle {
         // Last resort: use Bundle.main itself (resources may be embedded directly)
         return Bundle.main
     }()
+
+    /// Returns a bundle for the user's chosen language, falling back to appBundle (system locale).
+    static var localizedAppBundle: Bundle {
+        guard let lang = UserDefaults.standard.string(forKey: "appLanguage"),
+              lang != "system",
+              let path = appBundle.path(forResource: lang, ofType: "lproj"),
+              let bundle = Bundle(path: path) else {
+            return appBundle
+        }
+        return bundle
+    }
 }

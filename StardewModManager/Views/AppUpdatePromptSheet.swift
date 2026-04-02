@@ -15,7 +15,7 @@ struct AppUpdatePromptSheet: View {
                 .font(.system(size: 32))
                 .foregroundStyle(Color.stardewOrange)
 
-            Text("Update Available")
+            Text(L.s("update_available"))
                 .font(.stardew(size: 22))
                 .foregroundStyle(Color.textDark)
 
@@ -32,7 +32,7 @@ struct AppUpdatePromptSheet: View {
                         .foregroundStyle(Color.stardewOrange)
                 }
 
-                Text("A new version of Stardew Mod Manager is available.")
+                Text(L.s("update_version_message"))
                     .font(.system(size: 13))
                     .foregroundStyle(Color.textMedium)
                     .multilineTextAlignment(.center)
@@ -61,7 +61,7 @@ struct AppUpdatePromptSheet: View {
                 HStack(spacing: 8) {
                     ProgressView()
                         .controlSize(.small)
-                    Text("Downloading update...")
+                    Text(L.s("update_downloading"))
                         .font(.system(size: 13))
                         .foregroundStyle(Color.textMuted)
                 }
@@ -72,7 +72,7 @@ struct AppUpdatePromptSheet: View {
                     Button {
                         appState.performAppUpdate()
                     } label: {
-                        Text("Update Now")
+                        Text(L.s("update_now"))
                             .font(.stardew(size: 16))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
@@ -90,7 +90,7 @@ struct AppUpdatePromptSheet: View {
                             }
                             dismiss()
                         } label: {
-                            Text("View on GitHub")
+                            Text(L.s("update_view_github"))
                                 .font(.stardew(size: 16))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)
@@ -105,7 +105,7 @@ struct AppUpdatePromptSheet: View {
                     Button {
                         dismiss()
                     } label: {
-                        Text("Later")
+                        Text(L.s("update_later"))
                             .font(.system(size: 12))
                             .foregroundStyle(Color.textMuted)
                     }

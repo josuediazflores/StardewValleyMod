@@ -7,6 +7,15 @@ enum NexusBrowseTab: String, CaseIterable, Identifiable {
     case search = "Search"
 
     var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .essentials: L.s("nexus_essentials")
+        case .trending: L.s("nexus_trending")
+        case .latest: L.s("nexus_latest")
+        case .search: L.s("nexus_search")
+        }
+    }
 }
 
 struct NexusBrowseView: View {
@@ -25,7 +34,7 @@ struct NexusBrowseView: View {
                 HStack(spacing: 12) {
                     StardewSegmentedPicker(
                         selection: $selectedTab,
-                        label: { $0.rawValue }
+                        label: { $0.displayName }
                     )
                     .fixedSize()
 
@@ -57,14 +66,14 @@ struct NexusBrowseView: View {
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(Color.textMuted)
-                        TextField("Search Nexus Mods...", text: $state.nexusSearchText)
+                        TextField(L.s("nexus_search_placeholder"), text: $state.nexusSearchText)
                             .textFieldStyle(.plain)
                             .font(.stardew(size: 16))
                             .onSubmit {
                                 Task { await appState.searchNexusMods(query: appState.nexusSearchText) }
                             }
 
-                        Button("Search") {
+                        Button(L.s("nexus_search_button")) {
                             Task { await appState.searchNexusMods(query: appState.nexusSearchText) }
                         }
                         .font(.stardew(size: 14))
@@ -96,7 +105,7 @@ struct NexusBrowseView: View {
                 if appState.isNexusLoading {
                     VStack(spacing: 12) {
                         ProgressView()
-                        Text("Loading...")
+                        Text(L.s("nexus_loading"))
                             .font(.stardew(size: 16))
                             .foregroundStyle(Color.textMuted)
                     }
@@ -111,7 +120,7 @@ struct NexusBrowseView: View {
                             .foregroundStyle(Color.textLight)
                             .multilineTextAlignment(.center)
 
-                        Button("Retry") {
+                        Button(L.s("common_retry")) {
                             refreshCurrentTab()
                         }
                         .font(.stardew(size: 14))

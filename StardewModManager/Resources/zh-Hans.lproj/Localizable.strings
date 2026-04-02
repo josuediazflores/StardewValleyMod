@@ -1,0 +1,337 @@
+/* 通用 */
+"common_cancel" = "取消";
+"common_done" = "完成";
+"common_retry" = "重试";
+"common_loading" = "加载中...";
+"common_ok" = "好";
+"common_delete" = "删除";
+"common_error" = "错误";
+"common_search" = "搜索";
+"common_undo" = "撤销";
+"common_import" = "导入";
+"common_export" = "导出";
+"common_browse" = "浏览...";
+
+/* 应用菜单 */
+"menu_import_mods" = "导入模组...";
+"menu_refresh_mod_list" = "刷新模组列表";
+"menu_launch_game" = "启动游戏";
+"menu_check_updates" = "检查更新";
+"menu_toggle_mod" = "切换选中模组";
+"menu_show_in_finder" = "在 Finder 中显示";
+"menu_show_all" = "显示全部模组";
+"menu_show_enabled" = "仅显示已启用";
+"menu_show_disabled" = "仅显示已禁用";
+
+/* 侧边栏 */
+"sidebar_modpacks" = "模组包";
+"sidebar_mods" = "模组";
+"sidebar_browse" = "浏览";
+"sidebar_settings" = "设置";
+"sidebar_smapi_ready" = "SMAPI 就绪";
+"sidebar_smapi_not_found" = "未找到 SMAPI";
+"sidebar_select_item" = "请从侧边栏选择一项";
+
+/* 应用更新 */
+"update_available" = "有新版本";
+"update_version_message" = "Stardew Mod Manager 有新版本可用。";
+"update_downloading" = "正在下载更新...";
+"update_now" = "立即更新";
+"update_view_github" = "在 GitHub 查看";
+"update_later" = "稍后";
+
+/* 已安装模组 */
+"installed_search" = "搜索模组...";
+"installed_import" = "导入";
+"installed_import_help" = "导入模组 ZIP 文件";
+"installed_add_folder" = "添加文件夹";
+"installed_add_folder_help" = "导入模组文件夹";
+"installed_nexus_url" = "Nexus URL";
+"installed_nexus_url_help" = "从 Nexus Mods URL 安装";
+"installed_select" = "选择";
+"installed_select_help" = "进入批量选择模式";
+"installed_deselect_all" = "取消全选";
+"installed_select_all" = "全选";
+"installed_enable" = "启用";
+"installed_disable" = "禁用";
+"installed_checking" = "检查中...";
+"installed_selected_count" = "已选 %d 个模组";
+"installed_update_count" = "%d 个更新";
+"installed_no_mods" = "尚未安装模组";
+"installed_no_mods_hint" = "将模组文件夹或 ZIP 文件拖放到此处，或使用上方按钮";
+"installed_choose_files" = "选择文件...";
+"installed_choose_folder" = "选择文件夹...";
+"installed_no_results" = "没有匹配的模组";
+"installed_delete_title" = "删除 %d 个模组";
+"installed_delete_confirm" = "确定要删除这些模组吗？将从磁盘删除且无法恢复。";
+"installed_nexus_sheet_title" = "从 Nexus URL 安装";
+"installed_nexus_sheet_desc" = "粘贴 Nexus Mods 链接以下载安装";
+"installed_nexus_placeholder" = "https://www.nexusmods.com/stardewvalley/mods/...";
+"installed_nexus_install" = "安装";
+
+/* 模组详情 */
+"detail_enabled" = "已启用";
+"detail_disabled" = "已禁用";
+"detail_description" = "描述";
+"detail_content_pack_for" = "内容包所属";
+"detail_dependencies" = "依赖项";
+"detail_optional" = "可选";
+"detail_unique_id" = "唯一 ID";
+"detail_folder" = "文件夹";
+"detail_show_in_finder" = "在 Finder 中显示";
+"detail_view_on_nexus" = "在 Nexus Mods 查看";
+
+/* 模组行 */
+"row_built_in" = "内置";
+"row_update_help" = "有可用更新 - 点击打开下载页面";
+"row_missing_deps" = "缺少或已禁用依赖模组";
+"row_delete_help" = "删除模组";
+
+/* 模组包 */
+"modpack_load_profile" = "加载配置";
+"modpack_share" = "分享";
+"modpack_share_smm" = "以 .smm 分享";
+"modpack_copy_clipboard" = "复制到剪贴板";
+"modpack_export_json" = "导出为 JSON";
+"modpack_export_zip" = "导出为 ZIP";
+"modpack_active" = "已激活";
+"modpack_mods_count" = "%d 个模组";
+"modpack_no_mods" = "此模组包中没有模组";
+"modpack_missing" = "缺少";
+"modpack_enable" = "启用";
+"modpack_disable" = "禁用";
+"modpack_remove" = "从模组包中移除";
+"modpack_manual" = "手动";
+"modpack_nexus_collection" = "Nexus 合集";
+"modpack_imported" = "已导入";
+"modpack_external" = "外部";
+"modpack_live" = "实时";
+"modpack_download" = "下载";
+
+/* 创建模组包 */
+"modpack_create_title" = "创建模组包";
+"modpack_create_name" = "名称";
+"modpack_create_name_placeholder" = "我的模组包";
+"modpack_create_description" = "描述";
+"modpack_create_desc_placeholder" = "可选描述...";
+"modpack_create_preview" = "将保存当前模组配置（已启用 %d 个，已禁用 %d 个）";
+"modpack_create_button" = "创建";
+
+/* 模组包详情 */
+"modpack_detail_apply" = "应用配置";
+"modpack_detail_delete" = "删除模组包";
+"modpack_detail_created" = "创建日期:";
+"modpack_detail_updated" = "更新日期:";
+"modpack_detail_mods" = "模组 (%d)";
+"modpack_detail_delete_confirm" = "删除「%@」";
+"modpack_detail_delete_message" = "确定要删除「%@」吗？此操作无法撤销。";
+"modpack_detail_applied" = "模组包已应用";
+"modpack_detail_applied_message" = "模组包「%@」已成功应用。";
+
+/* 导入模组包 */
+"modpack_import_title" = "导入模组包";
+"modpack_import_url" = "URL";
+"modpack_import_url_placeholder" = "https://...";
+"modpack_import_detected" = "检测到:";
+"modpack_import_downloading" = "下载中...";
+"modpack_import_button" = "导入";
+"modpack_import_nexus" = "Nexus 合集";
+"modpack_import_google" = "Google Drive";
+"modpack_import_zip" = "直接下载";
+"modpack_import_unknown" = "未知来源";
+"modpack_import_security" = "安全警告";
+"modpack_import_warning" = "请仅导入来源可信的模组包。模组包可能包含恶意代码。";
+"modpack_import_risk_code" = "恶意代码执行风险";
+"modpack_import_risk_privacy" = "外部 URL 可能涉及隐私问题";
+"modpack_import_trust" = "我了解相关风险";
+
+/* 模组包列表 */
+"modpack_list_play" = "开始游戏";
+"modpack_list_play_help" = "使用 SMAPI 启动 Stardew Valley";
+"modpack_list_profiles" = "配置";
+"modpack_list_new" = "新建";
+"modpack_list_from_file" = "从文件...";
+"modpack_list_from_clipboard" = "从剪贴板";
+"modpack_list_from_url" = "从 URL...";
+"modpack_list_from_nexus" = "从 Nexus 合集...";
+"modpack_list_compare" = "比较";
+"modpack_list_nearby" = "附近";
+"modpack_list_vanilla" = "原版";
+"modpack_list_zero_mods" = "无模组";
+"modpack_list_no_profiles" = "暂无保存的配置";
+"modpack_list_status" = "%d 个配置 · 已安装 %d 个模组";
+"modpack_list_delete_confirm" = "删除模组包";
+"modpack_list_delete_message" = "确定要删除「%@」吗？此操作无法撤销。";
+
+/* 比较配置 */
+"compare_title" = "比较配置";
+"compare_profile_a" = "配置 A";
+"compare_profile_b" = "配置 B";
+"compare_select" = "选择...";
+"compare_shared" = "%d 个相同";
+"compare_only_a" = "%d 个仅在 A";
+"compare_only_b" = "%d 个仅在 B";
+"compare_in_both" = "两者都有";
+"compare_only_in" = "仅在 %@";
+"compare_select_hint" = "选择两个配置进行比较";
+
+/* NXM 选择器 */
+"nxm_downloaded" = "模组已下载";
+"nxm_where_install" = "要将此模组安装到哪里？";
+"nxm_contains_mods" = "此下载包含 %d 个模组";
+"nxm_current_profile" = "当前配置";
+"nxm_install_now" = "立即安装";
+"nxm_new_modpack" = "新建模组包";
+"nxm_modpack_name" = "模组包名称";
+"nxm_create" = "创建";
+
+/* 附近 */
+"nearby_title" = "与附近玩家比较";
+"nearby_select_modpack" = "选择要比较的模组包:";
+"nearby_start" = "开始搜索";
+"nearby_searching" = "正在搜索附近的玩家...";
+"nearby_ensure" = "确保对方也打开了"附近比较"功能";
+"nearby_found" = "发现附近:";
+"nearby_pick_first" = "请先选择一个模组包";
+"nearby_connected" = "已连接到 %@";
+"nearby_send" = "发送我的模组包";
+"nearby_send_full" = "发送完整模组包（含文件）";
+"nearby_send_full_help" = "发送所有模组文件，让好友可以直接安装";
+"nearby_compare" = "比较模组包";
+"nearby_sent" = "模组包已发送！";
+"nearby_waiting" = "等待对方的模组包...";
+"nearby_preparing" = "正在准备模组...";
+"nearby_sending" = "正在发送模组...";
+"nearby_keep_near" = "请保持两台设备靠近";
+"nearby_receiving" = "正在接收模组...";
+"nearby_importing" = "正在导入模组...";
+"nearby_transfer_done" = "传输完成！";
+"nearby_mods_imported" = "模组导入成功。";
+"nearby_mods_sent" = "模组发送成功。";
+"nearby_transfer_failed" = "传输失败";
+"nearby_perfect_match" = "完全匹配！";
+"nearby_all_match" = "所有 %d 个已启用模组完全匹配。";
+"nearby_you_have" = "仅你拥有";
+"nearby_send_missing" = "发送 %d 个缺少的模组";
+"nearby_they_have" = "仅对方拥有";
+"nearby_ask_friend" = "请好友从对方发送这些模组";
+"nearby_matched" = "匹配 (%d)";
+"nearby_shared" = "%d 个相同";
+"nearby_only_you" = "%d 个仅你有";
+"nearby_only_them" = "%d 个仅对方有";
+"nearby_close" = "关闭";
+
+/* Nexus API 密钥 */
+"nexus_connect_title" = "连接 Nexus Mods";
+"nexus_connect_desc" = "输入 Nexus Mods API 密钥，即可直接浏览和下载模组。";
+"nexus_api_key" = "API 密钥";
+"nexus_api_placeholder" = "在此粘贴 API 密钥...";
+"nexus_get_key" = "获取 API 密钥";
+"nexus_validate" = "验证并保存";
+
+/* Nexus 浏览 */
+"nexus_essentials" = "必备";
+"nexus_trending" = "热门";
+"nexus_latest" = "最新";
+"nexus_search" = "搜索";
+"nexus_refresh" = "刷新";
+"nexus_search_placeholder" = "搜索 Nexus Mods...";
+"nexus_search_button" = "搜索";
+"nexus_loading" = "加载中...";
+
+/* Nexus 卡片 */
+"nexus_modpack" = "模组包";
+"nexus_installed" = "已安装";
+
+/* Nexus 详情 */
+"nexus_detail_view" = "在 Nexus 查看";
+"nexus_detail_web_downloads" = "通过 Nexus 网页下载";
+"nexus_detail_files" = "文件";
+"nexus_detail_loading" = "正在加载文件...";
+"nexus_detail_no_files" = "没有可用文件";
+"nexus_detail_install" = "安装";
+"nexus_detail_download" = "下载";
+
+/* Nexus 网页下载 */
+"nexus_web_hint" = "如需登录请先登录，然后点击 \"Mod Manager Download\"";
+
+/* 引导 */
+"onboarding_welcome" = "欢迎使用 Stardew Mod Manager";
+"onboarding_welcome_desc" = "在 Mac 上轻松管理 Stardew Valley 模组。";
+"onboarding_welcome_hint" = "只需几步即可完成设置。";
+"onboarding_find_game" = "查找游戏";
+"onboarding_game_location" = "请指定 Stardew Valley 的安装位置。";
+"onboarding_no_path" = "未检测到路径";
+"onboarding_game_found" = "已找到游戏";
+"onboarding_game_not_found" = "未找到游戏";
+"onboarding_smapi_installed" = "SMAPI 已安装";
+"onboarding_smapi_not_found" = "未找到 SMAPI";
+"onboarding_install_smapi" = "安装 SMAPI";
+"onboarding_installing" = "安装中...";
+"onboarding_auto_detect" = "自动检测";
+"onboarding_nexus_title" = "连接 Nexus Mods";
+"onboarding_nexus_desc" = "可选择关联 Nexus Mods 账号，直接浏览和下载模组。";
+"onboarding_connected" = "已连接";
+"onboarding_nexus_as" = "以 %@";
+"onboarding_premium" = "高级会员";
+"onboarding_setup_later" = "之后可在设置中随时更改。";
+"onboarding_all_set" = "一切就绪！";
+"onboarding_all_set_hint" = "你可以:";
+"onboarding_profiles_title" = "模组包";
+"onboarding_profiles_desc" = "为不同的游戏存档创建和切换模组配置。";
+"onboarding_mods_title" = "模组";
+"onboarding_mods_desc" = "查看、启用、禁用和导入已安装的模组。";
+"onboarding_browse_title" = "浏览 Nexus";
+"onboarding_browse_desc" = "直接从 Nexus Mods 搜索和下载模组。";
+"onboarding_back" = "上一步";
+"onboarding_next" = "下一步";
+"onboarding_skip" = "跳过";
+"onboarding_get_started" = "开始使用";
+"onboarding_game_dir" = "选择 Stardew Valley 游戏目录";
+"onboarding_game_dir_hint" = "导航至包含 StardewModdingAPI 的文件夹";
+
+/* 设置 */
+"settings_general" = "通用";
+"settings_nexus" = "Nexus";
+"settings_about" = "关于";
+"settings_language" = "语言";
+"settings_language_system" = "跟随系统";
+"settings_theme" = "主题";
+"settings_sounds" = "音效";
+"settings_game_location" = "Stardew Valley 位置";
+"settings_game_found" = "已找到游戏";
+"settings_game_not_found" = "未找到游戏";
+"settings_smapi_installed" = "SMAPI 已安装";
+"settings_smapi_not_found" = "未找到 SMAPI";
+"settings_install_smapi" = "安装 SMAPI";
+"settings_installing" = "安装中...";
+"settings_auto_detect" = "自动检测";
+"settings_reload_hint" = "更改游戏路径后，刷新模组列表（⌘R）即可生效。";
+"settings_show_welcome" = "显示欢迎指引";
+"settings_manual_install" = "手动安装";
+"settings_nexus_api" = "Nexus Mods API 密钥";
+"settings_nexus_placeholder" = "输入 API 密钥...";
+"settings_disconnect" = "断开连接";
+"settings_app" = "应用";
+"settings_app_name" = "Stardew Mod Manager";
+"settings_version" = "版本";
+"settings_check_updates" = "检查更新";
+"settings_checking" = "检查中...";
+"settings_up_to_date" = "已是最新版本。";
+"settings_update_available" = "v%@ 可用！";
+"settings_update_to" = "更新到 v%@";
+"settings_view_notes" = "查看更新日志";
+
+/* 枚举 */
+"mod_type_code" = "代码模组";
+"mod_type_content" = "内容包";
+"mod_type_unknown" = "未知";
+"filter_all" = "全部";
+"filter_enabled" = "已启用";
+"filter_disabled" = "已禁用";
+"filter_code_mods" = "代码模组";
+"filter_content_packs" = "内容包";
+"filter_code_short" = "代码";
+"filter_packs_short" = "内容包";
+"theme_stardew" = "Stardew";
+"theme_pink" = "粉色";

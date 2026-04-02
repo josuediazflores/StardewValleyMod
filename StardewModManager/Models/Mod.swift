@@ -6,6 +6,14 @@ enum ModType: String, CaseIterable, Identifiable {
     case unknown = "Unknown"
 
     var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .codeMod: L.s("mod_type_code")
+        case .contentPack: L.s("mod_type_content")
+        case .unknown: L.s("mod_type_unknown")
+        }
+    }
 }
 
 enum DependencyStatus: Equatable {
@@ -31,13 +39,23 @@ enum ModFilter: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var displayName: String {
+        switch self {
+        case .all: L.s("filter_all")
+        case .enabled: L.s("filter_enabled")
+        case .disabled: L.s("filter_disabled")
+        case .codeMods: L.s("filter_code_mods")
+        case .contentPacks: L.s("filter_content_packs")
+        }
+    }
+
     var shortLabel: String {
         switch self {
-        case .all: "All"
-        case .enabled: "Enabled"
-        case .disabled: "Disabled"
-        case .codeMods: "Code"
-        case .contentPacks: "Packs"
+        case .all: L.s("filter_all")
+        case .enabled: L.s("filter_enabled")
+        case .disabled: L.s("filter_disabled")
+        case .codeMods: L.s("filter_code_short")
+        case .contentPacks: L.s("filter_packs_short")
         }
     }
 }

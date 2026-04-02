@@ -31,7 +31,7 @@ struct NexusModCardView: View {
                 VStack {
                     HStack {
                         if isLikelyModpack {
-                            Text("Modpack")
+                            Text(L.s("nexus_modpack"))
                                 .font(.stardew(size: 12))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -41,7 +41,7 @@ struct NexusModCardView: View {
                         }
                         Spacer()
                         if isInstalled {
-                            Text("Installed")
+                            Text(L.s("nexus_installed"))
                                 .font(.stardew(size: 12))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)

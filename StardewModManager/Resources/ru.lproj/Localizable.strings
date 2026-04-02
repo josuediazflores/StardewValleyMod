@@ -1,0 +1,337 @@
+/* Общие */
+"common_cancel" = "Отмена";
+"common_done" = "Готово";
+"common_retry" = "Повторить";
+"common_loading" = "Загрузка...";
+"common_ok" = "ОК";
+"common_delete" = "Удалить";
+"common_error" = "Ошибка";
+"common_search" = "Поиск";
+"common_undo" = "Отменить";
+"common_import" = "Импорт";
+"common_export" = "Экспорт";
+"common_browse" = "Обзор...";
+
+/* Меню приложения */
+"menu_import_mods" = "Импортировать моды...";
+"menu_refresh_mod_list" = "Обновить список модов";
+"menu_launch_game" = "Запустить игру";
+"menu_check_updates" = "Проверить обновления";
+"menu_toggle_mod" = "Переключить выбранный мод";
+"menu_show_in_finder" = "Показать в Finder";
+"menu_show_all" = "Показать все моды";
+"menu_show_enabled" = "Только включённые";
+"menu_show_disabled" = "Только отключённые";
+
+/* Боковая панель */
+"sidebar_modpacks" = "Модпаки";
+"sidebar_mods" = "Моды";
+"sidebar_browse" = "Обзор";
+"sidebar_settings" = "Настройки";
+"sidebar_smapi_ready" = "SMAPI готов";
+"sidebar_smapi_not_found" = "SMAPI не найден";
+"sidebar_select_item" = "Выберите элемент на боковой панели";
+
+/* Обновление приложения */
+"update_available" = "Доступно обновление";
+"update_version_message" = "Доступна новая версия Stardew Mod Manager.";
+"update_downloading" = "Загрузка обновления...";
+"update_now" = "Обновить сейчас";
+"update_view_github" = "Открыть на GitHub";
+"update_later" = "Позже";
+
+/* Установленные моды */
+"installed_search" = "Поиск модов...";
+"installed_import" = "Импорт";
+"installed_import_help" = "Импортировать ZIP-файлы модов";
+"installed_add_folder" = "Добавить папку";
+"installed_add_folder_help" = "Импортировать папки модов";
+"installed_nexus_url" = "URL Nexus";
+"installed_nexus_url_help" = "Установить по URL Nexus Mods";
+"installed_select" = "Выбрать";
+"installed_select_help" = "Режим множественного выбора";
+"installed_deselect_all" = "Снять выделение";
+"installed_select_all" = "Выбрать все";
+"installed_enable" = "Включить";
+"installed_disable" = "Отключить";
+"installed_checking" = "Проверка...";
+"installed_selected_count" = "Выбрано модов: %d";
+"installed_update_count" = "Обновлений: %d";
+"installed_no_mods" = "Моды не установлены";
+"installed_no_mods_hint" = "Перетащите сюда папки или ZIP-файлы модов, или используйте кнопки выше";
+"installed_choose_files" = "Выбрать файлы...";
+"installed_choose_folder" = "Выбрать папку...";
+"installed_no_results" = "Ничего не найдено";
+"installed_delete_title" = "Удалить модов: %d";
+"installed_delete_confirm" = "Вы уверены, что хотите удалить эти моды? Они будут удалены с диска без возможности восстановления.";
+"installed_nexus_sheet_title" = "Установить по URL Nexus";
+"installed_nexus_sheet_desc" = "Вставьте ссылку Nexus Mods для загрузки и установки";
+"installed_nexus_placeholder" = "https://www.nexusmods.com/stardewvalley/mods/...";
+"installed_nexus_install" = "Установить";
+
+/* Детали мода */
+"detail_enabled" = "Включён";
+"detail_disabled" = "Отключён";
+"detail_description" = "Описание";
+"detail_content_pack_for" = "Content Pack для";
+"detail_dependencies" = "Зависимости";
+"detail_optional" = "Необязательно";
+"detail_unique_id" = "Уникальный ID";
+"detail_folder" = "Папка";
+"detail_show_in_finder" = "Показать в Finder";
+"detail_view_on_nexus" = "Открыть на Nexus Mods";
+
+/* Строка мода */
+"row_built_in" = "Встроенный";
+"row_update_help" = "Доступно обновление — нажмите, чтобы открыть страницу загрузки";
+"row_missing_deps" = "Отсутствующие или отключённые зависимости";
+"row_delete_help" = "Удалить мод";
+
+/* Модпак */
+"modpack_load_profile" = "Загрузить профиль";
+"modpack_share" = "Поделиться";
+"modpack_share_smm" = "Поделиться как .smm";
+"modpack_copy_clipboard" = "Скопировать в буфер обмена";
+"modpack_export_json" = "Экспорт в JSON";
+"modpack_export_zip" = "Экспорт в ZIP";
+"modpack_active" = "Активен";
+"modpack_mods_count" = "Модов: %d";
+"modpack_no_mods" = "В этом модпаке нет модов";
+"modpack_missing" = "Отсутствует";
+"modpack_enable" = "Включить";
+"modpack_disable" = "Отключить";
+"modpack_remove" = "Удалить из модпака";
+"modpack_manual" = "Вручную";
+"modpack_nexus_collection" = "Коллекция Nexus";
+"modpack_imported" = "Импортирован";
+"modpack_external" = "Внешний";
+"modpack_live" = "Live";
+"modpack_download" = "Скачать";
+
+/* Создание модпака */
+"modpack_create_title" = "Создать модпак";
+"modpack_create_name" = "Название";
+"modpack_create_name_placeholder" = "Мой модпак";
+"modpack_create_description" = "Описание";
+"modpack_create_desc_placeholder" = "Необязательное описание...";
+"modpack_create_preview" = "Будет сохранена текущая конфигурация (%d включено, %d отключено)";
+"modpack_create_button" = "Создать";
+
+/* Детали модпака */
+"modpack_detail_apply" = "Применить профиль";
+"modpack_detail_delete" = "Удалить модпак";
+"modpack_detail_created" = "Создан:";
+"modpack_detail_updated" = "Обновлён:";
+"modpack_detail_mods" = "Моды (%d)";
+"modpack_detail_delete_confirm" = "Удалить \"%@\"";
+"modpack_detail_delete_message" = "Вы уверены, что хотите удалить \"%@\"? Это действие нельзя отменить.";
+"modpack_detail_applied" = "Модпак применён";
+"modpack_detail_applied_message" = "Модпак \"%@\" успешно применён.";
+
+/* Импорт модпака */
+"modpack_import_title" = "Импорт модпака";
+"modpack_import_url" = "URL";
+"modpack_import_url_placeholder" = "https://...";
+"modpack_import_detected" = "Обнаружено:";
+"modpack_import_downloading" = "Загрузка...";
+"modpack_import_button" = "Импортировать";
+"modpack_import_nexus" = "Коллекция Nexus";
+"modpack_import_google" = "Google Drive";
+"modpack_import_zip" = "Прямой архив";
+"modpack_import_unknown" = "Неизвестный источник";
+"modpack_import_security" = "Предупреждение безопасности";
+"modpack_import_warning" = "Импортируйте модпаки только из надёжных источников. Модпаки могут содержать вредоносный код.";
+"modpack_import_risk_code" = "Запуск вредоносного кода";
+"modpack_import_risk_privacy" = "Угрозы конфиденциальности через внешние URL";
+"modpack_import_trust" = "Я понимаю риски";
+
+/* Список модпаков */
+"modpack_list_play" = "Играть";
+"modpack_list_play_help" = "Запустить Stardew Valley с SMAPI";
+"modpack_list_profiles" = "ПРОФИЛИ";
+"modpack_list_new" = "Новый";
+"modpack_list_from_file" = "Из файла...";
+"modpack_list_from_clipboard" = "Из буфера обмена";
+"modpack_list_from_url" = "По URL...";
+"modpack_list_from_nexus" = "Из коллекции Nexus...";
+"modpack_list_compare" = "Сравнить";
+"modpack_list_nearby" = "Рядом";
+"modpack_list_vanilla" = "Vanilla";
+"modpack_list_zero_mods" = "0 модов";
+"modpack_list_no_profiles" = "Нет сохранённых профилей";
+"modpack_list_status" = "Профилей: %d · Модов: %d";
+"modpack_list_delete_confirm" = "Удалить модпак";
+"modpack_list_delete_message" = "Вы уверены, что хотите удалить \"%@\"? Это действие нельзя отменить.";
+
+/* Сравнение модпаков */
+"compare_title" = "Сравнить профили";
+"compare_profile_a" = "Профиль A";
+"compare_profile_b" = "Профиль B";
+"compare_select" = "Выбрать...";
+"compare_shared" = "Общих: %d";
+"compare_only_a" = "Только в A: %d";
+"compare_only_b" = "Только в B: %d";
+"compare_in_both" = "В обоих";
+"compare_only_in" = "Только в %@";
+"compare_select_hint" = "Выберите два профиля для сравнения";
+
+/* Выбор NXM */
+"nxm_downloaded" = "Мод загружен";
+"nxm_where_install" = "Куда установить этот мод?";
+"nxm_contains_mods" = "Эта загрузка содержит модов: %d";
+"nxm_current_profile" = "Текущий профиль";
+"nxm_install_now" = "Установить сейчас";
+"nxm_new_modpack" = "Новый модпак";
+"nxm_modpack_name" = "Название модпака";
+"nxm_create" = "Создать";
+
+/* Рядом */
+"nearby_title" = "Сравнить с ближайшим игроком";
+"nearby_select_modpack" = "Выберите модпак для сравнения:";
+"nearby_start" = "Начать поиск";
+"nearby_searching" = "Поиск ближайших игроков...";
+"nearby_ensure" = "Убедитесь, что другой игрок тоже открыл «Сравнить рядом»";
+"nearby_found" = "Найдены поблизости:";
+"nearby_pick_first" = "Сначала выберите модпак";
+"nearby_connected" = "Подключено к %@";
+"nearby_send" = "Отправить мой модпак";
+"nearby_send_full" = "Отправить модпак с файлами";
+"nearby_send_full_help" = "Отправить все файлы модов для установки другом";
+"nearby_compare" = "Сравнить модпаки";
+"nearby_sent" = "Модпак отправлен!";
+"nearby_waiting" = "Ожидание модпака для сравнения...";
+"nearby_preparing" = "Подготовка модов...";
+"nearby_sending" = "Отправка модов...";
+"nearby_keep_near" = "Держите устройства рядом";
+"nearby_receiving" = "Получение модов...";
+"nearby_importing" = "Импорт модов...";
+"nearby_transfer_done" = "Передача завершена!";
+"nearby_mods_imported" = "Моды успешно импортированы.";
+"nearby_mods_sent" = "Моды успешно отправлены.";
+"nearby_transfer_failed" = "Ошибка передачи";
+"nearby_perfect_match" = "Полное совпадение!";
+"nearby_all_match" = "Все %d включённых модов совпадают.";
+"nearby_you_have" = "Есть у вас, нет у них";
+"nearby_send_missing" = "Отправить недостающих модов: %d";
+"nearby_they_have" = "Есть у них, нет у вас";
+"nearby_ask_friend" = "Попросите друга отправить со своего устройства";
+"nearby_matched" = "Совпадения (%d)";
+"nearby_shared" = "Общих: %d";
+"nearby_only_you" = "Только у вас: %d";
+"nearby_only_them" = "Только у них: %d";
+"nearby_close" = "Закрыть";
+
+/* Ключ API Nexus */
+"nexus_connect_title" = "Подключиться к Nexus Mods";
+"nexus_connect_desc" = "Введите ключ API Nexus Mods, чтобы искать и скачивать моды напрямую.";
+"nexus_api_key" = "Ключ API";
+"nexus_api_placeholder" = "Вставьте ключ API...";
+"nexus_get_key" = "Получить ключ API";
+"nexus_validate" = "Проверить и сохранить";
+
+/* Обзор Nexus */
+"nexus_essentials" = "Основные";
+"nexus_trending" = "Популярные";
+"nexus_latest" = "Новые";
+"nexus_search" = "Поиск";
+"nexus_refresh" = "Обновить";
+"nexus_search_placeholder" = "Поиск на Nexus Mods...";
+"nexus_search_button" = "Найти";
+"nexus_loading" = "Загрузка...";
+
+/* Карточка Nexus */
+"nexus_modpack" = "Модпак";
+"nexus_installed" = "Установлен";
+
+/* Детали Nexus */
+"nexus_detail_view" = "Открыть на Nexus";
+"nexus_detail_web_downloads" = "Загрузка через веб-страницу Nexus";
+"nexus_detail_files" = "Файлы";
+"nexus_detail_loading" = "Загрузка файлов...";
+"nexus_detail_no_files" = "Нет доступных файлов";
+"nexus_detail_install" = "Установить";
+"nexus_detail_download" = "Скачать";
+
+/* Веб-загрузка Nexus */
+"nexus_web_hint" = "Войдите при необходимости, затем нажмите \"Mod Manager Download\"";
+
+/* Начальная настройка */
+"onboarding_welcome" = "Добро пожаловать в Stardew Mod Manager";
+"onboarding_welcome_desc" = "Уютное место для управления модами Stardew Valley на Mac.";
+"onboarding_welcome_hint" = "Настроим всё за несколько шагов.";
+"onboarding_find_game" = "Найти игру";
+"onboarding_game_location" = "Нужно указать, где установлен Stardew Valley.";
+"onboarding_no_path" = "Путь не обнаружен";
+"onboarding_game_found" = "Игра найдена";
+"onboarding_game_not_found" = "Игра не найдена";
+"onboarding_smapi_installed" = "SMAPI установлен";
+"onboarding_smapi_not_found" = "SMAPI не найден";
+"onboarding_install_smapi" = "Установить SMAPI";
+"onboarding_installing" = "Установка...";
+"onboarding_auto_detect" = "Определить автоматически";
+"onboarding_nexus_title" = "Подключиться к Nexus Mods";
+"onboarding_nexus_desc" = "Привяжите аккаунт Nexus Mods, чтобы искать и скачивать моды напрямую.";
+"onboarding_connected" = "Подключено";
+"onboarding_nexus_as" = "как %@";
+"onboarding_premium" = "Premium";
+"onboarding_setup_later" = "Это можно настроить позже в разделе «Настройки».";
+"onboarding_all_set" = "Всё готово!";
+"onboarding_all_set_hint" = "Вот что вы можете делать:";
+"onboarding_profiles_title" = "Модпаки";
+"onboarding_profiles_desc" = "Создавайте профили модов для разных прохождений и переключайтесь между ними.";
+"onboarding_mods_title" = "Моды";
+"onboarding_mods_desc" = "Просматривайте, включайте, отключайте и импортируйте установленные моды.";
+"onboarding_browse_title" = "Обзор Nexus";
+"onboarding_browse_desc" = "Ищите и скачивайте моды прямо из Nexus Mods.";
+"onboarding_back" = "Назад";
+"onboarding_next" = "Далее";
+"onboarding_skip" = "Пропустить";
+"onboarding_get_started" = "Начать";
+"onboarding_game_dir" = "Выберите папку игры Stardew Valley";
+"onboarding_game_dir_hint" = "Перейдите к папке, содержащей StardewModdingAPI";
+
+/* Настройки */
+"settings_general" = "Основные";
+"settings_nexus" = "Nexus";
+"settings_about" = "О программе";
+"settings_language" = "Язык";
+"settings_language_system" = "Системный";
+"settings_theme" = "Тема";
+"settings_sounds" = "Звуковые эффекты";
+"settings_game_location" = "Расположение Stardew Valley";
+"settings_game_found" = "Игра найдена";
+"settings_game_not_found" = "Игра не найдена";
+"settings_smapi_installed" = "SMAPI установлен";
+"settings_smapi_not_found" = "SMAPI не найден";
+"settings_install_smapi" = "Установить SMAPI";
+"settings_installing" = "Установка...";
+"settings_auto_detect" = "Определить автоматически";
+"settings_reload_hint" = "Изменения пути вступят в силу после обновления списка модов (⌘R).";
+"settings_show_welcome" = "Показать приветствие";
+"settings_manual_install" = "Ручная установка";
+"settings_nexus_api" = "Ключ API Nexus Mods";
+"settings_nexus_placeholder" = "Введите ключ API...";
+"settings_disconnect" = "Отключить";
+"settings_app" = "Приложение";
+"settings_app_name" = "Stardew Mod Manager";
+"settings_version" = "Версия";
+"settings_check_updates" = "Проверить обновления";
+"settings_checking" = "Проверка...";
+"settings_up_to_date" = "Установлена последняя версия.";
+"settings_update_available" = "Доступна v%@!";
+"settings_update_to" = "Обновить до v%@";
+"settings_view_notes" = "Заметки о выпуске";
+
+/* Перечисления */
+"mod_type_code" = "Мод с кодом";
+"mod_type_content" = "Content Pack";
+"mod_type_unknown" = "Неизвестно";
+"filter_all" = "Все";
+"filter_enabled" = "Включённые";
+"filter_disabled" = "Отключённые";
+"filter_code_mods" = "Моды с кодом";
+"filter_content_packs" = "Content Pack";
+"filter_code_short" = "Код";
+"filter_packs_short" = "Паки";
+"theme_stardew" = "Stardew";
+"theme_pink" = "Розовая";

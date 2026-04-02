@@ -45,7 +45,7 @@ struct OnboardingView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "chevron.left")
                                     .font(.system(size: 11))
-                                Text("Back")
+                                Text(L.s("onboarding_back"))
                                     .font(.stardew(size: 18))
                             }
                             .foregroundStyle(Color.textMuted)
@@ -113,11 +113,11 @@ struct OnboardingView: View {
     private var nextButtonText: String {
         switch currentStep {
         case 2:
-            return appState.settings.isAPIKeyValidated ? "Next" : "Skip"
+            return appState.settings.isAPIKeyValidated ? L.s("onboarding_next") : L.s("onboarding_skip")
         case 3:
-            return "Get Started"
+            return L.s("onboarding_get_started")
         default:
-            return "Next"
+            return L.s("onboarding_next")
         }
     }
 }
@@ -133,18 +133,18 @@ private struct WelcomeStepView: View {
 
             JunimoIcon(name: appState.selectedJunimoName, size: 80)
 
-            Text("Welcome to Stardew Mod Manager")
+            Text(L.s("onboarding_welcome"))
                 .font(.stardew(size: 32))
                 .foregroundStyle(Color.textDark)
                 .multilineTextAlignment(.center)
 
-            Text("Your cozy home for managing Stardew Valley mods on Mac.")
+            Text(L.s("onboarding_welcome_desc"))
                 .font(.stardew(size: 18))
                 .foregroundStyle(Color.textMedium)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 400)
 
-            Text("Let's get you set up in just a few steps.")
+            Text(L.s("onboarding_welcome_hint"))
                 .font(.stardew(size: 16))
                 .foregroundStyle(Color.textMuted)
 
@@ -163,25 +163,25 @@ private struct GamePathStepView: View {
         VStack(spacing: 20) {
             Spacer()
 
-            Text("Find Your Game")
+            Text(L.s("onboarding_find_game"))
                 .font(.stardew(size: 28))
                 .foregroundStyle(Color.textDark)
 
-            Text("We need to know where Stardew Valley is installed.")
+            Text(L.s("onboarding_game_location"))
                 .font(.stardew(size: 16))
                 .foregroundStyle(Color.textMedium)
 
             // Game path card
             VStack(spacing: 0) {
                 HStack(spacing: 12) {
-                    Text(appState.settings.gamePath.isEmpty ? "No path detected" : appState.settings.gamePath)
+                    Text(appState.settings.gamePath.isEmpty ? L.s("onboarding_no_path") : appState.settings.gamePath)
                         .font(.stardew(size: 14))
                         .foregroundStyle(appState.settings.gamePath.isEmpty ? Color.stardewRed : Color.textMuted)
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Button("Browse...") {
+                    Button(L.s("common_browse")) {
                         browseGamePath()
                     }
                     .font(.stardew(size: 14))
@@ -207,7 +207,7 @@ private struct GamePathStepView: View {
                         Circle()
                             .fill(appState.settings.isGamePathValid ? Color.stardewGreen : Color.stardewRed)
                             .frame(width: 8, height: 8)
-                        Text(appState.settings.isGamePathValid ? "Game found" : "Game not found")
+                        Text(appState.settings.isGamePathValid ? L.s("onboarding_game_found") : L.s("onboarding_game_not_found"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(appState.settings.isGamePathValid ? Color.stardewGreen : Color.stardewRed)
                     }
@@ -216,7 +216,7 @@ private struct GamePathStepView: View {
                         Circle()
                             .fill(appState.settings.isSMAPIInstalled ? Color.stardewGreen : Color.stardewRed)
                             .frame(width: 8, height: 8)
-                        Text(appState.settings.isSMAPIInstalled ? "SMAPI installed" : "SMAPI not found")
+                        Text(appState.settings.isSMAPIInstalled ? L.s("onboarding_smapi_installed") : L.s("onboarding_smapi_not_found"))
                             .font(.stardew(size: 14))
                             .foregroundStyle(appState.settings.isSMAPIInstalled ? Color.stardewGreen : Color.stardewRed)
                     }
@@ -226,7 +226,7 @@ private struct GamePathStepView: View {
                             HStack(spacing: 6) {
                                 ProgressView()
                                     .controlSize(.small)
-                                Text("Installing...")
+                                Text(L.s("onboarding_installing"))
                                     .font(.stardew(size: 14))
                                     .foregroundStyle(Color.textMuted)
                             }
@@ -234,7 +234,7 @@ private struct GamePathStepView: View {
                             Button {
                                 appState.installSMAPI()
                             } label: {
-                                Text("Install SMAPI")
+                                Text(L.s("onboarding_install_smapi"))
                                     .font(.stardew(size: 14))
                                     .foregroundStyle(Color.textDark)
                                     .padding(.horizontal, 12)
@@ -261,11 +261,11 @@ private struct GamePathStepView: View {
                             .foregroundStyle(Color.stardewRed)
                             .multilineTextAlignment(.center)
                         HStack(spacing: 12) {
-                            Button("Retry") { appState.installSMAPI() }
+                            Button(L.s("common_retry")) { appState.installSMAPI() }
                                 .font(.stardew(size: 12))
                                 .foregroundStyle(Color.stardewBlue)
                                 .buttonStyle(.plain)
-                            Button("Manual Install") {
+                            Button(L.s("settings_manual_install")) {
                                 if let url = URL(string: "https://smapi.io") {
                                     NSWorkspace.shared.open(url)
                                 }
@@ -295,7 +295,7 @@ private struct GamePathStepView: View {
                     appState.loadMods()
                 }
             } label: {
-                Text("Auto-Detect")
+                Text(L.s("onboarding_auto_detect"))
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.textDark)
                     .padding(.horizontal, 20)
@@ -321,8 +321,8 @@ private struct GamePathStepView: View {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.title = "Select Stardew Valley Game Directory"
-        panel.message = "Navigate to the folder containing StardewModdingAPI"
+        panel.title = L.s("onboarding_game_dir")
+        panel.message = L.s("onboarding_game_dir_hint")
 
         if panel.runModal() == .OK, let url = panel.url {
             appState.settings.gamePath = url.path(percentEncoded: false)
@@ -342,11 +342,11 @@ private struct NexusKeyStepView: View {
         VStack(spacing: 20) {
             Spacer()
 
-            Text("Connect to Nexus Mods")
+            Text(L.s("onboarding_nexus_title"))
                 .font(.stardew(size: 28))
                 .foregroundStyle(Color.textDark)
 
-            Text("Optionally link your Nexus Mods account to browse and download mods directly.")
+            Text(L.s("onboarding_nexus_desc"))
                 .font(.stardew(size: 16))
                 .foregroundStyle(Color.textMedium)
                 .multilineTextAlignment(.center)
@@ -358,16 +358,16 @@ private struct NexusKeyStepView: View {
                         Circle()
                             .fill(Color.stardewGreen)
                             .frame(width: 8, height: 8)
-                        Text("Connected")
+                        Text(L.s("onboarding_connected"))
                             .font(.stardew(size: 16))
                             .foregroundStyle(Color.stardewGreen)
                         if let name = appState.settings.nexusUserName {
-                            Text("as \(name)")
+                            Text(L.s("onboarding_nexus_as", name))
                                 .font(.stardew(size: 14))
                                 .foregroundStyle(Color.textMuted)
                         }
                         if appState.settings.isNexusPremium {
-                            Text("Premium")
+                            Text(L.s("onboarding_premium"))
                                 .font(.stardew(size: 12))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
@@ -379,7 +379,7 @@ private struct NexusKeyStepView: View {
                     .padding(14)
                 } else {
                     VStack(spacing: 12) {
-                        SecureField("Paste your API key here...", text: $apiKeyInput)
+                        SecureField(L.s("nexus_api_placeholder"), text: $apiKeyInput)
                             .font(.stardew(size: 14))
                             .textFieldStyle(.roundedBorder)
                             .frame(maxWidth: 400)
@@ -392,7 +392,7 @@ private struct NexusKeyStepView: View {
                                     isValidating = false
                                 }
                             } label: {
-                                Text("Validate & Save")
+                                Text(L.s("nexus_validate"))
                                     .font(.stardew(size: 14))
                                     .foregroundStyle(Color.textDark)
                                     .padding(.horizontal, 14)
@@ -410,7 +410,7 @@ private struct NexusKeyStepView: View {
                             .disabled(apiKeyInput.isEmpty || isValidating)
                             .opacity(apiKeyInput.isEmpty || isValidating ? 0.5 : 1)
 
-                            Button("Get API Key") {
+                            Button(L.s("nexus_get_key")) {
                                 if let url = URL(string: "https://www.nexusmods.com/users/myaccount?tab=api+access") {
                                     NSWorkspace.shared.open(url)
                                 }
@@ -444,7 +444,7 @@ private struct NexusKeyStepView: View {
                     )
             )
 
-            Text("You can always set this up later in Settings.")
+            Text(L.s("onboarding_setup_later"))
                 .font(.stardew(size: 14))
                 .foregroundStyle(Color.textMuted)
 
@@ -461,29 +461,29 @@ private struct OrientationStepView: View {
         VStack(spacing: 20) {
             Spacer()
 
-            Text("You're All Set!")
+            Text(L.s("onboarding_all_set"))
                 .font(.stardew(size: 28))
                 .foregroundStyle(Color.textDark)
 
-            Text("Here's what you can do:")
+            Text(L.s("onboarding_all_set_hint"))
                 .font(.stardew(size: 16))
                 .foregroundStyle(Color.textMedium)
 
             VStack(spacing: 12) {
                 orientationCard(
                     imageName: "Golden_Scroll",
-                    title: "Modpacks",
-                    description: "Create and switch between mod profiles for different playthroughs."
+                    title: L.s("onboarding_profiles_title"),
+                    description: L.s("onboarding_profiles_desc")
                 )
                 orientationCard(
                     imageName: "Chest",
-                    title: "Mods",
-                    description: "View, enable, disable, and import your installed mods."
+                    title: L.s("onboarding_mods_title"),
+                    description: L.s("onboarding_mods_desc")
                 )
                 orientationCard(
                     imageName: "Horse_The_Book",
-                    title: "Browse Nexus",
-                    description: "Search and download mods directly from Nexus Mods."
+                    title: L.s("onboarding_browse_title"),
+                    description: L.s("onboarding_browse_desc")
                 )
             }
             .frame(maxWidth: 450)

@@ -80,7 +80,7 @@ struct ExpandableModpackCardView: View {
                     Circle()
                         .fill(Color.stardewGreen)
                         .frame(width: 6, height: 6)
-                    Text("Active")
+                    Text(L.s("modpack_active"))
                         .font(.stardew(size: 12))
                 }
                 .padding(.horizontal, 6)
@@ -92,7 +92,7 @@ struct ExpandableModpackCardView: View {
 
             sourceBadge
 
-            Text("\(modpack.entries.count) mods")
+            Text(L.s("modpack_mods_count", modpack.entries.count))
                 .font(.stardew(size: 14))
                 .foregroundStyle(Color.textMuted)
 
@@ -106,7 +106,7 @@ struct ExpandableModpackCardView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "play.fill")
                             .font(.system(size: 10))
-                        Text("Load Profile")
+                        Text(L.s("modpack_load_profile"))
                             .font(.system(size: 11, weight: .medium))
                     }
                     .padding(.horizontal, 10)
@@ -118,13 +118,13 @@ struct ExpandableModpackCardView: View {
                 .buttonStyle(.plain)
 
                 Menu {
-                    Section("Share") {
-                        Button("Share as .smm") { onShareSMM() }
-                        Button("Copy to Clipboard") { onCopyClipboard() }
+                    Section(L.s("modpack_share")) {
+                        Button(L.s("modpack_share_smm")) { onShareSMM() }
+                        Button(L.s("modpack_copy_clipboard")) { onCopyClipboard() }
                     }
-                    Section("Export") {
-                        Button("Export as JSON") { onExportJSON() }
-                        Button("Export as ZIP") { onExportZIP() }
+                    Section(L.s("common_export")) {
+                        Button(L.s("modpack_export_json")) { onExportJSON() }
+                        Button(L.s("modpack_export_zip")) { onExportZIP() }
                     }
                 } label: {
                     Image(systemName: "square.and.arrow.up")
@@ -157,7 +157,7 @@ struct ExpandableModpackCardView: View {
         let installedIDs = Set(appState.mods.map(\.id))
 
         if entries.isEmpty {
-            Text("No mods in this modpack")
+            Text(L.s("modpack_no_mods"))
                 .font(.stardew(size: 14))
                 .foregroundStyle(Color.textMuted)
                 .frame(maxWidth: .infinity, minHeight: 100)
@@ -185,7 +185,7 @@ struct ExpandableModpackCardView: View {
                             Spacer()
 
                             if !isInstalled {
-                                Text("Missing")
+                                Text(L.s("modpack_missing"))
                                     .font(.stardew(size: 12))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -206,11 +206,11 @@ struct ExpandableModpackCardView: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .contextMenu {
-                            Button(entry.isEnabled ? "Disable" : "Enable") {
+                            Button(entry.isEnabled ? L.s("modpack_disable") : L.s("modpack_enable")) {
                                 appState.toggleModpackEntry(modpackID: modpack.id, entryID: entry.uniqueID)
                             }
                             Divider()
-                            Button("Remove from Modpack", role: .destructive) {
+                            Button(L.s("modpack_remove"), role: .destructive) {
                                 appState.removeModpackEntry(modpackID: modpack.id, entryID: entry.uniqueID)
                             }
                         }
@@ -252,15 +252,15 @@ struct ExpandableModpackCardView: View {
     private var sourceInfo: (String, Color) {
         switch modpack.source {
         case .manual:
-            return ("Manual", Color.stardewPurple)
+            return (L.s("modpack_manual"), Color.stardewPurple)
         case .nexusCollection:
-            return ("Nexus", Color.stardewOrange)
+            return (L.s("modpack_nexus_collection"), Color.stardewOrange)
         case .imported:
-            return ("Imported", Color.stardewBlue)
+            return (L.s("modpack_imported"), Color.stardewBlue)
         case .externalURL:
-            return ("External", Color.textMuted)
+            return (L.s("modpack_external"), Color.textMuted)
         case .currentProfile:
-            return ("Live", Color.stardewGreen)
+            return (L.s("modpack_live"), Color.stardewGreen)
         }
     }
 }
@@ -282,7 +282,7 @@ struct ModNameCell: View {
                 .lineLimit(1)
 
             if mod.isBuiltIn {
-                Text("Built-in")
+                Text(L.s("row_built_in"))
                     .font(.system(size: 10, weight: .medium))
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
@@ -340,7 +340,7 @@ private struct VersionCell: View {
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
-                .help("Update available")
+                .help(L.s("row_update_help"))
             }
         }
     }

@@ -28,11 +28,11 @@ struct NXMModpackPickerSheet: View {
                 .font(.system(size: 32))
                 .foregroundStyle(Color.stardewGreen)
 
-            Text("Mod Downloaded")
+            Text(L.s("nxm_downloaded"))
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(Color.textDark)
 
-            Text("Where would you like to install **\(modNames)**?")
+            Text(L.s("nxm_where_install"))
                 .font(.system(size: 13))
                 .foregroundStyle(Color.textMedium)
                 .multilineTextAlignment(.center)
@@ -43,7 +43,7 @@ struct NXMModpackPickerSheet: View {
                     Image(systemName: "square.stack.3d.up")
                         .font(.system(size: 11))
                         .foregroundStyle(Color.stardewPurple)
-                    Text("This download contains \(appState.pendingNXMModNames.count) mods")
+                    Text(L.s("nxm_contains_mods", appState.pendingNXMModNames.count))
                         .font(.system(size: 12))
                         .foregroundStyle(Color.stardewPurple)
                 }
@@ -69,11 +69,11 @@ struct NXMModpackPickerSheet: View {
                             Circle()
                                 .fill(Color.stardewGreen)
                                 .frame(width: 8, height: 8)
-                            Text("Current Profile")
+                            Text(L.s("nxm_current_profile"))
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(Color.textDark)
                             Spacer()
-                            Text("Install now")
+                            Text(L.s("nxm_install_now"))
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.textMuted)
                         }
@@ -104,7 +104,7 @@ struct NXMModpackPickerSheet: View {
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundStyle(Color.textDark)
                                 Spacer()
-                                Text("\(modpack.entries.count) mods")
+                                Text(L.s("modpack_mods_count", modpack.entries.count))
                                     .font(.system(size: 11))
                                     .foregroundStyle(Color.textMuted)
                             }
@@ -121,7 +121,7 @@ struct NXMModpackPickerSheet: View {
                     // New Modpack option
                     if showNewModpackField {
                         HStack(spacing: 8) {
-                            TextField("Modpack name", text: $newModpackName)
+                            TextField(L.s("nxm_modpack_name"), text: $newModpackName)
                                 .textFieldStyle(.roundedBorder)
                                 .font(.system(size: 13))
                                 .onSubmit {
@@ -131,7 +131,7 @@ struct NXMModpackPickerSheet: View {
                             Button {
                                 createAndInstall()
                             } label: {
-                                Text("Create")
+                                Text(L.s("nxm_create"))
                                     .font(.system(size: 11, weight: .medium))
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
@@ -160,7 +160,7 @@ struct NXMModpackPickerSheet: View {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 14))
                                     .foregroundStyle(Color.accentGold)
-                                Text("New Modpack")
+                                Text(L.s("nxm_new_modpack"))
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundStyle(Color.textDark)
                                 Spacer()
@@ -184,7 +184,7 @@ struct NXMModpackPickerSheet: View {
                 appState.cancelPendingNXM()
                 dismiss()
             } label: {
-                Text("Cancel")
+                Text(L.s("common_cancel"))
                     .font(.system(size: 12))
                     .foregroundStyle(Color.textMuted)
             }

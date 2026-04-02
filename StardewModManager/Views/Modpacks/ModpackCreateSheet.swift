@@ -18,7 +18,7 @@ struct ModpackCreateSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            Text("Create Modpack")
+            Text(L.s("modpack_create_title"))
                 .font(.stardew(size: 24))
                 .foregroundStyle(Color.textDark)
                 .frame(maxWidth: .infinity)
@@ -31,25 +31,25 @@ struct ModpackCreateSheet: View {
             // Form
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Name")
+                    Text(L.s("modpack_create_name"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textDark)
-                    TextField("My Modpack", text: $name)
+                    TextField(L.s("modpack_create_name_placeholder"), text: $name)
                         .font(.system(size: 14))
                         .textFieldStyle(.roundedBorder)
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Description")
+                    Text(L.s("modpack_create_description"))
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textDark)
-                    TextField("Optional description...", text: $description)
+                    TextField(L.s("modpack_create_desc_placeholder"), text: $description)
                         .font(.system(size: 14))
                         .textFieldStyle(.roundedBorder)
                 }
 
                 // Preview
-                Text("This will save your current mod configuration (\(enabledCount) enabled, \(disabledCount) disabled)")
+                Text(L.s("modpack_create_preview", enabledCount, disabledCount))
                     .font(.stardew(size: 14))
                     .foregroundStyle(Color.textLight)
                     .padding(10)
@@ -69,7 +69,7 @@ struct ModpackCreateSheet: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text("Cancel")
+                    Text(L.s("common_cancel"))
                         .font(.stardew(size: 16))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -86,7 +86,7 @@ struct ModpackCreateSheet: View {
                     )
                     dismiss()
                 } label: {
-                    Text("Create")
+                    Text(L.s("modpack_create_button"))
                         .font(.stardew(size: 16))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)

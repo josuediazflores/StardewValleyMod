@@ -35,7 +35,7 @@ struct ModpackImportSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            Text("Import Modpack")
+            Text(L.s("modpack_import_title"))
                 .font(.stardew(size: 24))
                 .foregroundStyle(Color.textDark)
                 .frame(maxWidth: .infinity)
@@ -49,10 +49,10 @@ struct ModpackImportSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // URL input
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("URL")
+                        Text(L.s("modpack_import_url"))
                             .font(.stardew(size: 16))
                             .foregroundStyle(Color.textDark)
-                        TextField("https://...", text: $urlString)
+                        TextField(L.s("modpack_import_url_placeholder"), text: $urlString)
                             .font(.stardew(size: 16))
                             .textFieldStyle(.roundedBorder)
                     }
@@ -60,7 +60,7 @@ struct ModpackImportSheet: View {
                     // Detected source badge
                     if !urlString.trimmingCharacters(in: .whitespaces).isEmpty {
                         HStack(spacing: 8) {
-                            Text("Detected:")
+                            Text(L.s("modpack_import_detected"))
                                 .font(.stardew(size: 14))
                                 .foregroundStyle(Color.textLight)
 
@@ -78,7 +78,7 @@ struct ModpackImportSheet: View {
                         HStack(spacing: 10) {
                             ProgressView()
                                 .controlSize(.small)
-                            Text("Downloading...")
+                            Text(L.s("modpack_import_downloading"))
                                 .font(.stardew(size: 16))
                                 .foregroundStyle(Color.textLight)
                         }
@@ -110,7 +110,7 @@ struct ModpackImportSheet: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text("Cancel")
+                    Text(L.s("common_cancel"))
                         .font(.stardew(size: 16))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -123,7 +123,7 @@ struct ModpackImportSheet: View {
                 Button {
                     performImport()
                 } label: {
-                    Text("Import")
+                    Text(L.s("modpack_import_button"))
                         .font(.stardew(size: 16))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -146,7 +146,7 @@ struct ModpackImportSheet: View {
     private var detectedBadge: some View {
         switch detectedType {
         case .nexusCollection:
-            Text("Nexus Collection")
+            Text(L.s("modpack_import_nexus"))
                 .font(.stardew(size: 13))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -154,7 +154,7 @@ struct ModpackImportSheet: View {
                 .foregroundStyle(Color.stardewOrange)
                 .clipShape(Capsule())
         case .googleDrive:
-            Text("Google Drive")
+            Text(L.s("modpack_import_google"))
                 .font(.stardew(size: 13))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -162,7 +162,7 @@ struct ModpackImportSheet: View {
                 .foregroundStyle(Color.stardewBlue)
                 .clipShape(Capsule())
         case .directZIP:
-            Text("Direct Archive")
+            Text(L.s("modpack_import_zip"))
                 .font(.stardew(size: 13))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -170,7 +170,7 @@ struct ModpackImportSheet: View {
                 .foregroundStyle(Color.stardewPurple)
                 .clipShape(Capsule())
         case .unknown:
-            Text("Unknown Source")
+            Text(L.s("modpack_import_unknown"))
                 .font(.stardew(size: 13))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -191,7 +191,7 @@ struct ModpackImportSheet: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(Color.stardewOrange)
                     .font(.system(size: 16))
-                Text("Security Warning")
+                Text(L.s("modpack_import_security"))
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.stardewOrange)
             }
@@ -214,7 +214,7 @@ struct ModpackImportSheet: View {
             }
 
             Toggle(isOn: $acceptedRisks) {
-                Text("I understand the risks")
+                Text(L.s("modpack_import_trust"))
                     .font(.stardew(size: 14))
                     .foregroundStyle(Color.textDark)
             }
