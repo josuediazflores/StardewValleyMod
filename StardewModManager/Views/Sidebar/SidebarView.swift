@@ -14,7 +14,7 @@ struct SidebarView: View {
                 } label: {
                     HStack(spacing: 10) {
                         stardewIcon(for: item)
-                        Text(item.rawValue)
+                        Text(item.displayName)
                             .font(.stardew(size: 17))
                             .lineLimit(1)
                         Spacer()

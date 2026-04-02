@@ -6,6 +6,13 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var displayName: String {
+        switch self {
+        case .stardew: L.s("theme_stardew")
+        case .pink: L.s("theme_pink")
+        }
+    }
+
     static var current: AppTheme {
         AppTheme(rawValue: UserDefaults.standard.string(forKey: "appTheme") ?? "Stardew") ?? .stardew
     }

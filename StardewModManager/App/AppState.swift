@@ -8,6 +8,14 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var displayName: String {
+        switch self {
+        case .modpacks: L.s("sidebar_modpacks")
+        case .installedMods: L.s("sidebar_mods")
+        case .browseNexus: L.s("sidebar_browse")
+        }
+    }
+
     var icon: String {
         switch self {
         case .modpacks: return "archivebox.fill"

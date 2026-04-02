@@ -8,6 +8,14 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case about = "About"
 
     var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .general: L.s("settings_general")
+        case .nexus: L.s("settings_nexus")
+        case .about: L.s("settings_about")
+        }
+    }
 }
 
 // MARK: - Settings View
@@ -26,7 +34,7 @@ struct SettingsView: View {
                             selectedTab = tab
                         }
                     } label: {
-                        Text(tab.rawValue)
+                        Text(tab.displayName)
                             .font(.stardew(size: 18))
                             .lineLimit(1)
                             .padding(.horizontal, 24)
@@ -93,7 +101,7 @@ struct GeneralSettingsTab: View {
                                 appState.settings.theme = theme
                             }
                         } label: {
-                            Text(theme.rawValue)
+                            Text(theme.displayName)
                                 .font(.stardew(size: 16))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 4)
@@ -126,24 +134,39 @@ struct GeneralSettingsTab: View {
                     .foregroundStyle(Color.textDark)
                     .frame(width: 160, alignment: .leading)
 
-                Picker("", selection: Binding(
-                    get: { appState.settings.language },
-                    set: { appState.settings.language = $0 }
-                )) {
-                    Text(L.s("settings_language_system")).tag("system")
-                    Text("English").tag("en")
-                    Text("Español").tag("es")
-                    Text("Français").tag("fr")
-                    Text("Deutsch").tag("de")
-                    Text("Italiano").tag("it")
-                    Text("Português").tag("pt")
-                    Text("日本語").tag("ja")
-                    Text("한국어").tag("ko")
-                    Text("简体中文").tag("zh-Hans")
-                    Text("Русский").tag("ru")
+                Menu {
+                    Button { appState.settings.language = "system" } label: { Text(L.s("settings_language_system")) }
+                    Divider()
+                    Button { appState.settings.language = "en" } label: { Text("English") }
+                    Button { appState.settings.language = "es" } label: { Text("Español") }
+                    Button { appState.settings.language = "fr" } label: { Text("Français") }
+                    Button { appState.settings.language = "de" } label: { Text("Deutsch") }
+                    Button { appState.settings.language = "it" } label: { Text("Italiano") }
+                    Button { appState.settings.language = "pt" } label: { Text("Português") }
+                    Button { appState.settings.language = "ja" } label: { Text("日本語") }
+                    Button { appState.settings.language = "ko" } label: { Text("한국어") }
+                    Button { appState.settings.language = "zh-Hans" } label: { Text("简体中文") }
+                    Button { appState.settings.language = "ru" } label: { Text("Русский") }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(languageDisplayName(appState.settings.language))
+                            .font(.stardew(size: 16))
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 9))
+                    }
+                    .foregroundStyle(Color.textDark)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.parchment)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.frameBorder, lineWidth: 1)
+                            )
+                    )
                 }
-                .labelsHidden()
-                .frame(width: 160)
+                .menuStyle(.borderlessButton)
 
                 Spacer()
             }
@@ -335,6 +358,22 @@ struct GeneralSettingsTab: View {
             Spacer()
         }
         .padding(24)
+    }
+
+    private func languageDisplayName(_ code: String) -> String {
+        switch code {
+        case "en": "English"
+        case "es": "Español"
+        case "fr": "Français"
+        case "de": "Deutsch"
+        case "it": "Italiano"
+        case "pt": "Português"
+        case "ja": "日本語"
+        case "ko": "한국어"
+        case "zh-Hans": "简体中文"
+        case "ru": "Русский"
+        default: L.s("settings_language_system")
+        }
     }
 
     private func browseGamePath() {

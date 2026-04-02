@@ -300,7 +300,7 @@ struct ModTypeBadge: View {
 
     var body: some View {
         let color: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
-        Text(mod.modType.rawValue)
+        Text(mod.modType.displayName)
             .font(.system(size: 11, weight: .medium))
             .padding(.horizontal, 7)
             .padding(.vertical, 2)

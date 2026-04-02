@@ -11,7 +11,7 @@ struct StardewModManagerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .id(appState.settings.theme)
+                .id("\(appState.settings.theme)-\(appState.settings.language)")
                 .environment(appState)
                 .onAppear {
                     appState.loadMods()
@@ -117,7 +117,7 @@ struct StardewModManagerApp: App {
 
         Settings {
             SettingsView()
-                .id(appState.settings.theme)
+                .id("\(appState.settings.theme)-\(appState.settings.language)")
                 .environment(appState)
         }
     }
