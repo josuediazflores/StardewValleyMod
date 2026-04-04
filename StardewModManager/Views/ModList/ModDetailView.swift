@@ -21,6 +21,43 @@ struct ModDetailView: View {
                     .foregroundStyle(Color.textLight)
                 }
 
+                // Update available banner
+                if let update = appState.modUpdates[mod.id] {
+                    Button {
+                        if let nexusId = mod.nexusModID {
+                            appState.openWebDownloadSheet(modId: nexusId, modName: mod.manifest.name)
+                        } else if let urlString = update.updateURL, let url = URL(string: urlString) {
+                            NSWorkspace.shared.open(url)
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 14))
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("v\(update.newVersion) available")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text("Tap to update")
+                                    .font(.system(size: 10))
+                                    .opacity(0.8)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.down.circle")
+                                .font(.system(size: 16))
+                        }
+                        .foregroundStyle(Color.stardewBlue)
+                        .padding(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.stardewOrange.opacity(0.1))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.stardewOrange.opacity(0.3), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 Color.stardewDivider.opacity(0.4).frame(height: 1)
 
                 // Status

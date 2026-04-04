@@ -68,6 +68,7 @@ final class Mod: Identifiable, Hashable {
     var folderURL: URL
     var isEnabled: Bool
     let isBuiltIn: Bool
+    let subfolder: String?
 
     var resolvedDependencies: [ResolvedDependency] = []
 
@@ -88,13 +89,14 @@ final class Mod: Identifiable, Hashable {
         return nil
     }
 
-    init(manifest: ModManifest, folderName: String, folderURL: URL, isEnabled: Bool) {
+    init(manifest: ModManifest, folderName: String, folderURL: URL, isEnabled: Bool, subfolder: String? = nil) {
         self.id = manifest.uniqueID
         self.manifest = manifest
         self.folderName = folderName
         self.folderURL = folderURL
         self.isEnabled = isEnabled
         self.isBuiltIn = manifest.uniqueID.hasPrefix("SMAPI.")
+        self.subfolder = subfolder
     }
 
     static func == (lhs: Mod, rhs: Mod) -> Bool {

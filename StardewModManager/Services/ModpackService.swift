@@ -108,6 +108,8 @@ enum ModpackService {
         let modsByID = Dictionary(mods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let entryIDs = Set(modpack.entries.map(\.uniqueID))
 
+        NSLog("[SMM] applyModpack: '%@' entries=%d mods=%d modsByID=%d", modpack.name, modpack.entries.count, mods.count, modsByID.count)
+
         // Process each entry in the modpack
         for entry in modpack.entries {
             guard let mod = modsByID[entry.uniqueID] else {
@@ -121,11 +123,21 @@ enum ModpackService {
             }
 
             if entry.isEnabled && !mod.isEnabled {
-                try ModManagementService.enableMod(mod, settings: settings)
-                enabledNames.append(mod.manifest.name)
+                do {
+                    NSLog("[SMM] enabling '%@' from %@", mod.manifest.name, mod.folderURL.path)
+                    try ModManagementService.enableMod(mod, settings: settings)
+                    enabledNames.append(mod.manifest.name)
+                    NSLog("[SMM] enabled OK '%@'", mod.manifest.name)
+                } catch {
+                    NSLog("[SMM] FAILED to enable '%@': %@", mod.manifest.name, error.localizedDescription)
+                }
             } else if !entry.isEnabled && mod.isEnabled {
-                try ModManagementService.disableMod(mod, settings: settings)
-                disabledNames.append(mod.manifest.name)
+                do {
+                    try ModManagementService.disableMod(mod, settings: settings)
+                    disabledNames.append(mod.manifest.name)
+                } catch {
+                    print("[ModpackService] Failed to disable \(mod.manifest.name): \(error)")
+                }
             } else {
                 alreadyCorrect += 1
             }
@@ -133,8 +145,10 @@ enum ModpackService {
 
         // Disable mods not in the modpack (they're not part of this profile)
         for mod in mods where !mod.isBuiltIn && !entryIDs.contains(mod.id) && mod.isEnabled {
-            try ModManagementService.disableMod(mod, settings: settings)
-            disabledNames.append(mod.manifest.name)
+            do {
+                try ModManagementService.disableMod(mod, settings: settings)
+                disabledNames.append(mod.manifest.name)
+            } catch { /* skip this mod, continue with others */ }
         }
 
         // Also move orphan folders (no manifest.json) out of Mods to keep the profile clean
@@ -257,6 +271,11 @@ enum ModpackService {
 
     /// ZIP a subset of mods into a temp file for Bluetooth transfer
     static func zipMods(_ mods: [Mod]) throws -> URL {
+        try zipModFolders(mods.map { (folderName: $0.folderName, folderURL: $0.folderURL) })
+    }
+
+    /// ZIP mod folders by path — safe to call from any thread
+    static func zipModFolders(_ folders: [(folderName: String, folderURL: URL)]) throws -> URL {
         let fm = FileManager.default
         let tempDir = fm.temporaryDirectory.appending(path: "transfer_\(UUID().uuidString)")
 
@@ -265,9 +284,9 @@ enum ModpackService {
         let modsStaging = tempDir.appending(path: "Mods")
         try fm.createDirectory(at: modsStaging, withIntermediateDirectories: true)
 
-        for mod in mods {
-            let destination = modsStaging.appending(path: mod.folderName)
-            try fm.copyItem(at: mod.folderURL, to: destination)
+        for folder in folders {
+            let destination = modsStaging.appending(path: folder.folderName)
+            try fm.copyItem(at: folder.folderURL, to: destination)
         }
 
         let zipURL = fm.temporaryDirectory.appending(path: "mods_transfer_\(UUID().uuidString).zip")

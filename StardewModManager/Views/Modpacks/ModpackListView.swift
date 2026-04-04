@@ -9,6 +9,7 @@ struct ModpackListView: View {
     @State private var modpackToDelete: Modpack?
     @State private var showCompareSheet = false
     @State private var showNearbyCompareSheet = false
+    @State private var modpackSearchText = ""
 
     var body: some View {
         @Bindable var state = appState
@@ -50,42 +51,40 @@ struct ModpackListView: View {
                             label: { $0.shortLabel }
                         )
                         .fixedSize()
-
-                        Spacer()
-
-                        HStack(spacing: 4) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 11))
-                                .foregroundStyle(Color.textMuted)
-                            TextField(L.s("installed_search"), text: $state.searchText)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 13))
-                                .foregroundStyle(Color.textDark)
-                                .frame(width: 130)
-                            if !appState.searchText.isEmpty {
-                                Button {
-                                    appState.searchText = ""
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(Color.textMuted)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.parchmentAlt)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .stroke(Color.frameBorder.opacity(0.5), lineWidth: 1)
-                                )
-                        )
-                    } else {
-                        Spacer()
                     }
+
+                    Spacer()
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.textMuted)
+                        TextField(L.s("modpack_search_profiles"), text: $modpackSearchText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.textDark)
+                            .frame(width: 130)
+                        if !modpackSearchText.isEmpty {
+                            Button {
+                                modpackSearchText = ""
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Color.textMuted)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.parchmentAlt)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.frameBorder.opacity(0.5), lineWidth: 1)
+                            )
+                    )
                 }
                 .padding(.bottom, 4)
 
@@ -240,7 +239,12 @@ struct ModpackListView: View {
                     }
                     .padding(.vertical, 24)
                 } else {
-                    ForEach(appState.filteredModpacks) { modpack in
+                    let displayedModpacks = modpackSearchText.isEmpty
+                        ? appState.modpacks
+                        : appState.modpacks.filter {
+                            $0.name.localizedCaseInsensitiveContains(modpackSearchText)
+                        }
+                    ForEach(displayedModpacks) { modpack in
                         ExpandableModpackCardView(
                             modpack: modpack,
                             isActive: appState.activeModpackID == modpack.id,

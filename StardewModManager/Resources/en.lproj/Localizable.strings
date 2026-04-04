@@ -42,6 +42,7 @@
 
 /* Installed Mods */
 "installed_search" = "Search mods...";
+"modpack_search_profiles" = "Search profiles...";
 "installed_import" = "Import";
 "installed_import_help" = "Import mod ZIP files";
 "installed_add_folder" = "Add Folder";
@@ -97,6 +98,7 @@
 "modpack_active" = "Active";
 "modpack_mods_count" = "%d mods";
 "modpack_no_mods" = "No mods in this modpack";
+"modpack_search_mods" = "Search mods...";
 "modpack_missing" = "Missing";
 "modpack_enable" = "Enable";
 "modpack_disable" = "Disable";
@@ -162,6 +164,13 @@
 "modpack_list_status" = "%d profiles · %d mods installed";
 "modpack_list_delete_confirm" = "Delete Modpack";
 "modpack_list_delete_message" = "Are you sure you want to delete \"%@\"? This cannot be undone.";
+"modpack_select" = "Select";
+"modpack_select_all" = "Select All";
+"modpack_deselect_all" = "Deselect All";
+"modpack_enable_all" = "Enable All";
+"modpack_disable_all" = "Disable All";
+"modpack_remove_selected" = "Remove Selected";
+"modpack_selected_count" = "%d selected";
 
 /* Compare Modpacks */
 "compare_title" = "Compare Profiles";

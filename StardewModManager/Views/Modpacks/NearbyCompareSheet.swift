@@ -52,8 +52,8 @@ struct NearbyCompareSheet: View {
                 Task { @MainActor in
                     appState.importMods(from: [zipURL])
                     try? FileManager.default.removeItem(at: zipURL)
-                    let count = appState.mods.count
-                    peerService.transferState = .complete(count)
+                    let importedCount = appState.mods.count
+                    peerService.transferState = .complete(importedCount)
                     SoundService.play(.bigSelect)
                 }
             }
@@ -425,22 +425,7 @@ struct NearbyCompareSheet: View {
     private func sendMissingMods(ids: Set<String>, from modpack: Modpack) {
         let modsToSend = appState.mods.filter { ids.contains($0.id) }
         guard !modsToSend.isEmpty else { return }
-
-        peerService.transferState = .zipping
-
-        Task {
-            do {
-                let zipURL = try ModpackService.zipMods(modsToSend)
-                peerService.sendMods(zipURL: zipURL)
-                // Clean up ZIP after send completes
-                Task {
-                    try? await Task.sleep(for: .seconds(30))
-                    try? FileManager.default.removeItem(at: zipURL)
-                }
-            } catch {
-                peerService.transferState = .error("Failed to prepare mods: \(error.localizedDescription)")
-            }
-        }
+        zipAndSend(modsToSend)
     }
 
     private func sendFullModpack() {
@@ -448,12 +433,27 @@ struct NearbyCompareSheet: View {
         let enabledIDs = Set(modpack.entries.filter(\.isEnabled).map(\.uniqueID))
         let modsToSend = appState.mods.filter { enabledIDs.contains($0.id) }
         guard !modsToSend.isEmpty else { return }
+        zipAndSend(modsToSend)
+    }
 
+    private func zipAndSend(_ mods: [Mod]) {
         peerService.transferState = .zipping
+
+        // Capture folder info for background thread (avoid sending Mod across threads)
+        let modFolders = mods.map { (folderName: $0.folderName, folderURL: $0.folderURL) }
 
         Task {
             do {
-                let zipURL = try ModpackService.zipMods(modsToSend)
+                let zipURL = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<URL, Error>) in
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        do {
+                            let url = try ModpackService.zipModFolders(modFolders)
+                            continuation.resume(returning: url)
+                        } catch {
+                            continuation.resume(throwing: error)
+                        }
+                    }
+                }
                 peerService.sendMods(zipURL: zipURL)
                 Task {
                     try? await Task.sleep(for: .seconds(30))

@@ -89,9 +89,16 @@ class PeerSyncService: NSObject, ObservableObject {
     }
 
     func sendModpack(_ modpack: ShareableModpack) {
-        guard let session, !session.connectedPeers.isEmpty else { return }
-        guard let data = try? modpack.toJSON() else { return }
-        try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        guard let session, !session.connectedPeers.isEmpty else {
+            connectionState = .error("No connected peer")
+            return
+        }
+        do {
+            let data = try modpack.toJSON()
+            try session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        } catch {
+            connectionState = .error("Send failed: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - File Transfer
@@ -145,8 +152,19 @@ extension PeerSyncService: MCSessionDelegate {
             case .notConnected:
                 if connectedPeer == peerID {
                     connectedPeer = nil
-                    if case .received = connectionState { } else {
+                    if case .received = connectionState {
+                        // Keep received state — user is viewing results
+                    } else if case .error = transferState {
+                        // Keep error visible
+                    } else if case .complete = transferState {
+                        // Transfer finished — disconnect is expected
+                    } else if transferState != .idle {
+                        transferState = .error("Connection lost during transfer")
+                    } else {
                         connectionState = .searching
+                        // Restart discovery since we stopped it on connect
+                        advertiser?.startAdvertisingPeer()
+                        browser?.startBrowsingForPeers()
                     }
                 }
             case .connecting:
@@ -158,10 +176,14 @@ extension PeerSyncService: MCSessionDelegate {
     }
 
     nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
-        guard let modpack = try? ShareableModpack.fromJSON(data) else { return }
         Task { @MainActor in
-            receivedModpack = modpack
-            connectionState = .received
+            do {
+                let modpack = try ShareableModpack.fromJSON(data)
+                receivedModpack = modpack
+                connectionState = .received
+            } catch {
+                connectionState = .error("Failed to read modpack data")
+            }
         }
     }
 

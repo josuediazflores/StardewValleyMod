@@ -73,6 +73,12 @@ struct NexusModCardView: View {
 
                 Spacer()
 
+                if let dateStr = L.formatISO(mod.updatedAt) ?? L.formatISO(mod.createdAt) {
+                    Label(dateStr, systemImage: "clock")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.textMuted)
+                }
+
                 if let downloads = mod.modDownloads {
                     Label(formatNumber(downloads), systemImage: "arrow.down.circle")
                         .font(.system(size: 10))

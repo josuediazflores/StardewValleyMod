@@ -1000,10 +1000,11 @@ final class AppState {
     func applyModpack(_ modpack: Modpack) {
         isModpackLoading = true
         modpackError = nil
+        print("[DEBUG] applyModpack called for '\(modpack.name)' with \(modpack.entries.count) entries, \(mods.count) mods loaded")
         do {
             let result = try ModpackService.applyModpack(modpack, mods: mods, settings: settings)
+            print("[DEBUG] apply result: enabled=\(result.enabled.count) disabled=\(result.disabled.count) missing=\(result.missing.count) correct=\(result.alreadyCorrect)")
             activeModpackID = modpack.id
-            loadMods()
 
             if !result.missing.isEmpty {
                 let names = result.missing.map(\.name).joined(separator: ", ")
@@ -1015,6 +1016,8 @@ final class AppState {
         } catch {
             modpackError = error.localizedDescription
         }
+        // Always refresh mods from disk, even if some moves failed
+        loadMods()
         isModpackLoading = false
     }
 
@@ -1223,6 +1226,24 @@ final class AppState {
     func removeModpackEntry(modpackID: UUID, entryID: String) {
         guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
         modpacks[idx].entries.removeAll { $0.uniqueID == entryID }
+        modpacks[idx].updatedAt = Date()
+        try? ModpackService.saveModpacks(modpacks, settings: settings)
+    }
+
+    func batchToggleModpackEntries(modpackID: UUID, entryIDs: Set<String>, enabled: Bool) {
+        guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
+        for entryID in entryIDs {
+            if let entryIdx = modpacks[idx].entries.firstIndex(where: { $0.uniqueID == entryID }) {
+                modpacks[idx].entries[entryIdx].isEnabled = enabled
+            }
+        }
+        modpacks[idx].updatedAt = Date()
+        try? ModpackService.saveModpacks(modpacks, settings: settings)
+    }
+
+    func batchRemoveModpackEntries(modpackID: UUID, entryIDs: Set<String>) {
+        guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
+        modpacks[idx].entries.removeAll { entryIDs.contains($0.uniqueID) }
         modpacks[idx].updatedAt = Date()
         try? ModpackService.saveModpacks(modpacks, settings: settings)
     }

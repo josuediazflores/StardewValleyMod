@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NexusModDetailView: View {
     let mod: NexusModInfo
+    var installedVersion: String?
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     @State private var files: [NexusModFileInfo] = []
@@ -60,6 +61,14 @@ struct NexusModDetailView: View {
                             if let downloads = mod.modDownloads {
                                 Label("\(downloads) downloads", systemImage: "arrow.down.circle")
                                     .foregroundStyle(Color.textMedium)
+                            }
+                            if let dateStr = L.formatISO(mod.updatedAt) ?? L.formatISO(mod.createdAt) {
+                                Label(dateStr, systemImage: "clock")
+                                    .foregroundStyle(Color.textMedium)
+                            }
+                            if let installed = installedVersion {
+                                Label("v\(installed) installed", systemImage: "checkmark.circle.fill")
+                                    .foregroundStyle(Color.stardewGreen)
                             }
                         }
                         .font(.system(size: 13))
@@ -120,15 +129,35 @@ struct NexusModDetailView: View {
                         ForEach(files) { file in
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(file.name)
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundStyle(Color.textDark)
+                                    HStack(spacing: 6) {
+                                        Text(file.name)
+                                            .font(.system(size: 13, weight: .medium))
+                                            .foregroundStyle(Color.textDark)
+                                        if let installed = installedVersion, file.version == installed {
+                                            Text(L.s("nexus_installed"))
+                                                .font(.system(size: 9, weight: .semibold))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 1)
+                                                .background(Color.stardewGreen.opacity(0.15))
+                                                .foregroundStyle(Color.stardewGreen)
+                                                .clipShape(Capsule())
+                                        }
+                                    }
+                                    if let desc = file.description, !desc.isEmpty {
+                                        Text(desc)
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(Color.textLight)
+                                            .lineLimit(2)
+                                    }
                                     HStack(spacing: 8) {
                                         if let version = file.version {
                                             Text("v\(version)")
                                         }
                                         if let size = file.sizeKb {
                                             Text(formatSize(size))
+                                        }
+                                        if let dateStr = L.formatTimestamp(file.uploadedTimestamp) {
+                                            Text(dateStr)
                                         }
                                         if let category = file.categoryName {
                                             Text(category)

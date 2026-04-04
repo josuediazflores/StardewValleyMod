@@ -163,7 +163,8 @@ struct NexusBrowseView: View {
             }
             .background(Color.parchment)
             .sheet(item: $selectedModForDetail) { mod in
-                NexusModDetailView(mod: mod)
+                let installedVersion = appState.mods.first { $0.nexusModID == mod.modId }?.manifest.version
+                NexusModDetailView(mod: mod, installedVersion: installedVersion)
                     .environment(appState)
             }
             .task(id: selectedTab) {

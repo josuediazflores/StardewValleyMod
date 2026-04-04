@@ -191,7 +191,7 @@ actor NexusAPIService {
         } ?? ""
 
         let graphqlQuery = """
-        {"query":"{ mods(filter: { gameDomainName: { value: \\"stardewvalley\\" }\(searchFilter) }, sort: [{ \(sortBy.rawValue): { direction: DESC } }], offset: \(offset), count: \(count)) { nodes { modId name summary version author pictureUrl downloads endorsements } } }"}
+        {"query":"{ mods(filter: { gameDomainName: { value: \\"stardewvalley\\" }\(searchFilter) }, sort: [{ \(sortBy.rawValue): { direction: DESC } }], offset: \(offset), count: \(count)) { nodes { modId name summary version author pictureUrl downloads endorsements createdAt updatedAt } } }"}
         """
         request.httpBody = graphqlQuery.data(using: .utf8)
 
@@ -207,6 +207,8 @@ actor NexusAPIService {
             let pictureUrl: String?
             let downloads: Int?
             let endorsements: Int?
+            let createdAt: String?
+            let updatedAt: String?
         }
 
         struct GraphQLResponse: Codable {
@@ -226,7 +228,8 @@ actor NexusAPIService {
                 description: nil, version: m.version, author: m.author,
                 pictureUrl: m.pictureUrl, endorsementCount: m.endorsements,
                 modDownloads: m.downloads, modUniqueDownloads: nil,
-                categoryId: nil, available: nil, status: nil, uploadedBy: nil
+                categoryId: nil, available: nil, status: nil, uploadedBy: nil,
+                createdAt: m.createdAt, updatedAt: m.updatedAt
             )
         }
     }

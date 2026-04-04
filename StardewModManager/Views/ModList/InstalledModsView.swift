@@ -11,6 +11,8 @@ struct InstalledModsView: View {
     @State private var showNexusURLSheet = false
     @State private var nexusURLInput = ""
     @State private var isDownloadingFromURL = false
+    @FocusState private var isListFocused: Bool
+    @State private var selectionAnchor: String?
 
     var body: some View {
         @Bindable var state = appState
@@ -182,9 +184,15 @@ struct InstalledModsView: View {
                                     Text(L.s("installed_add_folder"))
                                         .font(.system(size: 13, weight: .medium))
                                 }
-                                .foregroundStyle(Color.accentGold)
+                                .foregroundStyle(Color.textDark)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.accentGold)
+                                )
                             }
-                            .buttonStyle(.borderless)
+                            .buttonStyle(.plain)
                             .help(L.s("installed_add_folder_help"))
 
                             Button {
@@ -197,9 +205,15 @@ struct InstalledModsView: View {
                                     Text(L.s("installed_nexus_url"))
                                         .font(.system(size: 13, weight: .medium))
                                 }
-                                .foregroundStyle(Color.stardewBlue)
+                                .foregroundStyle(Color.textDark)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.accentGold)
+                                )
                             }
-                            .buttonStyle(.borderless)
+                            .buttonStyle(.plain)
                             .help(L.s("installed_nexus_url_help"))
                         }
 
@@ -212,7 +226,7 @@ struct InstalledModsView: View {
                                 Text(L.s("installed_update_count", appState.modUpdates.count))
                                     .font(.system(size: 13, weight: .medium))
                             }
-                            .foregroundStyle(Color.stardewOrange)
+                            .foregroundStyle(Color.stardewBlue)
                         } else if appState.isCheckingUpdates {
                             HStack(spacing: 4) {
                                 ProgressView()
@@ -297,24 +311,34 @@ struct InstalledModsView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            let mods = appState.filteredMods
-                            ForEach(Array(mods.enumerated()), id: \.element.id) { index, mod in
-                                VStack(spacing: 0) {
-                                    modRow(mod)
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
+                                let mods = appState.filteredMods
+                                ForEach(Array(mods.enumerated()), id: \.element.id) { index, mod in
+                                    VStack(spacing: 0) {
+                                        modRow(mod)
 
-                                    if index < mods.count - 1 {
-                                        Color.stardewDivider.opacity(0.2).frame(height: 1)
-                                            .padding(.leading, 31)
+                                        if index < mods.count - 1 {
+                                            Color.stardewDivider.opacity(0.2).frame(height: 1)
+                                                .padding(.leading, 31)
+                                        }
                                     }
+                                    .id(mod.id)
                                 }
                             }
                         }
+                        .focusable()
+                        .focused($isListFocused)
+                        .focusEffectDisabled()
+                        .onKeyPress { keyPress in
+                            handleKeyPress(keyPress, proxy: proxy)
+                        }
+                        .onAppear { isListFocused = true }
                     }
                 }
             }
-            .frame(minWidth: 400)
+            .frame(minWidth: 500)
             .background(Color.parchment)
             .overlay(
                 Rectangle()
@@ -402,8 +426,25 @@ struct InstalledModsView: View {
 
             // Detail inspector
             if !isBatchMode, let mod = appState.selectedMod {
-                ModDetailView(mod: mod)
-                    .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
+                VStack(spacing: 0) {
+                    HStack {
+                        Spacer()
+                        Button {
+                            appState.selectedModID = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(Color.textMuted)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+
+                    ModDetailView(mod: mod)
+                }
+                .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
+                .background(Color.parchment)
             }
         }
     }
@@ -448,6 +489,16 @@ struct InstalledModsView: View {
                             .foregroundStyle(Color.textDark)
                             .lineLimit(1)
 
+                        if let folder = mod.subfolder {
+                            Text(folder)
+                                .font(.system(size: 9))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Color.accentGold.opacity(0.15))
+                                .foregroundStyle(Color.accentGoldDark)
+                                .clipShape(Capsule())
+                        }
+
                         if mod.isBuiltIn {
                             Text(L.s("row_built_in"))
                                 .font(.caption2)
@@ -461,7 +512,7 @@ struct InstalledModsView: View {
                         if mod.resolvedDependencies.contains(where: { $0.status != .satisfied && $0.entry.isRequired }) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 11))
-                                .foregroundStyle(.yellow)
+                                .foregroundStyle(Color.stardewOrange)
                                 .help(L.s("row_missing_deps"))
                         }
                     }
@@ -480,7 +531,7 @@ struct InstalledModsView: View {
                 HStack(spacing: 6) {
                     Text("v\(mod.manifest.version)")
                         .font(.system(size: 12))
-                        .foregroundStyle(Color.textLight)
+                        .foregroundStyle(Color.textDark)
 
                     if let update = appState.modUpdates[mod.id] {
                         Button {
@@ -495,8 +546,8 @@ struct InstalledModsView: View {
                             .font(.system(size: 10, weight: .medium))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
-                            .background(Color.stardewOrange.opacity(0.15))
-                            .foregroundStyle(Color.stardewOrange)
+                            .background(Color.stardewBlue.opacity(0.15))
+                            .foregroundStyle(Color.stardewBlue)
                             .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
@@ -516,10 +567,10 @@ struct InstalledModsView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 9)
-        .opacity(isBatchMode && mod.isBuiltIn ? 0.3 : mod.isEnabled ? 1.0 : 0.5)
+        .opacity(isBatchMode && mod.isBuiltIn ? 0.3 : 1.0)
         .background(
             isBatchMode && selectedModIDs.contains(mod.id)
-                ? Color.accentGold.opacity(0.08)
+                ? Color.accentGold.opacity(0.2)
                 : appState.selectedModID == mod.id && !isBatchMode
                     ? Color.rowSelected
                     : hoveredModID == mod.id
@@ -527,7 +578,9 @@ struct InstalledModsView: View {
                         : Color.clear
         )
         .overlay(alignment: .leading) {
-            if !isBatchMode && appState.selectedModID == mod.id {
+            if isBatchMode && selectedModIDs.contains(mod.id) {
+                Color.accentGold.frame(width: 3)
+            } else if !isBatchMode && appState.selectedModID == mod.id {
                 Color.accentGold.frame(width: 3)
             }
         }
@@ -622,5 +675,141 @@ struct InstalledModsView: View {
         }
 
         return true
+    }
+
+    // MARK: - Keyboard Navigation
+
+    private func handleKeyPress(_ keyPress: KeyPress, proxy: ScrollViewProxy) -> KeyPress.Result {
+        let shift = keyPress.modifiers.contains(.shift)
+        let cmd = keyPress.modifiers.contains(.command)
+
+        switch keyPress.key {
+        case .upArrow:
+            if shift { extendSelectionUp(proxy: proxy) } else { selectPreviousMod(proxy: proxy) }
+            return .handled
+        case .downArrow:
+            if shift { extendSelectionDown(proxy: proxy) } else { selectNextMod(proxy: proxy) }
+            return .handled
+        case .space, .return:
+            toggleSelectedMods()
+            return .handled
+        case .delete:
+            deleteSelectedMods()
+            return .handled
+        case .escape:
+            if isBatchMode {
+                isBatchMode = false
+                selectedModIDs.removeAll()
+                selectionAnchor = nil
+            } else {
+                appState.selectedModID = nil
+            }
+            return .handled
+        default:
+            if cmd && keyPress.characters == "a" {
+                isBatchMode = true
+                selectedModIDs = Set(appState.filteredMods.filter { !$0.isBuiltIn }.map(\.id))
+                return .handled
+            }
+            return .ignored
+        }
+    }
+
+    private func selectNextMod(proxy: ScrollViewProxy) {
+        let mods = appState.filteredMods
+        guard !mods.isEmpty else { return }
+        if let currentID = appState.selectedModID,
+           let index = mods.firstIndex(where: { $0.id == currentID }),
+           index + 1 < mods.count {
+            appState.selectedModID = mods[index + 1].id
+        } else {
+            appState.selectedModID = mods[0].id
+        }
+        if let id = appState.selectedModID {
+            withAnimation { proxy.scrollTo(id, anchor: .center) }
+        }
+    }
+
+    private func selectPreviousMod(proxy: ScrollViewProxy) {
+        let mods = appState.filteredMods
+        guard !mods.isEmpty else { return }
+        if let currentID = appState.selectedModID,
+           let index = mods.firstIndex(where: { $0.id == currentID }),
+           index > 0 {
+            appState.selectedModID = mods[index - 1].id
+        } else {
+            appState.selectedModID = mods.last?.id
+        }
+        if let id = appState.selectedModID {
+            withAnimation { proxy.scrollTo(id, anchor: .center) }
+        }
+    }
+
+    private func extendSelectionDown(proxy: ScrollViewProxy) {
+        let mods = appState.filteredMods
+        guard !mods.isEmpty else { return }
+
+        let currentID = appState.selectedModID ?? mods.first?.id
+        guard let currentID, let index = mods.firstIndex(where: { $0.id == currentID }) else { return }
+
+        if !isBatchMode {
+            isBatchMode = true
+            selectedModIDs = [currentID]
+            selectionAnchor = currentID
+        }
+
+        if index + 1 < mods.count {
+            let nextMod = mods[index + 1]
+            appState.selectedModID = nextMod.id
+            if !nextMod.isBuiltIn {
+                selectedModIDs.insert(nextMod.id)
+            }
+            withAnimation { proxy.scrollTo(nextMod.id, anchor: .center) }
+        }
+    }
+
+    private func extendSelectionUp(proxy: ScrollViewProxy) {
+        let mods = appState.filteredMods
+        guard !mods.isEmpty else { return }
+
+        let currentID = appState.selectedModID ?? mods.last?.id
+        guard let currentID, let index = mods.firstIndex(where: { $0.id == currentID }) else { return }
+
+        if !isBatchMode {
+            isBatchMode = true
+            selectedModIDs = [currentID]
+            selectionAnchor = currentID
+        }
+
+        if index > 0 {
+            let prevMod = mods[index - 1]
+            appState.selectedModID = prevMod.id
+            if !prevMod.isBuiltIn {
+                selectedModIDs.insert(prevMod.id)
+            }
+            withAnimation { proxy.scrollTo(prevMod.id, anchor: .center) }
+        }
+    }
+
+    private func toggleSelectedMods() {
+        if isBatchMode && !selectedModIDs.isEmpty {
+            let modsToToggle = appState.mods.filter { selectedModIDs.contains($0.id) && !$0.isBuiltIn }
+            let hasEnabled = modsToToggle.contains { $0.isEnabled }
+            if hasEnabled {
+                appState.batchDisableMods(selectedModIDs)
+            } else {
+                appState.batchEnableMods(selectedModIDs)
+            }
+        } else if let mod = appState.selectedMod, !mod.isBuiltIn {
+            toggleMod(mod)
+        }
+    }
+
+    private func deleteSelectedMods() {
+        if isBatchMode && !selectedModIDs.isEmpty {
+            showBatchDeleteConfirmation = true
+        } else if let mod = appState.selectedMod, !mod.isBuiltIn {
+            appState.softDeleteMods([mod])
+        }
     }
 }

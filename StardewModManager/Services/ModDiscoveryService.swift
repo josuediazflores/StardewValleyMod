@@ -16,33 +16,42 @@ enum ModDiscoveryService {
 
     private static func scanDirectory(_ directoryURL: URL, isEnabled: Bool, fm: FileManager) -> [Mod] {
         var mods: [Mod] = []
-
-        guard let contents = try? fm.contentsOfDirectory(
+        guard let enumerator = fm.enumerator(
             at: directoryURL,
             includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
         ) else { return mods }
 
-        for itemURL in contents {
-            guard (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else {
-                continue
-            }
+        var manifestParentDirs: Set<String> = []
+
+        for case let fileURL as URL in enumerator {
+            guard fileURL.lastPathComponent == "manifest.json" else { continue }
+            let parentDir = fileURL.deletingLastPathComponent()
+            let parentPath = parentDir.path(percentEncoded: false)
 
             // Skip backup folders
-            if itemURL.lastPathComponent.hasPrefix("Mods_backup") { continue }
+            if parentPath.contains("Mods_backup") { continue }
 
-            let manifestURL = itemURL.appending(path: "manifest.json")
-            guard fm.fileExists(atPath: manifestURL.path(percentEncoded: false)) else { continue }
+            // Avoid nested mod folders (child of already-found mod)
+            if manifestParentDirs.contains(where: { parentPath.hasPrefix($0) && parentPath != $0 }) { continue }
+            manifestParentDirs.insert(parentPath)
 
-            if let manifest = ManifestParser.parse(at: manifestURL) {
-                let mod = Mod(
-                    manifest: manifest,
-                    folderName: itemURL.lastPathComponent,
-                    folderURL: itemURL,
-                    isEnabled: isEnabled
-                )
-                mods.append(mod)
-            }
+            guard let manifest = ManifestParser.parse(at: fileURL) else { continue }
+
+            // Determine subfolder name relative to base directory
+            let basePath = directoryURL.path(percentEncoded: false)
+            let relativePath = parentPath.replacingOccurrences(of: basePath, with: "")
+            let components = relativePath.split(separator: "/").map(String.init)
+            let subfolder: String? = components.count > 1 ? components.first : nil
+
+            let mod = Mod(
+                manifest: manifest,
+                folderName: parentDir.lastPathComponent,
+                folderURL: parentDir,
+                isEnabled: isEnabled,
+                subfolder: subfolder
+            )
+            mods.append(mod)
         }
 
         return mods

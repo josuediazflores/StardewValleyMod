@@ -15,6 +15,8 @@ struct NexusModInfo: Codable, Identifiable {
     let available: Bool?
     let status: String?
     let uploadedBy: String?
+    let createdAt: String?
+    let updatedAt: String?
 
     var id: Int { modId }
 
@@ -38,6 +40,8 @@ struct NexusModInfo: Codable, Identifiable {
         case categoryId = "category_id"
         case available
         case uploadedBy = "uploaded_by"
+        // GraphQL returns camelCase, so these keys match directly
+        case createdAt, updatedAt
     }
 }
 
@@ -50,6 +54,7 @@ struct NexusModFileInfo: Codable, Identifiable {
     let sizeKb: Int?
     let fileName: String?
     let description: String?
+    let uploadedTimestamp: Int?
 
     var id: Int { fileId }
 
@@ -60,6 +65,7 @@ struct NexusModFileInfo: Codable, Identifiable {
         case isPrimary = "is_primary"
         case sizeKb = "size_kb"
         case fileName = "file_name"
+        case uploadedTimestamp = "uploaded_timestamp"
     }
 }
 

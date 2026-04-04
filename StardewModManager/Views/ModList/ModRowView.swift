@@ -54,8 +54,8 @@ struct ModRowView: View {
                             .font(.caption2)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
-                            .background(Color.stardewOrange.opacity(0.15))
-                            .foregroundStyle(Color.stardewOrange)
+                            .background(Color.stardewBlue.opacity(0.15))
+                            .foregroundStyle(Color.stardewBlue)
                             .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)

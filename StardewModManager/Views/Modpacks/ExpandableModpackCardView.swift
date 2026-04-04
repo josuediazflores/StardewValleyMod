@@ -14,6 +14,9 @@ struct ExpandableModpackCardView: View {
 
     @State private var sortOrder = [KeyPathComparator(\Mod.manifest.name, order: .forward)]
     @State private var hoveredModID: String?
+    @State private var isBatchMode = false
+    @State private var selectedEntryIDs: Set<String> = []
+    @State private var searchText = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -23,6 +26,10 @@ struct ExpandableModpackCardView: View {
             // Expanded content
             if isExpanded {
                 Divider().overlay(Color.stardewDivider)
+
+                if isBatchMode {
+                    batchActionBar
+                }
 
                 savedModpackEntryList
             }
@@ -67,6 +74,9 @@ struct ExpandableModpackCardView: View {
                     .frame(width: 16)
             }
             .buttonStyle(.plain)
+            .onChange(of: isExpanded) { _, expanded in
+                if !expanded { searchText = "" }
+            }
 
             // Name
             Text(modpack.name)
@@ -96,6 +106,38 @@ struct ExpandableModpackCardView: View {
                 .font(.stardew(size: 14))
                 .foregroundStyle(Color.textMuted)
 
+            if isExpanded {
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textMuted)
+                    TextField(L.s("modpack_search_mods"), text: $searchText)
+                        .font(.stardew(size: 14))
+                        .textFieldStyle(.plain)
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.textMuted)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .frame(maxWidth: 200)
+                .background(
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.parchment)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Color.frameBorder, lineWidth: 1)
+                        )
+                )
+            }
+
             Spacer()
 
             // Action buttons
@@ -114,6 +156,16 @@ struct ExpandableModpackCardView: View {
                     .background(Color.stardewGreen)
                     .foregroundStyle(.white)
                     .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    isBatchMode = true
+                    selectedEntryIDs.removeAll()
+                } label: {
+                    Label(L.s("modpack_select"), systemImage: "checkmark.circle")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textMuted)
                 }
                 .buttonStyle(.plain)
 
@@ -153,7 +205,10 @@ struct ExpandableModpackCardView: View {
 
     @ViewBuilder
     private var savedModpackEntryList: some View {
-        let entries = appState.filteredEntriesForModpack(modpack)
+        let allEntries = appState.filteredEntriesForModpack(modpack)
+        let entries = searchText.isEmpty ? allEntries : allEntries.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText)
+        }
         let installedIDs = Set(appState.mods.map(\.id))
 
         if entries.isEmpty {
@@ -168,6 +223,12 @@ struct ExpandableModpackCardView: View {
                         let isInstalled = installedIDs.contains(entry.uniqueID)
 
                         HStack(spacing: 8) {
+                            if isBatchMode {
+                                Image(systemName: selectedEntryIDs.contains(entry.uniqueID) ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(selectedEntryIDs.contains(entry.uniqueID) ? Color.accentGold : Color.textMuted)
+                            }
+
                             StardewIcon(type: .gear, size: 14)
                                 .opacity(isInstalled ? 1 : 0.3)
 
@@ -205,6 +266,16 @@ struct ExpandableModpackCardView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if isBatchMode {
+                                if selectedEntryIDs.contains(entry.uniqueID) {
+                                    selectedEntryIDs.remove(entry.uniqueID)
+                                } else {
+                                    selectedEntryIDs.insert(entry.uniqueID)
+                                }
+                            }
+                        }
                         .contextMenu {
                             Button(entry.isEnabled ? L.s("modpack_disable") : L.s("modpack_enable")) {
                                 appState.toggleModpackEntry(modpackID: modpack.id, entryID: entry.uniqueID)
@@ -225,6 +296,81 @@ struct ExpandableModpackCardView: View {
             .frame(height: min(CGFloat(entries.count) * 38, 500))
             .background(Color.parchment)
         }
+    }
+
+    // MARK: - Batch Action Bar
+
+    private var batchActionBar: some View {
+        HStack(spacing: 10) {
+            Text(L.s("modpack_selected_count", selectedEntryIDs.count))
+                .font(.stardew(size: 13))
+                .foregroundStyle(Color.textDark)
+
+            Spacer()
+
+            Button {
+                let allIDs = Set(modpack.entries.map(\.uniqueID))
+                if selectedEntryIDs == allIDs {
+                    selectedEntryIDs.removeAll()
+                } else {
+                    selectedEntryIDs = allIDs
+                }
+            } label: {
+                Text(selectedEntryIDs.count == modpack.entries.count ? L.s("modpack_deselect_all") : L.s("modpack_select_all"))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.accentGold)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                appState.batchToggleModpackEntries(modpackID: modpack.id, entryIDs: selectedEntryIDs, enabled: true)
+                isBatchMode = false
+                selectedEntryIDs.removeAll()
+            } label: {
+                Text(L.s("modpack_enable_all"))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.stardewGreen)
+            }
+            .buttonStyle(.plain)
+            .disabled(selectedEntryIDs.isEmpty)
+
+            Button {
+                appState.batchToggleModpackEntries(modpackID: modpack.id, entryIDs: selectedEntryIDs, enabled: false)
+                isBatchMode = false
+                selectedEntryIDs.removeAll()
+            } label: {
+                Text(L.s("modpack_disable_all"))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.textMuted)
+            }
+            .buttonStyle(.plain)
+            .disabled(selectedEntryIDs.isEmpty)
+
+            Button {
+                appState.batchRemoveModpackEntries(modpackID: modpack.id, entryIDs: selectedEntryIDs)
+                isBatchMode = false
+                selectedEntryIDs.removeAll()
+            } label: {
+                Text(L.s("modpack_remove_selected"))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.stardewRed)
+            }
+            .buttonStyle(.plain)
+            .disabled(selectedEntryIDs.isEmpty)
+
+            Button {
+                isBatchMode = false
+                selectedEntryIDs.removeAll()
+            } label: {
+                Text(L.s("common_cancel"))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.textDark)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(Color.parchmentAlt)
     }
 
     // MARK: - Helpers
@@ -335,8 +481,8 @@ private struct VersionCell: View {
                     .font(.system(size: 10))
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
-                    .background(Color.stardewOrange.opacity(0.12))
-                    .foregroundStyle(Color.stardewOrange)
+                    .background(Color.stardewBlue.opacity(0.12))
+                    .foregroundStyle(Color.stardewBlue)
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
