@@ -117,26 +117,39 @@ enum ModManagementService {
 
     private static func importFromFolder(_ folderURL: URL, settings: AppSettings, fm: FileManager) throws -> [Mod] {
         let manifestURL = folderURL.appending(path: "manifest.json")
-        guard fm.fileExists(atPath: manifestURL.path(percentEncoded: false)) else {
+
+        // If manifest.json exists at top level, import directly
+        if fm.fileExists(atPath: manifestURL.path(percentEncoded: false)) {
+            let destination = settings.modsDirectoryURL.appending(path: folderURL.lastPathComponent)
+            if fm.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fm.removeItem(at: destination)
+            }
+
+            do {
+                try fm.copyItem(at: folderURL, to: destination)
+            } catch {
+                throw ModManagementError.importError(error.localizedDescription)
+            }
+
+            guard let manifest = ManifestParser.parse(at: destination.appending(path: "manifest.json")) else {
+                throw ModManagementError.invalidMod("Could not parse manifest.json")
+            }
+
+            return [Mod(manifest: manifest, folderName: destination.lastPathComponent, folderURL: destination, isEnabled: true)]
+        }
+
+        // No top-level manifest — search for nested mod folders
+        let nestedFolders = findModFolders(in: folderURL, fm: fm)
+        guard !nestedFolders.isEmpty else {
             throw ModManagementError.invalidMod("No manifest.json found in \(folderURL.lastPathComponent)")
         }
 
-        let destination = settings.modsDirectoryURL.appending(path: folderURL.lastPathComponent)
-        if fm.fileExists(atPath: destination.path(percentEncoded: false)) {
-            try fm.removeItem(at: destination)
+        var importedMods: [Mod] = []
+        for nestedFolder in nestedFolders {
+            let imported = try importFromFolder(nestedFolder, settings: settings, fm: fm)
+            importedMods.append(contentsOf: imported)
         }
-
-        do {
-            try fm.copyItem(at: folderURL, to: destination)
-        } catch {
-            throw ModManagementError.importError(error.localizedDescription)
-        }
-
-        guard let manifest = ManifestParser.parse(at: destination.appending(path: "manifest.json")) else {
-            throw ModManagementError.invalidMod("Could not parse manifest.json")
-        }
-
-        return [Mod(manifest: manifest, folderName: destination.lastPathComponent, folderURL: destination, isEnabled: true)]
+        return importedMods
     }
 
     private static func importFromZip(_ zipURL: URL, settings: AppSettings, fm: FileManager) throws -> [Mod] {
