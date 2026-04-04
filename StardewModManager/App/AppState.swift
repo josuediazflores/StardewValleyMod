@@ -286,6 +286,7 @@ final class AppState {
             try ModManagementService.deleteMod(mod)
             mods.removeAll { $0.id == mod.id }
             if selectedModID == mod.id { selectedModID = nil }
+            removeModFromAllModpacks(mod.id)
             DependencyResolver.resolveAll(mods: mods)
         } catch {
             errorMessage = error.localizedDescription
@@ -653,6 +654,9 @@ final class AppState {
 
         guard !deletedMods.isEmpty else { return }
 
+        for mod in deletedMods {
+            removeModFromAllModpacks(mod.id)
+        }
         DependencyResolver.resolveAll(mods: mods)
 
         let pending = PendingDeletion(
@@ -1239,6 +1243,21 @@ final class AppState {
         }
         modpacks[idx].updatedAt = Date()
         try? ModpackService.saveModpacks(modpacks, settings: settings)
+    }
+
+    func removeModFromAllModpacks(_ modID: String) {
+        var changed = false
+        for i in modpacks.indices {
+            let before = modpacks[i].entries.count
+            modpacks[i].entries.removeAll { $0.uniqueID == modID }
+            if modpacks[i].entries.count != before {
+                modpacks[i].updatedAt = Date()
+                changed = true
+            }
+        }
+        if changed {
+            try? ModpackService.saveModpacks(modpacks, settings: settings)
+        }
     }
 
     func batchRemoveModpackEntries(modpackID: UUID, entryIDs: Set<String>) {
