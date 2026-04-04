@@ -52,6 +52,16 @@ struct NearbyCompareSheet: View {
                 Task { @MainActor in
                     appState.importMods(from: [zipURL])
                     try? FileManager.default.removeItem(at: zipURL)
+
+                    // Save the modpack config as a profile if metadata was received
+                    if let received = peerService.receivedModpack {
+                        let newModpack = received.toModpack()
+                        if !appState.modpacks.contains(where: { $0.name == newModpack.name }) {
+                            appState.modpacks.append(newModpack)
+                            try? ModpackService.saveModpacks(appState.modpacks, settings: appState.settings)
+                        }
+                    }
+
                     let importedCount = appState.mods.count
                     peerService.transferState = .complete(importedCount)
                     SoundService.play(.bigSelect)
@@ -430,9 +440,29 @@ struct NearbyCompareSheet: View {
 
     private func sendFullModpack() {
         guard let modpack = selectedModpack else { return }
+
+        // Always send metadata first so receiver gets the enable/disable config
+        let shareable = ShareableModpack.from(modpack)
+        peerService.sendModpack(shareable)
+        hasSent = true
+
         let enabledIDs = Set(modpack.entries.filter(\.isEnabled).map(\.uniqueID))
-        let modsToSend = appState.mods.filter { enabledIDs.contains($0.id) }
-        guard !modsToSend.isEmpty else { return }
+
+        // If we know what the receiver has, only send what they're missing
+        let idsToSend: Set<String>
+        if let theirModpack = peerService.receivedModpack {
+            let theirIDs = Set(theirModpack.mods.map(\.uniqueID))
+            idsToSend = enabledIDs.subtracting(theirIDs)
+        } else {
+            idsToSend = enabledIDs
+        }
+
+        let modsToSend = appState.mods.filter { idsToSend.contains($0.id) }
+        guard !modsToSend.isEmpty else {
+            // They already have everything, just show complete
+            peerService.transferState = .complete(0)
+            return
+        }
         zipAndSend(modsToSend)
     }
 

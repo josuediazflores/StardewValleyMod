@@ -286,6 +286,9 @@ enum ModpackService {
 
         for folder in folders {
             let destination = modsStaging.appending(path: folder.folderName)
+            if fm.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fm.removeItem(at: destination)
+            }
             try fm.copyItem(at: folder.folderURL, to: destination)
         }
 
