@@ -102,7 +102,10 @@ struct ExpandableModpackCardView: View {
 
             sourceBadge
 
-            Text(L.s("modpack_mods_count", modpack.entries.count))
+            let enabledCount = modpack.entries.filter(\.isEnabled).count
+            Text(enabledCount == modpack.entries.count
+                 ? L.s("modpack_mods_count", modpack.entries.count)
+                 : "\(enabledCount)/\(modpack.entries.count) mods")
                 .font(.stardew(size: 14))
                 .foregroundStyle(Color.textMuted)
 

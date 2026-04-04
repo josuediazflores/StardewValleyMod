@@ -1004,24 +1004,25 @@ final class AppState {
     func applyModpack(_ modpack: Modpack) {
         isModpackLoading = true
         modpackError = nil
-        print("[DEBUG] applyModpack called for '\(modpack.name)' with \(modpack.entries.count) entries, \(mods.count) mods loaded")
         do {
             let result = try ModpackService.applyModpack(modpack, mods: mods, settings: settings)
-            print("[DEBUG] apply result: enabled=\(result.enabled.count) disabled=\(result.disabled.count) missing=\(result.missing.count) correct=\(result.alreadyCorrect)")
             activeModpackID = modpack.id
 
+            // Always refresh mods from disk, even if some moves failed
+            loadMods()
+
+            let enabledCount = mods.filter { !$0.isBuiltIn && $0.isEnabled }.count
             if !result.missing.isEmpty {
                 let names = result.missing.map(\.name).joined(separator: ", ")
-                showToast("Profile applied. Missing: \(names)", type: .warning)
+                showToast("Profile loaded (\(enabledCount) mods enabled). Missing: \(names)", type: .warning)
             } else {
-                showToast("Profile \"\(modpack.name)\" applied", type: .success)
+                showToast("Profile \"\(modpack.name)\" loaded — \(enabledCount) mods enabled", type: .success)
             }
             SoundService.play(.bigSelect)
         } catch {
             modpackError = error.localizedDescription
+            loadMods()
         }
-        // Always refresh mods from disk, even if some moves failed
-        loadMods()
         isModpackLoading = false
     }
 

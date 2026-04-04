@@ -108,11 +108,12 @@ enum ModpackService {
         let modsByID = Dictionary(mods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let entryIDs = Set(modpack.entries.map(\.uniqueID))
 
-        NSLog("[SMM] applyModpack: '%@' entries=%d mods=%d modsByID=%d", modpack.name, modpack.entries.count, mods.count, modsByID.count)
+        var debugLog = "[applyModpack] '\(modpack.name)' entries=\(modpack.entries.count) mods=\(mods.count) modsByID=\(modsByID.count)\n"
 
         // Process each entry in the modpack
         for entry in modpack.entries {
             guard let mod = modsByID[entry.uniqueID] else {
+                debugLog += "  MISSING: \(entry.uniqueID) (\(entry.name))\n"
                 missingEntries.append(entry)
                 continue
             }
@@ -124,20 +125,18 @@ enum ModpackService {
 
             if entry.isEnabled && !mod.isEnabled {
                 do {
-                    NSLog("[SMM] enabling '%@' from %@", mod.manifest.name, mod.folderURL.path)
                     try ModManagementService.enableMod(mod, settings: settings)
                     enabledNames.append(mod.manifest.name)
-                    NSLog("[SMM] enabled OK '%@'", mod.manifest.name)
+                    debugLog += "  ENABLED: \(mod.manifest.name)\n"
                 } catch {
-                    NSLog("[SMM] FAILED to enable '%@': %@", mod.manifest.name, error.localizedDescription)
+                    debugLog += "  ENABLE-FAIL: \(mod.manifest.name) — \(error.localizedDescription)\n"
+                    missingEntries.append(entry)
                 }
             } else if !entry.isEnabled && mod.isEnabled {
                 do {
                     try ModManagementService.disableMod(mod, settings: settings)
                     disabledNames.append(mod.manifest.name)
-                } catch {
-                    print("[ModpackService] Failed to disable \(mod.manifest.name): \(error)")
-                }
+                } catch { }
             } else {
                 alreadyCorrect += 1
             }
@@ -148,34 +147,14 @@ enum ModpackService {
             do {
                 try ModManagementService.disableMod(mod, settings: settings)
                 disabledNames.append(mod.manifest.name)
-            } catch { /* skip this mod, continue with others */ }
+            } catch { }
         }
 
-        // Also move orphan folders (no manifest.json) out of Mods to keep the profile clean
-        let fm = FileManager.default
-        let disabledDir = settings.disabledModsDirectoryURL
-        if !fm.fileExists(atPath: disabledDir.path(percentEncoded: false)) {
-            try? fm.createDirectory(at: disabledDir, withIntermediateDirectories: true)
-        }
-        if let contents = try? fm.contentsOfDirectory(at: settings.modsDirectoryURL,
-                                                       includingPropertiesForKeys: [.isDirectoryKey],
-                                                       options: [.skipsHiddenFiles]) {
-            let knownIDs = Set(mods.map(\.folderURL))
-            for itemURL in contents {
-                guard (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else { continue }
-                // Skip folders the discovery service already knows about
-                if knownIDs.contains(itemURL) { continue }
-                // Skip SMAPI internal folders
-                let name = itemURL.lastPathComponent
-                if name == "StardewModdingAPI" || name.hasPrefix("Mods_backup") { continue }
-                // Move orphan folder to disabled
-                let dest = disabledDir.appending(path: name)
-                if fm.fileExists(atPath: dest.path(percentEncoded: false)) {
-                    try? fm.removeItem(at: dest)
-                }
-                try? fm.moveItem(at: itemURL, to: dest)
-            }
-        }
+        debugLog += "RESULT: enabled=\(enabledNames.count) disabled=\(disabledNames.count) missing=\(missingEntries.count) correct=\(alreadyCorrect)\n"
+        try? debugLog.write(toFile: "/tmp/smm-apply-debug.log", atomically: true, encoding: .utf8)
+
+        // Skip orphan cleanup — it was incorrectly moving just-enabled mods back to disabled
+        // because nested mod folders have paths that don't match the top-level Mods/ listing
 
         return ApplyResult(
             enabled: enabledNames,
