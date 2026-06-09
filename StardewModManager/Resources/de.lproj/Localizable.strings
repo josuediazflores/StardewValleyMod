@@ -123,10 +123,10 @@
 "modpack_detail_created" = "Erstellt:";
 "modpack_detail_updated" = "Aktualisiert:";
 "modpack_detail_mods" = "Mods (%d)";
-"modpack_detail_delete_confirm" = "„%@" löschen";
-"modpack_detail_delete_message" = "Möchtest du „%@" wirklich löschen? Dies kann nicht rückgängig gemacht werden.";
+"modpack_detail_delete_confirm" = "„%@“ löschen";
+"modpack_detail_delete_message" = "Möchtest du „%@“ wirklich löschen? Dies kann nicht rückgängig gemacht werden.";
 "modpack_detail_applied" = "Modpack angewendet";
-"modpack_detail_applied_message" = "Modpack „%@" wurde erfolgreich angewendet.";
+"modpack_detail_applied_message" = "Modpack „%@“ wurde erfolgreich angewendet.";
 
 /* Modpack importieren */
 "modpack_import_title" = "Modpack importieren";
@@ -161,7 +161,7 @@
 "modpack_list_no_profiles" = "Noch keine Profile gespeichert";
 "modpack_list_status" = "%d Profile · %d Mods installiert";
 "modpack_list_delete_confirm" = "Modpack löschen";
-"modpack_list_delete_message" = "Möchtest du „%@" wirklich löschen? Dies kann nicht rückgängig gemacht werden.";
+"modpack_list_delete_message" = "Möchtest du „%@“ wirklich löschen? Dies kann nicht rückgängig gemacht werden.";
 
 /* Modpacks vergleichen */
 "compare_title" = "Profile vergleichen";
@@ -190,7 +190,7 @@
 "nearby_select_modpack" = "Wähle dein Modpack zum Vergleichen:";
 "nearby_start" = "Suche starten";
 "nearby_searching" = "Suche nach Spielern in der Nähe...";
-"nearby_ensure" = "Stelle sicher, dass der andere Spieler ebenfalls „In der Nähe vergleichen" geöffnet hat";
+"nearby_ensure" = "Stelle sicher, dass der andere Spieler ebenfalls „In der Nähe vergleichen“ geöffnet hat";
 "nearby_found" = "In der Nähe gefunden:";
 "nearby_pick_first" = "Wähle zuerst ein Modpack";
 "nearby_connected" = "Verbunden mit %@";
@@ -253,7 +253,7 @@
 "nexus_detail_download" = "Herunterladen";
 
 /* Nexus-Web-Download */
-"nexus_web_hint" = "Melde dich bei Bedarf an und klicke auf „Mod Manager Download"";
+"nexus_web_hint" = "Melde dich bei Bedarf an und klicke auf „Mod Manager Download“";
 
 /* Einrichtung */
 "onboarding_welcome" = "Willkommen bei Stardew Mod Manager";

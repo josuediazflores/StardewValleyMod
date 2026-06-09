@@ -190,7 +190,7 @@
 "nearby_select_modpack" = "选择要比较的模组包:";
 "nearby_start" = "开始搜索";
 "nearby_searching" = "正在搜索附近的玩家...";
-"nearby_ensure" = "确保对方也打开了"附近比较"功能";
+"nearby_ensure" = "确保对方也打开了“附近比较”功能";
 "nearby_found" = "发现附近:";
 "nearby_pick_first" = "请先选择一个模组包";
 "nearby_connected" = "已连接到 %@";
