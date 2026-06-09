@@ -29,6 +29,14 @@ class PeerSyncService: NSObject, ObservableObject {
         let respond: (Bool) -> Void
     }
     @Published var pendingInvitation: PendingInvitation?
+    /// After a decline, ignore new invitations briefly so a spammy peer
+    /// can't trap the user in a re-presenting consent alert
+    private var lastDeclineAt: Date?
+
+    /// Peers advertising without our protocol marker run an older app version
+    /// that can't complete an encrypted session
+    @Published var outdatedPeers: Set<MCPeerID> = []
+    private static let protocolVersion = "2"
 
     enum ConnectionState {
         case idle
@@ -58,7 +66,7 @@ class PeerSyncService: NSObject, ObservableObject {
         session.delegate = self
         self.session = session
 
-        let advertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: nil, serviceType: serviceType)
+        let advertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: ["proto": Self.protocolVersion], serviceType: serviceType)
         advertiser.delegate = self
         advertiser.startAdvertisingPeer()
         self.advertiser = advertiser
@@ -71,10 +79,12 @@ class PeerSyncService: NSObject, ObservableObject {
         isSearching = true
         connectionState = .searching
         foundPeers = []
+        outdatedPeers = []
         connectedPeer = nil
         receivedModpack = nil
         transferState = .idle
         transferProgress = 0
+        lastDeclineAt = nil
     }
 
     func stopSearching() {
@@ -95,6 +105,10 @@ class PeerSyncService: NSObject, ObservableObject {
 
     func connectToPeer(_ peer: MCPeerID) {
         guard let session, let browser else { return }
+        if outdatedPeers.contains(peer) {
+            connectionState = .error("\(peer.displayName) is running an older app version — update Stardew Mod Manager on both Macs to sync.")
+            return
+        }
         // Generous timeout: the other side has to approve the connection prompt
         browser.invitePeer(peer, to: session, withContext: nil, timeout: 30)
     }
@@ -247,8 +261,13 @@ extension PeerSyncService: MCNearbyServiceAdvertiserDelegate {
                 invitationHandler(false, nil)
                 return
             }
+            if let last = lastDeclineAt, Date().timeIntervalSince(last) < 10 {
+                invitationHandler(false, nil)
+                return
+            }
             pendingInvitation = PendingInvitation(peerName: peerID.displayName) { [weak self] accept in
                 invitationHandler(accept, accept ? self?.session : nil)
+                if !accept { self?.lastDeclineAt = Date() }
                 self?.pendingInvitation = nil
             }
         }
@@ -259,9 +278,13 @@ extension PeerSyncService: MCNearbyServiceAdvertiserDelegate {
 
 extension PeerSyncService: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
+        let isOutdated = info?["proto"] == nil
         Task { @MainActor in
             if !foundPeers.contains(peerID) {
                 foundPeers.append(peerID)
+            }
+            if isOutdated {
+                outdatedPeers.insert(peerID)
             }
         }
     }
@@ -269,6 +292,7 @@ extension PeerSyncService: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         Task { @MainActor in
             foundPeers.removeAll { $0 == peerID }
+            outdatedPeers.remove(peerID)
         }
     }
 }
