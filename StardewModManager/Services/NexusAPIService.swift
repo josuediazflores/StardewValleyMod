@@ -91,8 +91,15 @@ actor NexusAPIService {
     }
 
     func downloadLinks(modId: Int, fileId: Int, nxmKey: String, nxmExpires: String) async throws -> [NexusDownloadLink] {
+        // key/expires come from an externally supplied nxm:// link — percent-encode
+        // them so crafted values can't inject extra query parameters
+        var query = URLComponents()
+        query.queryItems = [
+            URLQueryItem(name: "key", value: nxmKey),
+            URLQueryItem(name: "expires", value: nxmExpires),
+        ]
         let request = try buildRequest(
-            path: "/games/\(gameDomain)/mods/\(modId)/files/\(fileId)/download_link.json?key=\(nxmKey)&expires=\(nxmExpires)"
+            path: "/games/\(gameDomain)/mods/\(modId)/files/\(fileId)/download_link.json?\(query.percentEncodedQuery ?? "")"
         )
         let (data, response) = try await performRequest(request)
 

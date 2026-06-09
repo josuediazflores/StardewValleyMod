@@ -119,27 +119,37 @@ actor ExternalDownloadService {
             if let range = disposition.range(of: "filename=\""),
                let endRange = disposition[range.upperBound...].range(of: "\"") {
                 let name = String(disposition[range.upperBound..<endRange.lowerBound])
-                if !name.isEmpty { return name }
+                if let sanitized = sanitizedFileName(name) { return sanitized }
             }
             if let range = disposition.range(of: "filename=") {
                 let startIndex = range.upperBound
                 let remaining = disposition[startIndex...]
                 let name = remaining.split(separator: ";").first.map(String.init)?.trimmingCharacters(in: .whitespaces)
-                if let name, !name.isEmpty { return name }
+                if let name, let sanitized = sanitizedFileName(name) { return sanitized }
             }
         }
 
         // Try the suggested filename from the response
-        if let suggested = response.suggestedFilename, !suggested.isEmpty {
-            return suggested
+        if let suggested = response.suggestedFilename, let sanitized = sanitizedFileName(suggested) {
+            return sanitized
         }
 
         // Fall back to the last path component of the URL
-        let lastComponent = requestURL.lastPathComponent
-        if !lastComponent.isEmpty && lastComponent != "/" {
-            return lastComponent
+        if let sanitized = sanitizedFileName(requestURL.lastPathComponent) {
+            return sanitized
         }
 
         return "download.zip"
+    }
+
+    /// Server-supplied names are untrusted — strip path components so a crafted
+    /// header can't write outside the destination directory.
+    private func sanitizedFileName(_ raw: String) -> String? {
+        var name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\\", with: "/")
+        name = name.components(separatedBy: "/").last ?? name
+        name = name.replacingOccurrences(of: "..", with: "_")
+        guard !name.isEmpty, name.hasPrefix(".") == false else { return nil }
+        return name
     }
 }

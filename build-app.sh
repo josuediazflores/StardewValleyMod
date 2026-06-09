@@ -82,7 +82,8 @@ cat > "$APP_DIR/Contents/Info.plist" << PLIST
     <false/>
     <key>NSAppTransportSecurity</key>
     <dict>
-        <key>NSAllowsArbitraryLoads</key>
+        <!-- All API/CDN endpoints are HTTPS; only the embedded Nexus web view may load mixed content -->
+        <key>NSAllowsArbitraryLoadsInWebContent</key>
         <true/>
     </dict>
     <key>NSLocalNetworkUsageDescription</key>
