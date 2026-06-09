@@ -311,7 +311,7 @@ final class AppState {
                 let securityScoped = url.startAccessingSecurityScopedResource()
                 defer { if securityScoped { url.stopAccessingSecurityScopedResource() } }
 
-                let imported = try ModManagementService.importMod(from: url, settings: settings)
+                let imported = try ModManagementService.importMod(from: url, settings: settings, existingMods: mods)
                 for newMod in imported {
                     mods.removeAll { $0.id == newMod.id }
                     mods.append(newMod)
@@ -439,7 +439,7 @@ final class AppState {
     func installPendingNXMToCurrentProfile() {
         guard let zipURL = pendingNXMZipURL else { return }
         do {
-            let imported = try ModManagementService.importMod(from: zipURL, settings: settings)
+            let imported = try ModManagementService.importMod(from: zipURL, settings: settings, existingMods: mods)
             try? FileManager.default.removeItem(at: zipURL)
             for newMod in imported {
                 mods.removeAll { $0.id == newMod.id }
@@ -701,16 +701,12 @@ final class AppState {
 
         for i in pending.mods.indices {
             let mod = pending.mods[i]
-            let targetURL: URL
-            if pending.wasEnabled[i] {
-                targetURL = settings.modsDirectoryURL.appending(path: mod.folderName)
-            } else {
-                targetURL = settings.disabledModsDirectoryURL.appending(path: mod.folderName)
-            }
+            let targetURL = pending.originalURLs[i]
 
             do {
-                try ModManagementService.restoreFromTrash(stagingURL: pending.stagingURLs[i], to: targetURL)
-                mod.folderURL = targetURL
+                let restoredURL = try ModManagementService.restoreFromTrash(stagingURL: pending.stagingURLs[i], to: targetURL)
+                mod.folderURL = restoredURL
+                mod.folderName = restoredURL.lastPathComponent
                 mod.isEnabled = pending.wasEnabled[i]
                 mods.append(mod)
             } catch {
@@ -944,7 +940,7 @@ final class AppState {
                 return
             }
 
-            let imported = try ModManagementService.importMod(from: zipURL, settings: settings)
+            let imported = try ModManagementService.importMod(from: zipURL, settings: settings, existingMods: mods)
             try? FileManager.default.removeItem(at: zipURL)
 
             for newMod in imported {
@@ -1137,7 +1133,7 @@ final class AppState {
                 let modpack = try ModpackService.importFromJSON(at: url)
                 modpacks.append(modpack)
             } else {
-                let (modpack, imported) = try ModpackService.importFromZIP(at: url, settings: settings)
+                let (modpack, imported) = try ModpackService.importFromZIP(at: url, settings: settings, existingMods: mods)
                 modpacks.append(modpack)
                 for newMod in imported {
                     mods.removeAll { $0.id == newMod.id }
@@ -1158,7 +1154,7 @@ final class AppState {
         do {
             let tempDir = FileManager.default.temporaryDirectory
             let localURL = try await externalDownloader.downloadFile(from: urlString, to: tempDir)
-            let (modpack, imported) = try ModpackService.importFromZIP(at: localURL, settings: settings)
+            let (modpack, imported) = try ModpackService.importFromZIP(at: localURL, settings: settings, existingMods: mods)
             try? FileManager.default.removeItem(at: localURL)
 
             modpacks.append(modpack)

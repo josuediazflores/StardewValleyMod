@@ -38,11 +38,11 @@ enum ModDiscoveryService {
 
             guard let manifest = ManifestParser.parse(at: fileURL) else { continue }
 
-            // Determine subfolder name relative to base directory
+            // Determine relative parent path inside the base directory (e.g. "Gameplay/Combat")
             let basePath = directoryURL.path(percentEncoded: false)
             let relativePath = parentPath.replacingOccurrences(of: basePath, with: "")
             let components = relativePath.split(separator: "/").map(String.init)
-            let subfolder: String? = components.count > 1 ? components.first : nil
+            let subfolder: String? = components.count > 1 ? components.dropLast().joined(separator: "/") : nil
 
             let creationDate = (try? parentDir.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date()
 

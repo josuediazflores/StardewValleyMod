@@ -506,11 +506,13 @@ struct InstalledModsView: View {
                         if let folder = mod.subfolder {
                             Text(folder)
                                 .font(.system(size: 9))
+                                .lineLimit(1)
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
                                 .background(Color.accentGold.opacity(0.15))
                                 .foregroundStyle(Color.accentGoldDark)
                                 .clipShape(Capsule())
+                                .help(folder)
                         }
 
                         if mod.isBuiltIn {

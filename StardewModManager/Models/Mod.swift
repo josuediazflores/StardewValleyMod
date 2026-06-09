@@ -81,11 +81,12 @@ enum ModSortOption: String, CaseIterable, Identifiable {
 final class Mod: Identifiable, Hashable {
     let id: String
     let manifest: ModManifest
-    let folderName: String
+    var folderName: String
     var folderURL: URL
     var isEnabled: Bool
     let isBuiltIn: Bool
-    let subfolder: String?
+    /// Relative parent path inside the Mods (or Disabled Mods) directory, e.g. "Gameplay/Combat". nil for root-level mods.
+    var subfolder: String?
     let dateAdded: Date
 
     var resolvedDependencies: [ResolvedDependency] = []

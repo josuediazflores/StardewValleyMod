@@ -315,7 +315,7 @@ enum ModpackService {
         }
     }
 
-    static func importFromZIP(at url: URL, settings: AppSettings) throws -> (Modpack, [Mod]) {
+    static func importFromZIP(at url: URL, settings: AppSettings, existingMods: [Mod] = []) throws -> (Modpack, [Mod]) {
         let fm = FileManager.default
         let tempDir = fm.temporaryDirectory.appending(path: UUID().uuidString)
         defer { try? fm.removeItem(at: tempDir) }
@@ -374,7 +374,7 @@ enum ModpackService {
         let modFolders = findModFolders(in: modsDir, fm: fm)
         for modFolder in modFolders {
             do {
-                let imported = try ModManagementService.importMod(from: modFolder, settings: settings)
+                let imported = try ModManagementService.importMod(from: modFolder, settings: settings, existingMods: existingMods)
                 importedMods.append(contentsOf: imported)
             } catch {
                 // Skip individual mods that fail to import
