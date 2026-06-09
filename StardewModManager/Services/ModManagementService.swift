@@ -86,8 +86,8 @@ enum ModManagementService {
     /// `directory` to (but never including) `baseDir`. Uses rmdir(2), which fails on
     /// non-empty directories, so content added concurrently is never deleted.
     private static func removeEmptyAncestors(of directory: URL, upTo baseDir: URL, fm: FileManager) {
-        let basePath = baseDir.standardizedFileURL.path(percentEncoded: false)
-        var current = directory.standardizedFileURL
+        let basePath = baseDir.resolvingSymlinksInPath().path(percentEncoded: false)
+        var current = directory.resolvingSymlinksInPath()
 
         while current.path(percentEncoded: false).hasPrefix(basePath + "/") {
             guard let contents = try? fm.contentsOfDirectory(atPath: current.path(percentEncoded: false)) else { break }
@@ -100,7 +100,7 @@ enum ModManagementService {
                 return rmdir(ptr) == 0
             }
             guard removed else { break }
-            current = current.deletingLastPathComponent().standardizedFileURL
+            current = current.deletingLastPathComponent()
         }
     }
 
