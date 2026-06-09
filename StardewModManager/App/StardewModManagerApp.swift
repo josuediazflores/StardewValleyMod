@@ -9,7 +9,9 @@ struct StardewModManagerApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        // Single window: external nxm:// link events reuse it instead of
+        // spawning a new window per download
+        Window("Stardew Mod Manager", id: "main") {
             ContentView()
                 .id("\(appState.settings.theme)-\(appState.settings.language)")
                 .environment(appState)
