@@ -866,20 +866,16 @@ final class AppState {
     func loadEssentialMods() async {
         isNexusLoading = true
         nexusError = nil
-        do {
-            if let key = settings.nexusAPIKey {
-                await nexusAPI.setAPIKey(key)
-            }
-            var mods: [NexusModInfo] = []
-            for modId in Self.essentialModIDs {
-                if let mod = try? await nexusAPI.modDetails(modId: modId) {
-                    mods.append(mod)
-                }
-            }
-            nexusEssentialMods = mods
-        } catch {
-            nexusError = error.localizedDescription
+        if let key = settings.nexusAPIKey {
+            await nexusAPI.setAPIKey(key)
         }
+        var mods: [NexusModInfo] = []
+        for modId in Self.essentialModIDs {
+            if let mod = try? await nexusAPI.modDetails(modId: modId) {
+                mods.append(mod)
+            }
+        }
+        nexusEssentialMods = mods
         isNexusLoading = false
     }
 
@@ -1242,7 +1238,7 @@ final class AppState {
                 )
             }
 
-            var modpack = Modpack(
+            let modpack = Modpack(
                 id: UUID(),
                 name: info.name,
                 description: info.summary ?? "",
@@ -1253,7 +1249,6 @@ final class AppState {
                 createdAt: Date(),
                 updatedAt: Date()
             )
-            _ = modpack // suppress warning
             modpacks.append(modpack)
             try ModpackService.saveModpacks(modpacks, settings: settings)
         } catch {
