@@ -333,5 +333,10 @@
 "filter_content_packs" = "コンテンツパック";
 "filter_code_short" = "コード";
 "filter_packs_short" = "パック";
+"filter_updates" = "アップデート";
+"filter_updates_short" = "更新";
+"sort_name" = "名前";
+"sort_date_added" = "追加日";
+"sort_help" = "並び替え";
 "theme_stardew" = "Stardew";
 "theme_pink" = "ピンク";

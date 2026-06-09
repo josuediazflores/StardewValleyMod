@@ -36,6 +36,7 @@ enum ModFilter: String, CaseIterable, Identifiable {
     case disabled = "Disabled"
     case codeMods = "Code Mods"
     case contentPacks = "Content Packs"
+    case updates = "Updates"
 
     var id: String { rawValue }
 
@@ -46,6 +47,7 @@ enum ModFilter: String, CaseIterable, Identifiable {
         case .disabled: L.s("filter_disabled")
         case .codeMods: L.s("filter_code_mods")
         case .contentPacks: L.s("filter_content_packs")
+        case .updates: L.s("filter_updates")
         }
     }
 
@@ -56,6 +58,21 @@ enum ModFilter: String, CaseIterable, Identifiable {
         case .disabled: L.s("filter_disabled")
         case .codeMods: L.s("filter_code_short")
         case .contentPacks: L.s("filter_packs_short")
+        case .updates: L.s("filter_updates_short")
+        }
+    }
+}
+
+enum ModSortOption: String, CaseIterable, Identifiable {
+    case name = "Name"
+    case dateAdded = "Date Added"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .name: L.s("sort_name")
+        case .dateAdded: L.s("sort_date_added")
         }
     }
 }
@@ -69,6 +86,7 @@ final class Mod: Identifiable, Hashable {
     var isEnabled: Bool
     let isBuiltIn: Bool
     let subfolder: String?
+    let dateAdded: Date
 
     var resolvedDependencies: [ResolvedDependency] = []
 
@@ -89,7 +107,7 @@ final class Mod: Identifiable, Hashable {
         return nil
     }
 
-    init(manifest: ModManifest, folderName: String, folderURL: URL, isEnabled: Bool, subfolder: String? = nil) {
+    init(manifest: ModManifest, folderName: String, folderURL: URL, isEnabled: Bool, subfolder: String? = nil, dateAdded: Date = Date()) {
         self.id = manifest.uniqueID
         self.manifest = manifest
         self.folderName = folderName
@@ -97,6 +115,7 @@ final class Mod: Identifiable, Hashable {
         self.isEnabled = isEnabled
         self.isBuiltIn = manifest.uniqueID.hasPrefix("SMAPI.")
         self.subfolder = subfolder
+        self.dateAdded = dateAdded
     }
 
     static func == (lhs: Mod, rhs: Mod) -> Bool {

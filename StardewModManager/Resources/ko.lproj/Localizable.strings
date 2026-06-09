@@ -333,5 +333,10 @@
 "filter_content_packs" = "콘텐츠 팩";
 "filter_code_short" = "코드";
 "filter_packs_short" = "팩";
+"filter_updates" = "업데이트";
+"filter_updates_short" = "업데이트";
+"sort_name" = "이름";
+"sort_date_added" = "추가일";
+"sort_help" = "정렬 변경";
 "theme_stardew" = "Stardew";
 "theme_pink" = "핑크";

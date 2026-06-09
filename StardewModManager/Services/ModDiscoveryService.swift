@@ -18,7 +18,7 @@ enum ModDiscoveryService {
         var mods: [Mod] = []
         guard let enumerator = fm.enumerator(
             at: directoryURL,
-            includingPropertiesForKeys: [.isDirectoryKey],
+            includingPropertiesForKeys: [.isDirectoryKey, .creationDateKey],
             options: [.skipsHiddenFiles]
         ) else { return mods }
 
@@ -44,12 +44,15 @@ enum ModDiscoveryService {
             let components = relativePath.split(separator: "/").map(String.init)
             let subfolder: String? = components.count > 1 ? components.first : nil
 
+            let creationDate = (try? parentDir.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date()
+
             let mod = Mod(
                 manifest: manifest,
                 folderName: parentDir.lastPathComponent,
                 folderURL: parentDir,
                 isEnabled: isEnabled,
-                subfolder: subfolder
+                subfolder: subfolder,
+                dateAdded: creationDate
             )
             mods.append(mod)
         }

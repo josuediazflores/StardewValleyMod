@@ -333,5 +333,10 @@
 "filter_content_packs" = "Content Pack";
 "filter_code_short" = "Код";
 "filter_packs_short" = "Паки";
+"filter_updates" = "Обновления";
+"filter_updates_short" = "Обнов.";
+"sort_name" = "Имя";
+"sort_date_added" = "Дата";
+"sort_help" = "Изменить сортировку";
 "theme_stardew" = "Stardew";
 "theme_pink" = "Розовая";

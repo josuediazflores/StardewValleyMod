@@ -333,5 +333,10 @@
 "filter_content_packs" = "内容包";
 "filter_code_short" = "代码";
 "filter_packs_short" = "内容包";
+"filter_updates" = "可更新";
+"filter_updates_short" = "更新";
+"sort_name" = "名称";
+"sort_date_added" = "添加日期";
+"sort_help" = "切换排序";
 "theme_stardew" = "Stardew";
 "theme_pink" = "粉色";

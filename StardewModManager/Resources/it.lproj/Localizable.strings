@@ -333,5 +333,10 @@
 "filter_content_packs" = "Content Pack";
 "filter_code_short" = "Codice";
 "filter_packs_short" = "Pack";
+"filter_updates" = "Aggiornamenti";
+"filter_updates_short" = "Aggior.";
+"sort_name" = "Nome";
+"sort_date_added" = "Data aggiunta";
+"sort_help" = "Cambia ordinamento";
 "theme_stardew" = "Stardew";
 "theme_pink" = "Rosa";

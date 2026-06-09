@@ -239,6 +239,20 @@ struct InstalledModsView: View {
                         }
 
                         Button {
+                            appState.sortOption = appState.sortOption == .name ? .dateAdded : .name
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: appState.sortOption == .name ? "textformat.abc" : "calendar.badge.clock")
+                                    .font(.system(size: 12))
+                                Text(appState.sortOption.displayName)
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(Color.textLight)
+                        }
+                        .buttonStyle(.borderless)
+                        .help(L.s("sort_help"))
+
+                        Button {
                             isBatchMode = true
                             selectedModIDs.removeAll()
                         } label: {

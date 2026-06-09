@@ -42,6 +42,7 @@ final class AppState {
     var selectedModID: String?
     var searchText = ""
     var filterMode: ModFilter = .all
+    var sortOption: ModSortOption = .name
     var isLoading = false
     var showImportPicker = false
     var showInspector = true
@@ -155,6 +156,8 @@ final class AppState {
         case .contentPacks:
             let cpIDs = Set(mods.filter { $0.modType == .contentPack }.map(\.id))
             result = result.filter { cpIDs.contains($0.uniqueID) }
+        case .updates:
+            result = result.filter { modUpdates[$0.uniqueID] != nil }
         }
 
         return result
@@ -178,6 +181,14 @@ final class AppState {
         case .disabled: result = result.filter { !$0.isEnabled }
         case .codeMods: result = result.filter { $0.modType == .codeMod }
         case .contentPacks: result = result.filter { $0.modType == .contentPack }
+        case .updates: result = result.filter { modUpdates[$0.id] != nil }
+        }
+
+        switch sortOption {
+        case .name:
+            result.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+        case .dateAdded:
+            result.sort { $0.dateAdded > $1.dateAdded }
         }
 
         return result

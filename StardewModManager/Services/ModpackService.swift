@@ -212,22 +212,30 @@ enum ModpackService {
 
         let modsByID = Dictionary(mods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
 
-        // Write the modpack manifest
-        let manifestEncoder = JSONEncoder()
-        manifestEncoder.dateEncodingStrategy = .iso8601
-        manifestEncoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let manifestData = try manifestEncoder.encode(modpack)
-        try manifestData.write(to: tempDir.appending(path: "modpack.json"), options: .atomic)
-
         // Copy enabled mod folders into the staging directory
         let modsStaging = tempDir.appending(path: "Mods")
         try fm.createDirectory(at: modsStaging, withIntermediateDirectories: true)
+
+        // Track which entries have matching installed mods
+        let exportedEntries = modpack.entries.filter { entry in
+            guard entry.isEnabled else { return true } // keep disabled entries as-is
+            return modsByID[entry.uniqueID] != nil
+        }
 
         for entry in modpack.entries where entry.isEnabled {
             guard let mod = modsByID[entry.uniqueID] else { continue }
             let destination = modsStaging.appending(path: mod.folderName)
             try fm.copyItem(at: mod.folderURL, to: destination)
         }
+
+        // Write the modpack manifest with only entries that have matching mods
+        var exportModpack = modpack
+        exportModpack.entries = exportedEntries
+        let manifestEncoder = JSONEncoder()
+        manifestEncoder.dateEncodingStrategy = .iso8601
+        manifestEncoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let manifestData = try manifestEncoder.encode(exportModpack)
+        try manifestData.write(to: tempDir.appending(path: "modpack.json"), options: .atomic)
 
         // Remove existing file at destination if present
         if fm.fileExists(atPath: url.path(percentEncoded: false)) {

@@ -342,5 +342,10 @@
 "filter_content_packs" = "Content Packs";
 "filter_code_short" = "Code";
 "filter_packs_short" = "Packs";
+"filter_updates" = "Updates";
+"filter_updates_short" = "Updates";
+"sort_name" = "Name";
+"sort_date_added" = "Date Added";
+"sort_help" = "Toggle sort order";
 "theme_stardew" = "Stardew";
 "theme_pink" = "Pink";

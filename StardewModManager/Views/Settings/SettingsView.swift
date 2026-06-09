@@ -159,10 +159,10 @@ struct GeneralSettingsTab: View {
                     .padding(.vertical, 5)
                     .background(
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.parchment)
+                            .fill(Color.accentGold)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.frameBorder, lineWidth: 1)
+                                    .stroke(Color.stardewDivider, lineWidth: 1)
                             )
                     )
                 }
