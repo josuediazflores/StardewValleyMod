@@ -345,3 +345,7 @@
 "file_picker_subtitle" = "Questa mod ha più file. Scegli quale installare.";
 "installed_import_stardrop" = "Importa da Stardrop";
 "stardrop_picker_message" = "Seleziona la cartella mod di Stardrop. Le sue mod verranno copiate nella cartella Mods.";
+"nearby_invite_title" = "“%@” vuole connettersi";
+"nearby_invite_message" = "Accetta per confrontare e sincronizzare modpack con questo Mac vicino.";
+"nearby_invite_accept" = "Accetta";
+"nearby_invite_decline" = "Rifiuta";

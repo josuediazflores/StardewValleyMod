@@ -22,6 +22,14 @@ class PeerSyncService: NSObject, ObservableObject {
     private var progressObservation: AnyCancellable?
     var onModsReceived: ((URL) -> Void)?
 
+    // Incoming connection consent
+    struct PendingInvitation: Identifiable {
+        let id = UUID()
+        let peerName: String
+        let respond: (Bool) -> Void
+    }
+    @Published var pendingInvitation: PendingInvitation?
+
     enum ConnectionState {
         case idle
         case searching
@@ -46,7 +54,7 @@ class PeerSyncService: NSObject, ObservableObject {
     }
 
     func startSearching() {
-        let session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .none)
+        let session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .required)
         session.delegate = self
         self.session = session
 
@@ -70,6 +78,8 @@ class PeerSyncService: NSObject, ObservableObject {
     }
 
     func stopSearching() {
+        pendingInvitation?.respond(false)
+        pendingInvitation = nil
         advertiser?.stopAdvertisingPeer()
         browser?.stopBrowsingForPeers()
         session?.disconnect()
@@ -85,7 +95,8 @@ class PeerSyncService: NSObject, ObservableObject {
 
     func connectToPeer(_ peer: MCPeerID) {
         guard let session, let browser else { return }
-        browser.invitePeer(peer, to: session, withContext: nil, timeout: 10)
+        // Generous timeout: the other side has to approve the connection prompt
+        browser.invitePeer(peer, to: session, withContext: nil, timeout: 30)
     }
 
     func sendModpack(_ modpack: ShareableModpack) {
@@ -230,9 +241,16 @@ extension PeerSyncService: MCSessionDelegate {
 
 extension PeerSyncService: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        // Auto-accept invitations
+        // Ask the user before joining a session; never auto-accept
         Task { @MainActor in
-            invitationHandler(true, self.session)
+            guard pendingInvitation == nil else {
+                invitationHandler(false, nil)
+                return
+            }
+            pendingInvitation = PendingInvitation(peerName: peerID.displayName) { [weak self] accept in
+                invitationHandler(accept, accept ? self?.session : nil)
+                self?.pendingInvitation = nil
+            }
         }
     }
 }

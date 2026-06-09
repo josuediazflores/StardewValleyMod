@@ -354,3 +354,7 @@
 "file_picker_subtitle" = "This mod has several files. Pick the one to install.";
 "installed_import_stardrop" = "Import from Stardrop";
 "stardrop_picker_message" = "Select your Stardrop mods folder. Its mods will be copied into your Mods directory.";
+"nearby_invite_title" = "“%@” wants to connect";
+"nearby_invite_message" = "Accept to compare and sync modpacks with this nearby Mac.";
+"nearby_invite_accept" = "Accept";
+"nearby_invite_decline" = "Decline";

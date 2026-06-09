@@ -345,3 +345,7 @@
 "file_picker_subtitle" = "此模组有多个文件，请选择要安装的文件。";
 "installed_import_stardrop" = "从 Stardrop 导入";
 "stardrop_picker_message" = "选择你的 Stardrop 模组文件夹，其中的模组将被复制到 Mods 目录。";
+"nearby_invite_title" = "“%@”想要连接";
+"nearby_invite_message" = "接受后可与附近的 Mac 比较并同步模组包。";
+"nearby_invite_accept" = "接受";
+"nearby_invite_decline" = "拒绝";

@@ -43,6 +43,22 @@ struct NearbyCompareSheet: View {
         .padding(24)
         .frame(width: 520, height: 560)
         .background(Color.parchment)
+        .alert(
+            L.s("nearby_invite_title", peerService.pendingInvitation?.peerName ?? ""),
+            isPresented: Binding(
+                get: { peerService.pendingInvitation != nil },
+                set: { if !$0 { peerService.pendingInvitation?.respond(false) } }
+            )
+        ) {
+            Button(L.s("nearby_invite_accept")) {
+                peerService.pendingInvitation?.respond(true)
+            }
+            Button(L.s("nearby_invite_decline"), role: .cancel) {
+                peerService.pendingInvitation?.respond(false)
+            }
+        } message: {
+            Text(L.s("nearby_invite_message"))
+        }
         .onDisappear {
             peerService.stopSearching()
         }

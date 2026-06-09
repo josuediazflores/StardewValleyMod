@@ -345,3 +345,7 @@
 "file_picker_subtitle" = "이 모드에는 여러 파일이 있습니다. 설치할 파일을 선택하세요.";
 "installed_import_stardrop" = "Stardrop에서 가져오기";
 "stardrop_picker_message" = "Stardrop 모드 폴더를 선택하세요. 해당 모드가 Mods 폴더로 복사됩니다.";
+"nearby_invite_title" = "“%@”에서 연결을 원합니다";
+"nearby_invite_message" = "수락하면 근처 Mac과 모드팩을 비교하고 동기화할 수 있습니다.";
+"nearby_invite_accept" = "수락";
+"nearby_invite_decline" = "거절";

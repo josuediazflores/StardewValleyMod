@@ -345,3 +345,7 @@
 "file_picker_subtitle" = "Diese Mod hat mehrere Dateien. Wähle die zu installierende aus.";
 "installed_import_stardrop" = "Aus Stardrop importieren";
 "stardrop_picker_message" = "Wähle deinen Stardrop-Mods-Ordner. Seine Mods werden in deinen Mods-Ordner kopiert.";
+"nearby_invite_title" = "„%@“ möchte sich verbinden";
+"nearby_invite_message" = "Akzeptieren, um Modpacks mit diesem Mac in der Nähe zu vergleichen und zu synchronisieren.";
+"nearby_invite_accept" = "Akzeptieren";
+"nearby_invite_decline" = "Ablehnen";

@@ -345,3 +345,7 @@
 "file_picker_subtitle" = "У этого мода несколько файлов. Выберите, какой установить.";
 "installed_import_stardrop" = "Импорт из Stardrop";
 "stardrop_picker_message" = "Выберите папку модов Stardrop. Её моды будут скопированы в вашу папку Mods.";
+"nearby_invite_title" = "«%@» хочет подключиться";
+"nearby_invite_message" = "Примите, чтобы сравнивать и синхронизировать модпаки с этим Mac поблизости.";
+"nearby_invite_accept" = "Принять";
+"nearby_invite_decline" = "Отклонить";
