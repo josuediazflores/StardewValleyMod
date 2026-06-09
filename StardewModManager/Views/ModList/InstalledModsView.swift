@@ -215,6 +215,26 @@ struct InstalledModsView: View {
                             }
                             .buttonStyle(.plain)
                             .help(L.s("installed_nexus_url_help"))
+
+                            Button {
+                                importFromStardrop()
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "shippingbox")
+                                        .font(.system(size: 11))
+                                    Text(L.s("installed_import_stardrop"))
+                                        .font(.system(size: 13, weight: .medium))
+                                }
+                                .foregroundStyle(Color.textDark)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.accentGold)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .help(L.s("stardrop_picker_message"))
                         }
 
                         Spacer()
@@ -668,6 +688,38 @@ struct InstalledModsView: View {
         if panel.runModal() == .OK {
             appState.importMods(from: panel.urls)
         }
+    }
+
+    private func importFromStardrop() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.message = L.s("stardrop_picker_message")
+        panel.directoryURL = detectStardropModsFolder() ?? FileManager.default.homeDirectoryForCurrentUser
+
+        if panel.runModal() == .OK, let url = panel.urls.first {
+            appState.importMods(from: [url])
+        }
+    }
+
+    /// Stardrop (the cross-platform mod manager) keeps the active profile's mods in
+    /// "<app data>/Stardrop/Data/Selected Mods"; the app-data root depends on the
+    /// .NET runtime version it was built with.
+    private func detectStardropModsFolder() -> URL? {
+        let fm = FileManager.default
+        let home = fm.homeDirectoryForCurrentUser
+        let dataDirs = [
+            home.appending(path: "Library/Application Support/Stardrop/Data"),
+            home.appending(path: ".config/Stardrop/Data"),
+            home.appending(path: ".local/share/Stardrop/Data"),
+        ]
+        for dir in dataDirs {
+            let selected = dir.appending(path: "Selected Mods")
+            if fm.fileExists(atPath: selected.path(percentEncoded: false)) { return selected }
+            if fm.fileExists(atPath: dir.path(percentEncoded: false)) { return dir }
+        }
+        return nil
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {

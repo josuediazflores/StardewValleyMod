@@ -343,3 +343,5 @@
 "settings_smapi_console" = "SMAPI-Konsole beim Start";
 "file_picker_title" = "Datei auswählen";
 "file_picker_subtitle" = "Diese Mod hat mehrere Dateien. Wähle die zu installierende aus.";
+"installed_import_stardrop" = "Aus Stardrop importieren";
+"stardrop_picker_message" = "Wähle deinen Stardrop-Mods-Ordner. Seine Mods werden in deinen Mods-Ordner kopiert.";

@@ -343,3 +343,5 @@
 "settings_smapi_console" = "启动时显示 SMAPI 控制台";
 "file_picker_title" = "选择文件";
 "file_picker_subtitle" = "此模组有多个文件，请选择要安装的文件。";
+"installed_import_stardrop" = "从 Stardrop 导入";
+"stardrop_picker_message" = "选择你的 Stardrop 模组文件夹，其中的模组将被复制到 Mods 目录。";

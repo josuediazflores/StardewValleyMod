@@ -343,3 +343,5 @@
 "settings_smapi_console" = "起動時にSMAPIコンソールを表示";
 "file_picker_title" = "ファイルを選択";
 "file_picker_subtitle" = "このModには複数のファイルがあります。インストールするものを選んでください。";
+"installed_import_stardrop" = "Stardropからインポート";
+"stardrop_picker_message" = "StardropのModフォルダを選択してください。中のModがModsフォルダにコピーされます。";
