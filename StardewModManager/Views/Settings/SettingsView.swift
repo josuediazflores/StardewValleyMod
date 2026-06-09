@@ -187,6 +187,22 @@ struct GeneralSettingsTab: View {
                 Spacer()
             }
 
+            // SMAPI console toggle
+            HStack(spacing: 12) {
+                Text(L.s("settings_smapi_console"))
+                    .font(.stardew(size: 16))
+                    .foregroundStyle(Color.textDark)
+                    .frame(width: 160, alignment: .leading)
+
+                Toggle("", isOn: Binding(
+                    get: { appState.settings.showSMAPIConsole },
+                    set: { appState.settings.showSMAPIConsole = $0 }
+                ))
+                .toggleStyle(StardewToggleStyle())
+
+                Spacer()
+            }
+
             // Game path card
             VStack(spacing: 0) {
                 HStack(spacing: 12) {

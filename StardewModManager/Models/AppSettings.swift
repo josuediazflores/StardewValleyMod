@@ -41,6 +41,9 @@ final class AppSettings {
     var enableSounds: Bool {
         didSet { UserDefaults.standard.set(enableSounds, forKey: "enableSounds") }
     }
+    var showSMAPIConsole: Bool {
+        didSet { UserDefaults.standard.set(showSMAPIConsole, forKey: "showSMAPIConsole") }
+    }
     var language: String {
         didSet { UserDefaults.standard.set(language, forKey: "appLanguage") }
     }
@@ -76,6 +79,7 @@ final class AppSettings {
         theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: "appTheme") ?? "Stardew") ?? .stardew
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         enableSounds = UserDefaults.standard.object(forKey: "enableSounds") == nil ? true : UserDefaults.standard.bool(forKey: "enableSounds")
+        showSMAPIConsole = UserDefaults.standard.object(forKey: "showSMAPIConsole") == nil ? true : UserDefaults.standard.bool(forKey: "showSMAPIConsole")
         language = UserDefaults.standard.string(forKey: "appLanguage") ?? "system"
         if let saved = UserDefaults.standard.string(forKey: "gamePath"), !saved.isEmpty {
             gamePath = saved

@@ -340,3 +340,4 @@
 "sort_help" = "Alterar ordenação";
 "theme_stardew" = "Stardew";
 "theme_pink" = "Rosa";
+"settings_smapi_console" = "Console SMAPI ao iniciar";
