@@ -1019,7 +1019,11 @@ final class AppState {
             loadMods()
 
             let enabledCount = mods.filter { !$0.isBuiltIn && $0.isEnabled }.count
-            if !result.missing.isEmpty {
+            if !result.failures.isEmpty {
+                let names = result.failures.prefix(3).map(\.name).joined(separator: ", ")
+                let suffix = result.failures.count > 3 ? ", …" : ""
+                showToast("Profile loaded, but \(result.failures.count) mod\(result.failures.count == 1 ? "" : "s") could not be moved: \(names)\(suffix)", type: .warning)
+            } else if !result.missing.isEmpty {
                 let names = result.missing.map(\.name).joined(separator: ", ")
                 showToast("Profile loaded (\(enabledCount) mods enabled). Missing: \(names)", type: .warning)
             } else {

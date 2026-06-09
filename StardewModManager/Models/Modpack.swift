@@ -39,10 +39,16 @@ struct Modpack: Codable, Identifiable, Hashable {
     }
 }
 
+struct ApplyFailure {
+    let name: String
+    let reason: String
+}
+
 struct ApplyResult {
     let enabled: [String]
     let disabled: [String]
     let missing: [ModpackEntry]
+    let failures: [ApplyFailure]
     let alreadyCorrect: Int
 }
 

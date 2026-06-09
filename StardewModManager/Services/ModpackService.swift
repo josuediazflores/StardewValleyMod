@@ -103,63 +103,71 @@ enum ModpackService {
         var enabledNames: [String] = []
         var disabledNames: [String] = []
         var missingEntries: [ModpackEntry] = []
+        var failures: [ApplyFailure] = []
         var alreadyCorrect = 0
 
-        let modsByID = Dictionary(mods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        // Duplicate folders for the same mod can exist on disk (e.g. one enabled copy
+        // and one disabled copy), so track every instance per uniqueID
+        let modsByID = Dictionary(grouping: mods.filter { !$0.isBuiltIn }, by: \.id)
         let entryIDs = Set(modpack.entries.map(\.uniqueID))
 
-        var debugLog = "[applyModpack] '\(modpack.name)' entries=\(modpack.entries.count) mods=\(mods.count) modsByID=\(modsByID.count)\n"
+        func disable(_ mod: Mod) {
+            do {
+                try ModManagementService.disableMod(mod, settings: settings)
+                disabledNames.append(mod.manifest.name)
+            } catch {
+                failures.append(ApplyFailure(name: mod.manifest.name, reason: error.localizedDescription))
+            }
+        }
 
         // Process each entry in the modpack
         for entry in modpack.entries {
-            guard let mod = modsByID[entry.uniqueID] else {
-                debugLog += "  MISSING: \(entry.uniqueID) (\(entry.name))\n"
-                missingEntries.append(entry)
-                continue
-            }
-
-            if mod.isBuiltIn {
-                alreadyCorrect += 1
-                continue
-            }
-
-            if entry.isEnabled && !mod.isEnabled {
-                do {
-                    try ModManagementService.enableMod(mod, settings: settings)
-                    enabledNames.append(mod.manifest.name)
-                    debugLog += "  ENABLED: \(mod.manifest.name)\n"
-                } catch {
-                    debugLog += "  ENABLE-FAIL: \(mod.manifest.name) — \(error.localizedDescription)\n"
+            guard let instances = modsByID[entry.uniqueID], !instances.isEmpty else {
+                if mods.contains(where: { $0.isBuiltIn && $0.id == entry.uniqueID }) {
+                    alreadyCorrect += 1
+                } else if entry.isEnabled {
+                    // A profile listing an uninstalled mod as disabled is vacuously satisfied
                     missingEntries.append(entry)
                 }
-            } else if !entry.isEnabled && mod.isEnabled {
-                do {
-                    try ModManagementService.disableMod(mod, settings: settings)
-                    disabledNames.append(mod.manifest.name)
-                } catch { }
+                continue
+            }
+
+            if entry.isEnabled {
+                // Keep exactly one instance enabled; extra enabled copies get disabled
+                if let enabledInstance = instances.first(where: \.isEnabled) {
+                    alreadyCorrect += 1
+                    for extra in instances where extra !== enabledInstance && extra.isEnabled {
+                        disable(extra)
+                    }
+                } else {
+                    do {
+                        try ModManagementService.enableMod(instances[0], settings: settings)
+                        enabledNames.append(instances[0].manifest.name)
+                    } catch {
+                        failures.append(ApplyFailure(name: instances[0].manifest.name, reason: error.localizedDescription))
+                    }
+                }
             } else {
-                alreadyCorrect += 1
+                if instances.contains(where: \.isEnabled) {
+                    for instance in instances where instance.isEnabled {
+                        disable(instance)
+                    }
+                } else {
+                    alreadyCorrect += 1
+                }
             }
         }
 
         // Disable mods not in the modpack (they're not part of this profile)
         for mod in mods where !mod.isBuiltIn && !entryIDs.contains(mod.id) && mod.isEnabled {
-            do {
-                try ModManagementService.disableMod(mod, settings: settings)
-                disabledNames.append(mod.manifest.name)
-            } catch { }
+            disable(mod)
         }
-
-        debugLog += "RESULT: enabled=\(enabledNames.count) disabled=\(disabledNames.count) missing=\(missingEntries.count) correct=\(alreadyCorrect)\n"
-        try? debugLog.write(toFile: "/tmp/smm-apply-debug.log", atomically: true, encoding: .utf8)
-
-        // Skip orphan cleanup — it was incorrectly moving just-enabled mods back to disabled
-        // because nested mod folders have paths that don't match the top-level Mods/ listing
 
         return ApplyResult(
             enabled: enabledNames,
             disabled: disabledNames,
             missing: missingEntries,
+            failures: failures,
             alreadyCorrect: alreadyCorrect
         )
     }
