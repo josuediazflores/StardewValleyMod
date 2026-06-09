@@ -129,12 +129,14 @@ final class AppState {
 
     func filteredEntriesForModpack(_ modpack: Modpack) -> [ModpackEntry] {
         // Start with explicit modpack entries
-        let existingIDs = Set(modpack.entries.map(\.uniqueID))
+        var existingIDs = Set(modpack.entries.map(\.uniqueID))
         var result = modpack.entries
 
-        // Merge in all installed mods not already in the modpack (as disabled)
+        // Merge in all installed mods not already in the modpack (as disabled);
+        // duplicate on-disk copies of one mod merge to a single entry
         for mod in mods {
             if !existingIDs.contains(mod.id) {
+                existingIDs.insert(mod.id)
                 result.append(ModpackEntry(
                     uniqueID: mod.id,
                     name: mod.manifest.name,
@@ -255,6 +257,7 @@ final class AppState {
     func performEnableMod(_ mod: Mod) {
         do {
             try ModManagementService.enableMod(mod, settings: settings)
+            pruneStaleDuplicates(of: mod)
             DependencyResolver.resolveAll(mods: mods)
             syncActiveModpackEntry(mod: mod, isEnabled: true)
             showToast("\(mod.manifest.name) enabled", type: .success)
@@ -267,12 +270,24 @@ final class AppState {
     func performDisableMod(_ mod: Mod) {
         do {
             try ModManagementService.disableMod(mod, settings: settings)
+            pruneStaleDuplicates(of: mod)
             DependencyResolver.resolveAll(mods: mods)
             syncActiveModpackEntry(mod: mod, isEnabled: false)
             showToast("\(mod.manifest.name) disabled", type: .info)
             SoundService.play(.click)
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    /// A move can replace a stale same-ID copy on disk; drop any in-memory Mod
+    /// whose backing folder no longer exists so the list can't show phantoms.
+    private func pruneStaleDuplicates(of mod: Mod) {
+        let fm = FileManager.default
+        mods.removeAll {
+            $0 !== mod
+                && $0.id.caseInsensitiveCompare(mod.id) == .orderedSame
+                && !fm.fileExists(atPath: $0.folderURL.path(percentEncoded: false))
         }
     }
 
@@ -785,6 +800,7 @@ final class AppState {
             guard let mod = mods.first(where: { $0.id == id }), !mod.isEnabled, !mod.isBuiltIn else { continue }
             do {
                 try ModManagementService.enableMod(mod, settings: settings)
+                pruneStaleDuplicates(of: mod)
                 syncActiveModpackEntry(mod: mod, isEnabled: true)
                 enabledCount += 1
             } catch { failedCount += 1 }
@@ -806,6 +822,7 @@ final class AppState {
             do {
                 syncActiveModpackEntry(mod: mod, isEnabled: false)
                 try ModManagementService.disableMod(mod, settings: settings)
+                pruneStaleDuplicates(of: mod)
                 disabledCount += 1
             } catch { failedCount += 1 }
         }

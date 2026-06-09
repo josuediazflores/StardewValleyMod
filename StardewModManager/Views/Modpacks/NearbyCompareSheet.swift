@@ -449,9 +449,15 @@ struct NearbyCompareSheet: View {
     // MARK: - Transfer Actions
 
     private func sendMissingMods(ids: Set<String>, from modpack: Modpack) {
-        let modsToSend = appState.mods.filter { ids.contains($0.id) }
+        let modsToSend = dedupedMods(matching: ids)
         guard !modsToSend.isEmpty else { return }
         zipAndSend(modsToSend)
+    }
+
+    /// One instance per uniqueID, preferring the enabled copy when duplicates exist
+    private func dedupedMods(matching ids: Set<String>) -> [Mod] {
+        let grouped = Dictionary(grouping: appState.mods.filter { ids.contains($0.id) && !$0.isBuiltIn }, by: \.id)
+        return grouped.values.compactMap { $0.first(where: \.isEnabled) ?? $0.first }
     }
 
     private func sendFullModpack() {
@@ -473,7 +479,7 @@ struct NearbyCompareSheet: View {
             idsToSend = enabledIDs
         }
 
-        let modsToSend = appState.mods.filter { idsToSend.contains($0.id) }
+        let modsToSend = dedupedMods(matching: idsToSend)
         guard !modsToSend.isEmpty else {
             // They already have everything, just show complete
             peerService.transferState = .complete(0)
@@ -486,7 +492,7 @@ struct NearbyCompareSheet: View {
         peerService.transferState = .zipping
 
         // Capture folder info for background thread (avoid sending Mod across threads)
-        let modFolders = mods.map { (folderName: $0.folderName, folderURL: $0.folderURL) }
+        let modFolders = mods.map { (folderName: $0.folderName, folderURL: $0.folderURL, subfolder: $0.subfolder) }
 
         Task {
             do {

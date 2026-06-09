@@ -140,11 +140,15 @@ enum ModpackService {
                         disable(extra)
                     }
                 } else {
+                    // Several disabled copies can exist — enable the newest one
+                    let candidate = instances.max(by: {
+                        $0.manifest.version.compare($1.manifest.version, options: .numeric) == .orderedAscending
+                    }) ?? instances[0]
                     do {
-                        try ModManagementService.enableMod(instances[0], settings: settings)
-                        enabledNames.append(instances[0].manifest.name)
+                        try ModManagementService.enableMod(candidate, settings: settings)
+                        enabledNames.append(candidate.manifest.name)
                     } catch {
-                        failures.append(ApplyFailure(name: instances[0].manifest.name, reason: error.localizedDescription))
+                        failures.append(ApplyFailure(name: candidate.manifest.name, reason: error.localizedDescription))
                     }
                 }
             } else {
@@ -218,7 +222,9 @@ enum ModpackService {
             throw ModpackError.exportFailed("Failed to create temp directory: \(error.localizedDescription)")
         }
 
-        let modsByID = Dictionary(mods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        // Duplicate on-disk copies of one mod can exist — export the enabled one
+        let modsByID = Dictionary(grouping: mods, by: \.id)
+            .mapValues { instances in instances.first(where: \.isEnabled) ?? instances[0] }
 
         // Copy enabled mod folders into the staging directory
         let modsStaging = tempDir.appending(path: "Mods")
@@ -232,7 +238,10 @@ enum ModpackService {
 
         for entry in modpack.entries where entry.isEnabled {
             guard let mod = modsByID[entry.uniqueID] else { continue }
-            let destination = modsStaging.appending(path: mod.folderName)
+            // Mirror the subfolder so two mods sharing a folder name can't collide
+            let relative = mod.subfolder.map { "\($0)/\(mod.folderName)" } ?? mod.folderName
+            let destination = modsStaging.appending(path: relative)
+            try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try fm.copyItem(at: mod.folderURL, to: destination)
         }
 
@@ -266,11 +275,11 @@ enum ModpackService {
 
     /// ZIP a subset of mods into a temp file for Bluetooth transfer
     static func zipMods(_ mods: [Mod]) throws -> URL {
-        try zipModFolders(mods.map { (folderName: $0.folderName, folderURL: $0.folderURL) })
+        try zipModFolders(mods.map { (folderName: $0.folderName, folderURL: $0.folderURL, subfolder: $0.subfolder) })
     }
 
     /// ZIP mod folders by path — safe to call from any thread
-    static func zipModFolders(_ folders: [(folderName: String, folderURL: URL)]) throws -> URL {
+    static func zipModFolders(_ folders: [(folderName: String, folderURL: URL, subfolder: String?)]) throws -> URL {
         let fm = FileManager.default
         let tempDir = fm.temporaryDirectory.appending(path: "transfer_\(UUID().uuidString)")
 
@@ -280,7 +289,10 @@ enum ModpackService {
         try fm.createDirectory(at: modsStaging, withIntermediateDirectories: true)
 
         for folder in folders {
-            let destination = modsStaging.appending(path: folder.folderName)
+            // Mirror the subfolder so two mods sharing a folder name can't silently overwrite
+            let relative = folder.subfolder.map { "\($0)/\(folder.folderName)" } ?? folder.folderName
+            let destination = modsStaging.appending(path: relative)
+            try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             if fm.fileExists(atPath: destination.path(percentEncoded: false)) {
                 try fm.removeItem(at: destination)
             }

@@ -41,6 +41,15 @@ enum ModManagementService {
         var destParent = destinationBase
         if let subfolder = mod.subfolder, !subfolder.isEmpty {
             destParent = destinationBase.appending(path: subfolder)
+
+            // Self-heal stale copies left flat at the base by older app versions:
+            // a same-ID folder at the root is a leftover of this mod, not a different mod
+            let legacyFlat = destinationBase.appending(path: mod.folderName)
+            if fm.fileExists(atPath: legacyFlat.path(percentEncoded: false)),
+               let occupant = ManifestParser.parse(at: legacyFlat.appending(path: "manifest.json")),
+               occupant.uniqueID.caseInsensitiveCompare(mod.id) == .orderedSame {
+                try? fm.removeItem(at: legacyFlat)
+            }
         }
         try ensureDirectoryExists(destParent, fm: fm)
 
@@ -182,18 +191,39 @@ enum ModManagementService {
             }
 
             // Already installed — replace it in place, keeping its location, folder name,
-            // subfolder, and enabled state (avoids creating a duplicate copy at the root)
-            if let existing = existingMods.first(where: {
+            // subfolder, and enabled state (avoids creating a duplicate copy at the root).
+            // Prefer the enabled instance when stale duplicates exist.
+            let matches: (Mod) -> Bool = {
                 !$0.isBuiltIn
                     && $0.id.caseInsensitiveCompare(manifest.uniqueID) == .orderedSame
                     && fm.fileExists(atPath: $0.folderURL.path(percentEncoded: false))
-            }) {
+            }
+            if let existing = existingMods.first(where: { matches($0) && $0.isEnabled })
+                ?? existingMods.first(where: matches) {
+                // Stage-and-swap so a failed copy can't destroy the installed mod
+                try ensureDirectoryExists(trashStagingURL, fm: fm)
+                let backup = trashStagingURL.appending(path: "\(UUID().uuidString)_\(existing.folderName)")
                 do {
-                    try fm.removeItem(at: existing.folderURL)
-                    try fm.copyItem(at: folderURL, to: existing.folderURL)
+                    try fm.moveItem(at: existing.folderURL, to: backup)
                 } catch {
                     throw ModManagementError.importError(error.localizedDescription)
                 }
+                do {
+                    try fm.copyItem(at: folderURL, to: existing.folderURL)
+                } catch {
+                    try? fm.moveItem(at: backup, to: existing.folderURL)
+                    throw ModManagementError.importError(error.localizedDescription)
+                }
+
+                // Keep the user's mod settings if the new copy doesn't ship its own
+                let oldConfig = backup.appending(path: "config.json")
+                let newConfig = existing.folderURL.appending(path: "config.json")
+                if fm.fileExists(atPath: oldConfig.path(percentEncoded: false)),
+                   !fm.fileExists(atPath: newConfig.path(percentEncoded: false)) {
+                    try? fm.copyItem(at: oldConfig, to: newConfig)
+                }
+                try? fm.removeItem(at: backup)
+
                 return [Mod(
                     manifest: manifest,
                     folderName: existing.folderName,
