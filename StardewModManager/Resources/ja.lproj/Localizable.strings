@@ -341,3 +341,5 @@
 "theme_stardew" = "Stardew";
 "theme_pink" = "ピンク";
 "settings_smapi_console" = "起動時にSMAPIコンソールを表示";
+"file_picker_title" = "ファイルを選択";
+"file_picker_subtitle" = "このModには複数のファイルがあります。インストールするものを選んでください。";

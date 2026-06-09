@@ -47,6 +47,13 @@ struct StardewModManagerApp: App {
                     AppUpdatePromptSheet()
                         .environment(appState)
                 }
+                .sheet(isPresented: .init(
+                    get: { appState.showNexusFilePicker },
+                    set: { appState.showNexusFilePicker = $0 }
+                )) {
+                    NexusFilePickerSheet()
+                        .environment(appState)
+                }
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1100, height: 700)

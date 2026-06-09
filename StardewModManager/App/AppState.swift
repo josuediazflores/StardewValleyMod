@@ -76,6 +76,11 @@ final class AppState {
     var webDownloadModName: String?
     var webDownloadURL: URL?
 
+    // Nexus file picker state (shown when a mod has no unambiguous main file)
+    var showNexusFilePicker = false
+    var nexusFilePickerFiles: [NexusModFileInfo] = []
+    var nexusFilePickerModId: Int?
+
     // Nexus state
     var nexusEssentialMods: [NexusModInfo] = []
     var nexusTrendingMods: [NexusModInfo] = []
@@ -529,6 +534,21 @@ final class AppState {
         return modId
     }
 
+    static let excludedNexusFileCategories: Set<String> = ["OLD_VERSION", "ARCHIVED", "DELETED"]
+
+    /// Picks the file to auto-install, or returns nil when the choice is ambiguous
+    /// (e.g. a mod with only optional files) so the UI can ask the user instead.
+    static func chooseNexusFile(from files: [NexusModFileInfo]) -> (auto: NexusModFileInfo?, candidates: [NexusModFileInfo]) {
+        let candidates = files
+            .filter { !excludedNexusFileCategories.contains($0.categoryName ?? "") }
+            .sorted { ($0.uploadedTimestamp ?? 0) > ($1.uploadedTimestamp ?? 0) }
+        if let primary = candidates.first(where: { $0.isPrimary == true }) { return (primary, candidates) }
+        if let main = candidates.first(where: { $0.categoryName == "MAIN" }) { return (main, candidates) }
+        if let update = candidates.first(where: { $0.categoryName == "UPDATE" }) { return (update, candidates) }
+        if candidates.count == 1 { return (candidates[0], candidates) }
+        return (nil, candidates)
+    }
+
     func importFromNexusURL(_ urlString: String) {
         guard let modId = Self.parseNexusModURL(urlString) else {
             errorMessage = "Invalid Nexus Mods URL. Expected format: nexusmods.com/stardewvalley/mods/1234"
@@ -537,6 +557,12 @@ final class AppState {
 
         guard settings.nexusAPIKey != nil, settings.isAPIKeyValidated else {
             errorMessage = "Nexus API key required. Set it up in Settings."
+            return
+        }
+
+        guard settings.isNexusPremium else {
+            // Free accounts can only download via nxm:// links from the website
+            openWebDownloadSheet(modId: modId, modName: "Mod #\(modId)")
             return
         }
 
@@ -549,40 +575,58 @@ final class AppState {
                 }
 
                 let files = try await nexusAPI.modFiles(modId: modId)
-                guard let file = files.first(where: { $0.isPrimary == true })
-                    ?? files.first(where: { $0.categoryName == "MAIN" })
-                    ?? files.first else {
+                let (auto, candidates) = Self.chooseNexusFile(from: files)
+
+                guard !candidates.isEmpty else {
                     nxmDownloadStatus = nil
                     errorMessage = "No downloadable files found for this mod."
                     return
                 }
 
-                if settings.isNexusPremium {
-                    nxmDownloadStatus = "Downloading..."
-                    let links = try await nexusAPI.downloadLinks(modId: modId, fileId: file.fileId)
-                    guard let link = links.first else {
-                        nxmDownloadStatus = nil
-                        errorMessage = "No download links available."
-                        return
-                    }
-
-                    let tempDir = FileManager.default.temporaryDirectory
-                    let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
-                    let names = ModManagementService.peekModNames(from: zipURL)
-
-                    nxmDownloadStatus = nil
-                    pendingNXMZipURL = zipURL
-                    pendingNXMModNames = names.isEmpty ? ["Downloaded mod"] : names
-                    pendingNXMSuggestedName = names.count > 1 ? names.first : nil
-                    showModpackPicker = true
+                if let file = auto {
+                    await downloadNexusFile(modId: modId, fileId: file.fileId)
                 } else {
                     nxmDownloadStatus = nil
-                    openWebDownloadSheet(modId: modId, modName: "Mod #\(modId)")
+                    nexusFilePickerFiles = candidates
+                    nexusFilePickerModId = modId
+                    showNexusFilePicker = true
                 }
             } catch {
                 nxmDownloadStatus = nil
                 errorMessage = "Failed to download mod: \(error.localizedDescription)"
             }
+        }
+    }
+
+    /// Downloads a specific Nexus file and stages it for the modpack picker.
+    func downloadNexusFile(modId: Int, fileId: Int) async {
+        nxmDownloadStatus = "Downloading..."
+        do {
+            if let key = settings.nexusAPIKey {
+                await nexusAPI.setAPIKey(key)
+            }
+            let links = try await nexusAPI.downloadLinks(modId: modId, fileId: fileId)
+            guard let link = links.first else {
+                nxmDownloadStatus = nil
+                errorMessage = "No download links available."
+                return
+            }
+
+            let tempDir = FileManager.default.temporaryDirectory
+            let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
+            let names = ModManagementService.peekModNames(from: zipURL)
+
+            nxmDownloadStatus = nil
+            pendingNXMZipURL = zipURL
+            pendingNXMModNames = names.isEmpty ? ["Downloaded mod"] : names
+            pendingNXMSuggestedName = names.count > 1 ? names.first : nil
+            showModpackPicker = true
+        } catch NexusAPIError.premiumRequired {
+            nxmDownloadStatus = nil
+            openWebDownloadSheet(modId: modId, modName: "Mod #\(modId)")
+        } catch {
+            nxmDownloadStatus = nil
+            errorMessage = "Failed to download mod: \(error.localizedDescription)"
         }
     }
 
@@ -949,12 +993,14 @@ final class AppState {
             }
             mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
             DependencyResolver.resolveAll(mods: mods)
-        } catch let error as NexusAPIError where error.localizedDescription == NexusAPIError.premiumRequired.localizedDescription {
+        } catch NexusAPIError.premiumRequired {
             isNexusLoading = false
             openWebDownloadSheet(modId: modId, modName: "Mod #\(modId)")
             return
         } catch {
-            nexusError = error.localizedDescription
+            // nexusError is only rendered by the browse view; use the global alert
+            // so failures inside the detail sheet are visible too
+            errorMessage = "Download failed: \(error.localizedDescription)"
         }
         isNexusLoading = false
     }

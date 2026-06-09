@@ -341,3 +341,5 @@
 "theme_stardew" = "Stardew";
 "theme_pink" = "Rose";
 "settings_smapi_console" = "Console SMAPI au lancement";
+"file_picker_title" = "Choisir un fichier";
+"file_picker_subtitle" = "Ce mod contient plusieurs fichiers. Choisissez celui à installer.";
