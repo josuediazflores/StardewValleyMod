@@ -406,8 +406,8 @@ struct InstalledModsView: View {
                     .strokeBorder(Color.stardewGreen, lineWidth: 3)
                     .opacity(isDropTargeted ? 1 : 0)
             )
-            .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
-                handleDrop(providers)
+            .onModDrop(isTargeted: $isDropTargeted) { urls in
+                appState.importMods(from: urls)
             }
             .confirmationDialog(
                 L.s("installed_delete_title", selectedModIDs.count),
@@ -582,33 +582,6 @@ struct InstalledModsView: View {
             if fm.fileExists(atPath: dir.path(percentEncoded: false)) { return dir }
         }
         return nil
-    }
-
-    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-        var urls: [URL] = []
-        let urlsLock = NSLock()
-        let group = DispatchGroup()
-
-        for provider in providers {
-            group.enter()
-            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { data, _ in
-                if let data = data as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                    // Completion handlers fire concurrently on arbitrary queues; serialize the append.
-                    urlsLock.lock()
-                    urls.append(url)
-                    urlsLock.unlock()
-                }
-                group.leave()
-            }
-        }
-
-        group.notify(queue: .main) {
-            if !urls.isEmpty {
-                appState.importMods(from: urls)
-            }
-        }
-
-        return true
     }
 
     // MARK: - Keyboard Navigation

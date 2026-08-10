@@ -48,18 +48,6 @@ actor NexusAPIService {
 
     // MARK: - Browse Mods
 
-    func trendingMods() async throws -> [NexusModInfo] {
-        try await fetchModList(path: "/games/\(gameDomain)/mods/trending.json")
-    }
-
-    func latestAddedMods() async throws -> [NexusModInfo] {
-        try await fetchModList(path: "/games/\(gameDomain)/mods/latest_added.json")
-    }
-
-    func latestUpdatedMods() async throws -> [NexusModInfo] {
-        try await fetchModList(path: "/games/\(gameDomain)/mods/latest_updated.json")
-    }
-
     func modDetails(modId: Int) async throws -> NexusModInfo {
         let request = try buildRequest(path: "/games/\(gameDomain)/mods/\(modId).json")
         let (data, response) = try await performRequest(request)
@@ -241,10 +229,6 @@ actor NexusAPIService {
         }
     }
 
-    func searchMods(query: String) async throws -> [NexusModInfo] {
-        try await browseMods(sortBy: .downloads, searchText: query)
-    }
-
     // MARK: - Collections
 
     func collectionDetails(slug: String) async throws -> NexusCollectionInfo {
@@ -347,13 +331,6 @@ actor NexusAPIService {
     }
 
     // MARK: - Helpers
-
-    private func fetchModList(path: String) async throws -> [NexusModInfo] {
-        let request = try buildRequest(path: path)
-        let (data, response) = try await performRequest(request)
-        try checkResponse(response)
-        return try JSONDecoder().decode([NexusModInfo].self, from: data)
-    }
 
     private func buildRequest(path: String, apiKey key: String? = nil) throws -> URLRequest {
         let effectiveKey = key ?? apiKey

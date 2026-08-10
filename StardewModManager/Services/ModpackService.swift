@@ -446,7 +446,7 @@ enum ModpackService {
         let modsDir = findDirectory(named: "Mods", in: tempDir, fm: fm) ?? tempDir
         var importedMods: [Mod] = []
 
-        let modFolders = findModFolders(in: modsDir, fm: fm)
+        let modFolders = ModFolderScanner.findModFolders(in: modsDir, fm: fm)
         for modFolder in modFolders {
             do {
                 let result = try ModManagementService.importMod(from: modFolder, settings: settings, existingMods: existingMods)
@@ -511,30 +511,5 @@ enum ModpackService {
             }
         }
         return nil
-    }
-
-    private static func findModFolders(in directory: URL, fm: FileManager) -> [URL] {
-        var result: [URL] = []
-
-        guard let enumerator = fm.enumerator(
-            at: directory,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        ) else { return result }
-
-        var manifestParentDirs: Set<String> = []
-
-        for case let fileURL as URL in enumerator {
-            if fileURL.lastPathComponent == "manifest.json" {
-                let parentDir = fileURL.deletingLastPathComponent()
-                let parentPath = parentDir.path(percentEncoded: false)
-                if !manifestParentDirs.contains(where: { parentPath.hasPrefix($0) && parentPath != $0 }) {
-                    manifestParentDirs.insert(parentPath)
-                    result.append(parentDir)
-                }
-            }
-        }
-
-        return result
     }
 }

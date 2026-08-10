@@ -302,8 +302,8 @@ struct ModpackListView: View {
         } message: { modpack in
             Text(L.s("modpack_list_delete_message", modpack.name))
         }
-        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            handleDrop(providers)
+        .onModDrop { urls in
+            appState.importMods(from: urls)
         }
         .onChange(of: appState.expandedModpackID) { _, _ in
             appState.searchText = ""
@@ -375,32 +375,6 @@ struct ModpackListView: View {
         }
     }
 
-    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-        var urls: [URL] = []
-        let urlsLock = NSLock()
-        let group = DispatchGroup()
-
-        for provider in providers {
-            group.enter()
-            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { data, _ in
-                if let data = data as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                    // Completion handlers fire concurrently on arbitrary queues; serialize the append.
-                    urlsLock.lock()
-                    urls.append(url)
-                    urlsLock.unlock()
-                }
-                group.leave()
-            }
-        }
-
-        group.notify(queue: .main) {
-            if !urls.isEmpty {
-                appState.importMods(from: urls)
-            }
-        }
-
-        return true
-    }
 }
 
 // MARK: - Compare Modpacks Sheet

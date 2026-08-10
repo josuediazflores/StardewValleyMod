@@ -320,7 +320,7 @@ enum ModManagementService {
         }
 
         // No top-level manifest — search for nested mod folders
-        let nestedFolders = findModFolders(in: folderURL, fm: fm)
+        let nestedFolders = ModFolderScanner.findModFolders(in: folderURL, fm: fm)
         guard !nestedFolders.isEmpty else {
             throw ModManagementError.invalidMod("No manifest.json found in \(folderURL.lastPathComponent)")
         }
@@ -356,7 +356,7 @@ enum ModManagementService {
         }
 
         // Find all manifest.json files in the extracted contents
-        let modFolders = findModFolders(in: tempDir, fm: fm)
+        let modFolders = ModFolderScanner.findModFolders(in: tempDir, fm: fm)
 
         if modFolders.isEmpty {
             throw ModManagementError.invalidMod("No mods found in ZIP (no manifest.json files)")
@@ -381,32 +381,6 @@ enum ModManagementService {
         return ImportResult(mods: importedMods, failures: failures)
     }
 
-    private static func findModFolders(in directory: URL, fm: FileManager) -> [URL] {
-        var result: [URL] = []
-
-        guard let enumerator = fm.enumerator(
-            at: directory,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        ) else { return result }
-
-        var manifestParentDirs: Set<String> = []
-
-        for case let fileURL as URL in enumerator {
-            if fileURL.lastPathComponent == "manifest.json" {
-                let parentDir = fileURL.deletingLastPathComponent()
-                let parentPath = parentDir.path(percentEncoded: false)
-                // Avoid adding nested mod folders that are children of already-found mods
-                if !manifestParentDirs.contains(where: { parentPath.hasPrefix($0) && parentPath != $0 }) {
-                    manifestParentDirs.insert(parentPath)
-                    result.append(parentDir)
-                }
-            }
-        }
-
-        return result
-    }
-
     /// Peek into a zip to extract mod names without installing
     static func peekModNames(from zipURL: URL) -> [String] {
         let fm = FileManager.default
@@ -417,7 +391,7 @@ enum ModManagementService {
             try fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
             try ArchiveService.extract(zipURL, to: tempDir)
 
-            let modDirs = findModFolders(in: tempDir, fm: fm)
+            let modDirs = ModFolderScanner.findModFolders(in: tempDir, fm: fm)
             return modDirs.compactMap { dir in
                 let manifestURL = dir.appending(path: "manifest.json")
                 guard let manifest = ManifestParser.parse(at: manifestURL) else { return nil }

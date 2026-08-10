@@ -16,32 +16,18 @@ enum ModDiscoveryService {
 
     private static func scanDirectory(_ directoryURL: URL, isEnabled: Bool, fm: FileManager) -> [Mod] {
         var mods: [Mod] = []
-        guard let enumerator = fm.enumerator(
-            at: directoryURL,
-            includingPropertiesForKeys: [.isDirectoryKey, .creationDateKey],
-            options: [.skipsHiddenFiles]
-        ) else { return mods }
 
-        var manifestParentDirs: Set<String> = []
+        // Skip backup folders, mirroring the previous inline "Mods_backup" guard.
+        let modFolders = ModFolderScanner.findModFolders(in: directoryURL, excluding: ["Mods_backup"], fm: fm)
+        let basePath = directoryURL.resolvingSymlinksInPath().path(percentEncoded: false)
 
-        for case let fileURL as URL in enumerator {
-            guard fileURL.lastPathComponent == "manifest.json" else { continue }
-            let parentDir = fileURL.deletingLastPathComponent()
-            let parentPath = parentDir.path(percentEncoded: false)
-
-            // Skip backup folders
-            if parentPath.contains("Mods_backup") { continue }
-
-            // Avoid nested mod folders (child of already-found mod)
-            if manifestParentDirs.contains(where: { parentPath.hasPrefix($0) && parentPath != $0 }) { continue }
-            manifestParentDirs.insert(parentPath)
-
-            guard let manifest = ManifestParser.parse(at: fileURL) else { continue }
+        for parentDir in modFolders {
+            let manifestURL = parentDir.appending(path: "manifest.json")
+            guard let manifest = ManifestParser.parse(at: manifestURL) else { continue }
 
             // Determine relative parent path inside the base directory (e.g. "Gameplay/Combat").
             // Resolve symlinks on both sides so the prefix match can't silently fail
             // (the move logic uses this path to place the folder).
-            let basePath = directoryURL.resolvingSymlinksInPath().path(percentEncoded: false)
             let resolvedParent = parentDir.resolvingSymlinksInPath().path(percentEncoded: false)
             var subfolder: String?
             if resolvedParent.hasPrefix(basePath + "/") {

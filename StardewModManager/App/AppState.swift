@@ -46,7 +46,6 @@ final class AppState {
     var isLoading = false
     var isImporting = false
     var showImportPicker = false
-    var showInspector = true
     var errorMessage: String?
 
     // Toast notification state
@@ -65,7 +64,6 @@ final class AppState {
     var smapiInstallError: String?
 
     // NXM protocol state
-    var nxmDownloadStatus: String?
     var showModpackPicker = false
     var pendingNXMMods: [Mod] = []
     var pendingNXMZipURL: URL?
@@ -112,20 +110,6 @@ final class AppState {
     var selectedModpack: Modpack? {
         guard let id = selectedModpackID else { return nil }
         return modpacks.first { $0.id == id }
-    }
-
-    var filteredModpacks: [Modpack] {
-        var result = modpacks
-
-        if !searchText.isEmpty && expandedModpackID == nil {
-            let query = searchText.lowercased()
-            result = result.filter {
-                $0.name.lowercased().contains(query) ||
-                $0.description.lowercased().contains(query)
-            }
-        }
-
-        return result
     }
 
     func filteredEntriesForModpack(_ modpack: Modpack) -> [ModpackEntry] {
@@ -210,21 +194,6 @@ final class AppState {
     var enabledCount: Int { mods.filter { $0.isEnabled }.count }
     var disabledCount: Int { mods.filter { !$0.isEnabled }.count }
     var userModCount: Int { mods.filter { !$0.isBuiltIn }.count }
-
-    // MARK: - Sorting
-
-    func sortMods(using comparators: [KeyPathComparator<Mod>]) {
-        mods.sort { lhs, rhs in
-            for comparator in comparators {
-                switch comparator.compare(lhs, rhs) {
-                case .orderedAscending: return true
-                case .orderedDescending: return false
-                case .orderedSame: continue
-                }
-            }
-            return false
-        }
-    }
 
     // MARK: - Mod Operations
 
@@ -311,19 +280,6 @@ final class AppState {
         }
         modpacks[idx].updatedAt = Date()
         persistModpacks()
-    }
-
-    func deleteMod(_ mod: Mod) {
-        do {
-            try ModManagementService.deleteMod(mod)
-            // Remove only this on-disk instance; a same-ID duplicate copy must survive.
-            mods.removeAll { $0.folderURL == mod.folderURL }
-            if selectedModID == mod.id { selectedModID = nil }
-            removeModFromAllModpacks(mod.id)
-            DependencyResolver.resolveAll(mods: mods)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
     }
 
     /// Imports mods off the main thread so a large (hundreds-of-MB) archive can't
@@ -466,8 +422,6 @@ final class AppState {
         }
 
         NSApp.activate(ignoringOtherApps: true)
-        nxmDownloadStatus = "Downloading mod..."
-
         Task {
             do {
                 if let key = settings.nexusAPIKey {
@@ -482,7 +436,6 @@ final class AppState {
                 }
 
                 guard let link = links.first else {
-                    nxmDownloadStatus = nil
                     errorMessage = "No download links available."
                     return
                 }
@@ -495,13 +448,11 @@ final class AppState {
                     ModManagementService.peekModNames(from: zipURL)
                 }.value
 
-                nxmDownloadStatus = nil
                 pendingNXMZipURL = zipURL
                 pendingNXMModNames = names.isEmpty ? ["Downloaded mod"] : names
                 pendingNXMSuggestedName = names.count > 1 ? names.first : nil
                 showModpackPicker = true
             } catch {
-                nxmDownloadStatus = nil
                 errorMessage = "NXM download failed: \(error.localizedDescription)"
             }
         }
@@ -659,8 +610,6 @@ final class AppState {
             return
         }
 
-        nxmDownloadStatus = "Fetching mod info..."
-
         Task {
             do {
                 if let key = settings.nexusAPIKey {
@@ -671,7 +620,6 @@ final class AppState {
                 let (auto, candidates) = Self.chooseNexusFile(from: files)
 
                 guard !candidates.isEmpty else {
-                    nxmDownloadStatus = nil
                     errorMessage = "No downloadable files found for this mod."
                     return
                 }
@@ -679,13 +627,11 @@ final class AppState {
                 if let file = auto {
                     await downloadNexusFile(modId: modId, fileId: file.fileId)
                 } else {
-                    nxmDownloadStatus = nil
                     nexusFilePickerFiles = candidates
                     nexusFilePickerModId = modId
                     showNexusFilePicker = true
                 }
             } catch {
-                nxmDownloadStatus = nil
                 errorMessage = "Failed to download mod: \(error.localizedDescription)"
             }
         }
@@ -693,14 +639,12 @@ final class AppState {
 
     /// Downloads a specific Nexus file and stages it for the modpack picker.
     func downloadNexusFile(modId: Int, fileId: Int) async {
-        nxmDownloadStatus = "Downloading..."
         do {
             if let key = settings.nexusAPIKey {
                 await nexusAPI.setAPIKey(key)
             }
             let links = try await nexusAPI.downloadLinks(modId: modId, fileId: fileId)
             guard let link = links.first else {
-                nxmDownloadStatus = nil
                 errorMessage = "No download links available."
                 return
             }
@@ -711,16 +655,13 @@ final class AppState {
                 ModManagementService.peekModNames(from: zipURL)
             }.value
 
-            nxmDownloadStatus = nil
             pendingNXMZipURL = zipURL
             pendingNXMModNames = names.isEmpty ? ["Downloaded mod"] : names
             pendingNXMSuggestedName = names.count > 1 ? names.first : nil
             showModpackPicker = true
         } catch NexusAPIError.premiumRequired {
-            nxmDownloadStatus = nil
             openWebDownloadSheet(modId: modId, modName: "Mod #\(modId)")
         } catch {
-            nxmDownloadStatus = nil
             errorMessage = "Failed to download mod: \(error.localizedDescription)"
         }
     }
