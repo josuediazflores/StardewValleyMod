@@ -102,6 +102,19 @@ final class AppState {
     var modpackError: String?
     var expandedModpackID: UUID? = nil
 
+    init() {
+        // Feed the Nexus API key to the actor from one place: push the current key now (loaded
+        // from the Keychain by AppSettings) and again whenever it changes, so the individual
+        // request paths don't each have to re-push it before every call.
+        let api = nexusAPI
+        settings.onNexusAPIKeyChange = { key in
+            Task { await api.setAPIKey(key) }
+        }
+        if let key = settings.nexusAPIKey {
+            Task { await api.setAPIKey(key) }
+        }
+    }
+
     var activeModpack: Modpack? {
         guard let id = activeModpackID else { return nil }
         return modpacks.first { $0.id == id }
@@ -122,14 +135,7 @@ final class AppState {
         for mod in mods {
             if !existingIDs.contains(mod.id) {
                 existingIDs.insert(mod.id)
-                result.append(ModpackEntry(
-                    uniqueID: mod.id,
-                    name: mod.manifest.name,
-                    version: mod.manifest.version,
-                    nexusModID: mod.nexusModID,
-                    nexusFileID: nil,
-                    isEnabled: false
-                ))
+                result.append(ModpackEntry(mod: mod, isEnabled: false))
             }
         }
 
@@ -269,14 +275,7 @@ final class AppState {
         if let entryIdx = modpacks[idx].entries.firstIndex(where: { $0.uniqueID == mod.id }) {
             modpacks[idx].entries[entryIdx].isEnabled = isEnabled
         } else {
-            modpacks[idx].entries.append(ModpackEntry(
-                uniqueID: mod.id,
-                name: mod.manifest.name,
-                version: mod.manifest.version,
-                nexusModID: mod.nexusModID,
-                nexusFileID: nil,
-                isEnabled: isEnabled
-            ))
+            modpacks[idx].entries.append(ModpackEntry(mod: mod, isEnabled: isEnabled))
         }
         modpacks[idx].updatedAt = Date()
         persistModpacks()
@@ -361,14 +360,7 @@ final class AppState {
               let idx = modpacks.firstIndex(where: { $0.id == activeID }) else { return }
         for mod in newMods {
             guard !modpacks[idx].entries.contains(where: { $0.uniqueID == mod.id }) else { continue }
-            let entry = ModpackEntry(
-                uniqueID: mod.id,
-                name: mod.manifest.name,
-                version: mod.manifest.version,
-                nexusModID: mod.nexusModID,
-                nexusFileID: nil,
-                isEnabled: mod.isEnabled
-            )
+            let entry = ModpackEntry(mod: mod, isEnabled: mod.isEnabled)
             modpacks[idx].entries.append(entry)
         }
         modpacks[idx].updatedAt = Date()
@@ -424,10 +416,6 @@ final class AppState {
         NSApp.activate(ignoringOtherApps: true)
         Task {
             do {
-                if let key = settings.nexusAPIKey {
-                    await nexusAPI.setAPIKey(key)
-                }
-
                 let links: [NexusDownloadLink]
                 if let nxmKey = nxmLink.key, let nxmExpires = nxmLink.expires {
                     links = try await nexusAPI.downloadLinks(modId: nxmLink.modId, fileId: nxmLink.fileId, nxmKey: nxmKey, nxmExpires: nxmExpires)
@@ -515,16 +503,7 @@ final class AppState {
                 if let newPack = modpacks.last {
                     // Clear entries and only add the downloaded mods
                     if let idx = modpacks.firstIndex(where: { $0.id == newPack.id }) {
-                        modpacks[idx].entries = pendingNXMMods.map { mod in
-                            ModpackEntry(
-                                uniqueID: mod.id,
-                                name: mod.manifest.name,
-                                version: mod.manifest.version,
-                                nexusModID: mod.nexusModID,
-                                nexusFileID: nil,
-                                isEnabled: true
-                            )
-                        }
+                        modpacks[idx].entries = pendingNXMMods.map { ModpackEntry(mod: $0, isEnabled: true) }
                         persistModpacks()
                     }
                 }
@@ -552,14 +531,7 @@ final class AppState {
             }) {
                 modpacks[index].entries[existingIdx].isEnabled = true
             } else {
-                modpacks[index].entries.append(ModpackEntry(
-                    uniqueID: mod.id,
-                    name: mod.manifest.name,
-                    version: mod.manifest.version,
-                    nexusModID: mod.nexusModID,
-                    nexusFileID: nil,
-                    isEnabled: true
-                ))
+                modpacks[index].entries.append(ModpackEntry(mod: mod, isEnabled: true))
             }
         }
         persistModpacks()
@@ -612,10 +584,6 @@ final class AppState {
 
         Task {
             do {
-                if let key = settings.nexusAPIKey {
-                    await nexusAPI.setAPIKey(key)
-                }
-
                 let files = try await nexusAPI.modFiles(modId: modId)
                 let (auto, candidates) = Self.chooseNexusFile(from: files)
 
@@ -640,9 +608,6 @@ final class AppState {
     /// Downloads a specific Nexus file and stages it for the modpack picker.
     func downloadNexusFile(modId: Int, fileId: Int) async {
         do {
-            if let key = settings.nexusAPIKey {
-                await nexusAPI.setAPIKey(key)
-            }
             let links = try await nexusAPI.downloadLinks(modId: modId, fileId: fileId)
             guard let link = links.first else {
                 errorMessage = "No download links available."
@@ -937,16 +902,11 @@ final class AppState {
         }
     }
 
-    static let essentialModIDs = [1915, 5098, 1063, 541, 4, 239, 12747, 3753, 11115, 518]
-
     func loadEssentialMods() async {
         isNexusLoading = true
         nexusError = nil
-        if let key = settings.nexusAPIKey {
-            await nexusAPI.setAPIKey(key)
-        }
         var mods: [NexusModInfo] = []
-        for modId in Self.essentialModIDs {
+        for modId in AppConfig.essentialModIDs {
             if let mod = try? await nexusAPI.modDetails(modId: modId) {
                 mods.append(mod)
             }
@@ -962,9 +922,6 @@ final class AppState {
         nexusError = nil
         nexusHasMore = true
         do {
-            if let key = settings.nexusAPIKey {
-                await nexusAPI.setAPIKey(key)
-            }
             let result = try await nexusAPI.browseMods(sortBy: .endorsements, offset: 0)
             if Task.isCancelled { return }
             nexusTrendingMods = result
@@ -983,9 +940,6 @@ final class AppState {
         nexusError = nil
         nexusHasMore = true
         do {
-            if let key = settings.nexusAPIKey {
-                await nexusAPI.setAPIKey(key)
-            }
             let result = try await nexusAPI.browseMods(sortBy: .createdAt, offset: 0)
             if Task.isCancelled { return }
             nexusLatestMods = result
@@ -1002,9 +956,6 @@ final class AppState {
         nexusError = nil
         nexusHasMore = true
         do {
-            if let key = settings.nexusAPIKey {
-                await nexusAPI.setAPIKey(key)
-            }
             let result = try await nexusAPI.browseMods(sortBy: .downloads, searchText: query)
             if Task.isCancelled { return }
             nexusSearchResults = result
@@ -1022,9 +973,6 @@ final class AppState {
         guard !isNexusLoadingMore, nexusHasMore else { return }
         isNexusLoadingMore = true
         do {
-            if let key = settings.nexusAPIKey {
-                await nexusAPI.setAPIKey(key)
-            }
             let newMods: [NexusModInfo]
             switch tab {
             case .trending:
@@ -1047,9 +995,6 @@ final class AppState {
         isNexusLoading = true
         nexusError = nil
         do {
-            if let key = settings.nexusAPIKey {
-                await nexusAPI.setAPIKey(key)
-            }
             let links = try await nexusAPI.downloadLinks(modId: modId, fileId: fileId)
             guard let link = links.first else {
                 nexusError = "No download links available."
@@ -1366,9 +1311,6 @@ final class AppState {
         isModpackLoading = true
         modpackError = nil
         do {
-            if let key = settings.nexusAPIKey {
-                await nexusAPI.setAPIKey(key)
-            }
             let info = try await nexusAPI.collectionDetails(slug: slug)
             let collectionMods = try await nexusAPI.collectionMods(slug: slug)
 
@@ -1414,14 +1356,7 @@ final class AppState {
             modpacks[idx].entries[entryIdx].isEnabled.toggle()
         } else if let mod = mods.first(where: { $0.id == entryID }) {
             // Entry was auto-merged from installed mods — persist it as enabled
-            modpacks[idx].entries.append(ModpackEntry(
-                uniqueID: mod.id,
-                name: mod.manifest.name,
-                version: mod.manifest.version,
-                nexusModID: mod.nexusModID,
-                nexusFileID: nil,
-                isEnabled: true
-            ))
+            modpacks[idx].entries.append(ModpackEntry(mod: mod, isEnabled: true))
         }
 
         modpacks[idx].updatedAt = Date()
@@ -1471,10 +1406,7 @@ final class AppState {
     func addModToModpack(modpackID: UUID, mod: Mod) {
         guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
         guard !modpacks[idx].entries.contains(where: { $0.uniqueID == mod.id }) else { return }
-        let entry = ModpackEntry(
-            uniqueID: mod.id, name: mod.manifest.name, version: mod.manifest.version,
-            nexusModID: mod.nexusModID, nexusFileID: nil, isEnabled: true
-        )
+        let entry = ModpackEntry(mod: mod, isEnabled: true)
         modpacks[idx].entries.append(entry)
         modpacks[idx].updatedAt = Date()
         persistModpacks()

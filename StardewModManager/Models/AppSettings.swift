@@ -16,17 +16,23 @@ enum AppTheme: String, CaseIterable, Identifiable {
     }
 
     static var current: AppTheme {
-        AppTheme(rawValue: UserDefaults.standard.string(forKey: "appTheme") ?? "Stardew") ?? .stardew
+        AppTheme(rawValue: UserDefaults.standard.string(forKey: DefaultsKey.appTheme) ?? "Stardew") ?? .stardew
     }
 }
 
 @Observable
 final class AppSettings {
+    /// Called whenever the Nexus API key changes so a single dependent (the Nexus API actor,
+    /// wired by AppState) is updated in one place instead of every request site re-pushing the
+    /// key. Not part of observation.
+    @ObservationIgnored
+    var onNexusAPIKeyChange: ((String?) -> Void)?
+
     var gamePath: String {
-        didSet { UserDefaults.standard.set(gamePath, forKey: "gamePath") }
+        didSet { UserDefaults.standard.set(gamePath, forKey: DefaultsKey.gamePath) }
     }
     var theme: AppTheme {
-        didSet { UserDefaults.standard.set(theme.rawValue, forKey: "appTheme") }
+        didSet { UserDefaults.standard.set(theme.rawValue, forKey: DefaultsKey.appTheme) }
     }
     var nexusAPIKey: String? {
         didSet {
@@ -35,19 +41,20 @@ final class AppSettings {
             } else {
                 KeychainService.delete()
             }
+            onNexusAPIKeyChange?(nexusAPIKey)
         }
     }
     var hasCompletedOnboarding: Bool {
-        didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
+        didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: DefaultsKey.hasCompletedOnboarding) }
     }
     var enableSounds: Bool {
-        didSet { UserDefaults.standard.set(enableSounds, forKey: "enableSounds") }
+        didSet { UserDefaults.standard.set(enableSounds, forKey: DefaultsKey.enableSounds) }
     }
     var showSMAPIConsole: Bool {
-        didSet { UserDefaults.standard.set(showSMAPIConsole, forKey: "showSMAPIConsole") }
+        didSet { UserDefaults.standard.set(showSMAPIConsole, forKey: DefaultsKey.showSMAPIConsole) }
     }
     var language: String {
-        didSet { UserDefaults.standard.set(language, forKey: "appLanguage") }
+        didSet { UserDefaults.standard.set(language, forKey: DefaultsKey.appLanguage) }
     }
     var isAPIKeyValidated: Bool = false
     var nexusUserName: String?
@@ -78,25 +85,25 @@ final class AppSettings {
     }
 
     init() {
-        theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: "appTheme") ?? "Stardew") ?? .stardew
-        hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
-        enableSounds = UserDefaults.standard.object(forKey: "enableSounds") == nil ? true : UserDefaults.standard.bool(forKey: "enableSounds")
-        showSMAPIConsole = UserDefaults.standard.object(forKey: "showSMAPIConsole") == nil ? true : UserDefaults.standard.bool(forKey: "showSMAPIConsole")
-        language = UserDefaults.standard.string(forKey: "appLanguage") ?? "system"
-        if let saved = UserDefaults.standard.string(forKey: "gamePath"), !saved.isEmpty {
+        theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: DefaultsKey.appTheme) ?? "Stardew") ?? .stardew
+        hasCompletedOnboarding = UserDefaults.standard.bool(forKey: DefaultsKey.hasCompletedOnboarding)
+        enableSounds = UserDefaults.standard.object(forKey: DefaultsKey.enableSounds) == nil ? true : UserDefaults.standard.bool(forKey: DefaultsKey.enableSounds)
+        showSMAPIConsole = UserDefaults.standard.object(forKey: DefaultsKey.showSMAPIConsole) == nil ? true : UserDefaults.standard.bool(forKey: DefaultsKey.showSMAPIConsole)
+        language = UserDefaults.standard.string(forKey: DefaultsKey.appLanguage) ?? "system"
+        if let saved = UserDefaults.standard.string(forKey: DefaultsKey.gamePath), !saved.isEmpty {
             gamePath = saved
             // Existing users already have a game path — skip onboarding
             if !hasCompletedOnboarding {
                 hasCompletedOnboarding = true
-                UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+                UserDefaults.standard.set(true, forKey: DefaultsKey.hasCompletedOnboarding)
             }
         } else {
             gamePath = GamePathDetector.detect() ?? ""
         }
         // Migrate API key from UserDefaults to Keychain
-        if let legacyKey = UserDefaults.standard.string(forKey: "nexusAPIKey"), !legacyKey.isEmpty {
+        if let legacyKey = UserDefaults.standard.string(forKey: DefaultsKey.legacyNexusAPIKey), !legacyKey.isEmpty {
             try? KeychainService.save(apiKey: legacyKey)
-            UserDefaults.standard.removeObject(forKey: "nexusAPIKey")
+            UserDefaults.standard.removeObject(forKey: DefaultsKey.legacyNexusAPIKey)
             nexusAPIKey = legacyKey
         } else {
             nexusAPIKey = KeychainService.load()

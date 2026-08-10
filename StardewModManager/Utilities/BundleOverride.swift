@@ -29,7 +29,7 @@ extension Foundation.Bundle {
 
     /// Returns a bundle for the user's chosen language, falling back to appBundle (system locale).
     static var localizedAppBundle: Bundle {
-        guard let lang = UserDefaults.standard.string(forKey: "appLanguage"),
+        guard let lang = UserDefaults.standard.string(forKey: DefaultsKey.appLanguage),
               lang != "system",
               let path = appBundle.path(forResource: lang, ofType: "lproj"),
               let bundle = Bundle(path: path) else {
@@ -37,4 +37,15 @@ extension Foundation.Bundle {
         }
         return bundle
     }
+
+    /// The English (`en.lproj`) sub-bundle, used as the last-resort fallback for keys missing
+    /// from the user's selected-language table so they degrade to English instead of the raw
+    /// key. Resolves to appBundle if en.lproj can't be located.
+    static let englishAppBundle: Bundle = {
+        guard let path = appBundle.path(forResource: "en", ofType: "lproj"),
+              let bundle = Bundle(path: path) else {
+            return appBundle
+        }
+        return bundle
+    }()
 }

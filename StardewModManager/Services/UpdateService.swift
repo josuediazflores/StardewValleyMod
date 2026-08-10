@@ -9,8 +9,6 @@ struct AppUpdate {
 }
 
 enum UpdateService {
-    private static let releasesURL = "https://api.github.com/repos/josuediazflores/StardewValleyMod/releases/latest"
-
     /// The exact asset name the release pipeline (build-app.sh) uploads. The updater
     /// matches this by name so a stray extra .zip on a release can't be installed by mistake.
     private static let expectedAssetName = "Stardew Mod Manager.zip"
@@ -39,7 +37,7 @@ enum UpdateService {
     /// - Throws when the check itself fails (network, HTTP, or decode), so a failed
     ///   check is distinguishable from "no update available".
     static func checkForUpdate() async throws -> AppUpdate? {
-        guard let url = URL(string: releasesURL) else {
+        guard let url = URL(string: AppConfig.releasesURL) else {
             throw UpdateError.checkFailed
         }
 

@@ -14,8 +14,8 @@ final class SoundService {
     private var player: AVAudioPlayer?
 
     static var isEnabled: Bool {
-        if UserDefaults.standard.object(forKey: "enableSounds") == nil { return true }
-        return UserDefaults.standard.bool(forKey: "enableSounds")
+        if UserDefaults.standard.object(forKey: DefaultsKey.enableSounds) == nil { return true }
+        return UserDefaults.standard.bool(forKey: DefaultsKey.enableSounds)
     }
 
     static func play(_ sound: StardewSound) {

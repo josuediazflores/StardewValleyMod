@@ -235,9 +235,6 @@ struct NexusModDetailView: View {
         .task {
             isLoadingFiles = true
             do {
-                if let key = appState.settings.nexusAPIKey {
-                    await appState.nexusAPI.setAPIKey(key)
-                }
                 files = try await appState.nexusAPI.modFiles(modId: mod.modId)
                 files.sort { a, b in
                     let aIsMain = a.categoryName != "OLD_VERSION"

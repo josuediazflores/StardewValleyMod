@@ -2,10 +2,19 @@ import Foundation
 
 enum L {
     static func s(_ key: String) -> String {
-        Bundle.localizedAppBundle.localizedString(forKey: key, value: key, table: "Localizable")
+        // A selected-language sub-bundle (e.g. de.lproj) has only one table and no fallback
+        // chain, so a key missing from it returns the key itself (value: key). When that
+        // happens, retry against en.lproj so the string degrades to English rather than
+        // showing the raw key. (Proper translations of the missing keys are a separate task.)
+        let bundle = Bundle.localizedAppBundle
+        let value = bundle.localizedString(forKey: key, value: key, table: "Localizable")
+        guard value == key, bundle !== Bundle.englishAppBundle else { return value }
+        return Bundle.englishAppBundle.localizedString(forKey: key, value: key, table: "Localizable")
     }
 
     static func s(_ key: String, _ args: CVarArg...) -> String {
+        // Delegates to s(key), so the format string gets the same English fallback before
+        // the arguments are applied.
         String(format: s(key), arguments: args)
     }
 

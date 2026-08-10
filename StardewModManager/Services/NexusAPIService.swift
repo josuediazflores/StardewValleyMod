@@ -24,7 +24,7 @@ actor NexusAPIService {
     private let baseURL = "https://api.nexusmods.com/v1"
     private let gameDomain = "stardewvalley"
     private let session = URLSession.shared
-    private let userAgent = "StardewModManager/1.0.0 (macOS)"
+    private let userAgent = "StardewModManager/\(UpdateService.currentVersion) (macOS)"
 
     private var apiKey: String?
 
@@ -112,8 +112,8 @@ actor NexusAPIService {
 
         let body = SMAPIUpdateRequest(
             mods: entries,
-            apiVersion: "4.0.0",
-            gameVersion: "1.6.0",
+            apiVersion: AppConfig.apiVersion,
+            gameVersion: AppConfig.gameVersion,
             platform: "Mac",
             includeExtendedMetadata: false
         )

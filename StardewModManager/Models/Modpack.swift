@@ -11,6 +11,22 @@ struct ModpackEntry: Codable, Identifiable, Hashable {
     var id: String { uniqueID }
 }
 
+extension ModpackEntry {
+    /// Builds an entry from an installed `Mod`, the common case across the modpack call sites.
+    /// The synthetic-id path (Nexus collections, which have no backing `Mod`) still constructs
+    /// the entry directly via the memberwise initializer.
+    init(mod: Mod, isEnabled: Bool, nexusFileID: Int? = nil) {
+        self.init(
+            uniqueID: mod.id,
+            name: mod.manifest.name,
+            version: mod.manifest.version,
+            nexusModID: mod.nexusModID,
+            nexusFileID: nexusFileID,
+            isEnabled: isEnabled
+        )
+    }
+}
+
 enum ModpackSource: Codable, Hashable {
     case manual
     case imported(fileName: String)

@@ -73,14 +73,7 @@ enum ModpackService {
 
     static func createModpack(name: String, description: String, from mods: [Mod]) -> Modpack {
         let entries = mods.filter { !$0.isBuiltIn }.map { mod in
-            ModpackEntry(
-                uniqueID: mod.id,
-                name: mod.manifest.name,
-                version: mod.manifest.version,
-                nexusModID: mod.nexusModID,
-                nexusFileID: nil,
-                isEnabled: mod.isEnabled
-            )
+            ModpackEntry(mod: mod, isEnabled: mod.isEnabled)
         }
 
         let now = Date()
@@ -460,14 +453,7 @@ enum ModpackService {
         // Build entries from imported mods if modpack.json was absent
         if modpackManifestURL == nil {
             modpack.entries = importedMods.map { mod in
-                ModpackEntry(
-                    uniqueID: mod.id,
-                    name: mod.manifest.name,
-                    version: mod.manifest.version,
-                    nexusModID: mod.nexusModID,
-                    nexusFileID: nil,
-                    isEnabled: true
-                )
+                ModpackEntry(mod: mod, isEnabled: true)
             }
         }
 
