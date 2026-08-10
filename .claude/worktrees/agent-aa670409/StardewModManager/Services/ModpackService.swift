@@ -37,9 +37,6 @@ enum ModpackService {
             decoder.dateDecodingStrategy = .iso8601
             return try decoder.decode([Modpack].self, from: data)
         } catch {
-            // Preserve corrupted file so the user can recover manually
-            let backupURL = fileURL.deletingLastPathComponent().appendingPathComponent("modpacks.json.corrupt")
-            try? FileManager.default.copyItem(at: fileURL, to: backupURL)
             return []
         }
     }
@@ -103,75 +100,70 @@ enum ModpackService {
         var enabledNames: [String] = []
         var disabledNames: [String] = []
         var missingEntries: [ModpackEntry] = []
-        var failures: [ApplyFailure] = []
         var alreadyCorrect = 0
 
-        // Duplicate folders for the same mod can exist on disk (e.g. one enabled copy
-        // and one disabled copy), so track every instance per uniqueID
-        let modsByID = Dictionary(grouping: mods.filter { !$0.isBuiltIn }, by: \.id)
+        let modsByID = Dictionary(mods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let entryIDs = Set(modpack.entries.map(\.uniqueID))
-
-        func disable(_ mod: Mod) {
-            do {
-                try ModManagementService.disableMod(mod, settings: settings)
-                disabledNames.append(mod.manifest.name)
-            } catch {
-                failures.append(ApplyFailure(name: mod.manifest.name, reason: error.localizedDescription))
-            }
-        }
 
         // Process each entry in the modpack
         for entry in modpack.entries {
-            guard let instances = modsByID[entry.uniqueID], !instances.isEmpty else {
-                if mods.contains(where: { $0.isBuiltIn && $0.id == entry.uniqueID }) {
-                    alreadyCorrect += 1
-                } else if entry.isEnabled {
-                    // A profile listing an uninstalled mod as disabled is vacuously satisfied
-                    missingEntries.append(entry)
-                }
+            guard let mod = modsByID[entry.uniqueID] else {
+                missingEntries.append(entry)
                 continue
             }
 
-            if entry.isEnabled {
-                // Keep exactly one instance enabled; extra enabled copies get disabled
-                if let enabledInstance = instances.first(where: \.isEnabled) {
-                    alreadyCorrect += 1
-                    for extra in instances where extra !== enabledInstance && extra.isEnabled {
-                        disable(extra)
-                    }
-                } else {
-                    // Several disabled copies can exist — enable the newest one
-                    let candidate = instances.max(by: {
-                        $0.manifest.version.compare($1.manifest.version, options: .numeric) == .orderedAscending
-                    }) ?? instances[0]
-                    do {
-                        try ModManagementService.enableMod(candidate, settings: settings)
-                        enabledNames.append(candidate.manifest.name)
-                    } catch {
-                        failures.append(ApplyFailure(name: candidate.manifest.name, reason: error.localizedDescription))
-                    }
-                }
+            if mod.isBuiltIn {
+                alreadyCorrect += 1
+                continue
+            }
+
+            if entry.isEnabled && !mod.isEnabled {
+                try ModManagementService.enableMod(mod, settings: settings)
+                enabledNames.append(mod.manifest.name)
+            } else if !entry.isEnabled && mod.isEnabled {
+                try ModManagementService.disableMod(mod, settings: settings)
+                disabledNames.append(mod.manifest.name)
             } else {
-                if instances.contains(where: \.isEnabled) {
-                    for instance in instances where instance.isEnabled {
-                        disable(instance)
-                    }
-                } else {
-                    alreadyCorrect += 1
-                }
+                alreadyCorrect += 1
             }
         }
 
         // Disable mods not in the modpack (they're not part of this profile)
         for mod in mods where !mod.isBuiltIn && !entryIDs.contains(mod.id) && mod.isEnabled {
-            disable(mod)
+            try ModManagementService.disableMod(mod, settings: settings)
+            disabledNames.append(mod.manifest.name)
+        }
+
+        // Also move orphan folders (no manifest.json) out of Mods to keep the profile clean
+        let fm = FileManager.default
+        let disabledDir = settings.disabledModsDirectoryURL
+        if !fm.fileExists(atPath: disabledDir.path(percentEncoded: false)) {
+            try? fm.createDirectory(at: disabledDir, withIntermediateDirectories: true)
+        }
+        if let contents = try? fm.contentsOfDirectory(at: settings.modsDirectoryURL,
+                                                       includingPropertiesForKeys: [.isDirectoryKey],
+                                                       options: [.skipsHiddenFiles]) {
+            let knownIDs = Set(mods.map(\.folderURL))
+            for itemURL in contents {
+                guard (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else { continue }
+                // Skip folders the discovery service already knows about
+                if knownIDs.contains(itemURL) { continue }
+                // Skip SMAPI internal folders
+                let name = itemURL.lastPathComponent
+                if name == "StardewModdingAPI" || name.hasPrefix("Mods_backup") { continue }
+                // Move orphan folder to disabled
+                let dest = disabledDir.appending(path: name)
+                if fm.fileExists(atPath: dest.path(percentEncoded: false)) {
+                    try? fm.removeItem(at: dest)
+                }
+                try? fm.moveItem(at: itemURL, to: dest)
+            }
         }
 
         return ApplyResult(
             enabled: enabledNames,
             disabled: disabledNames,
             missing: missingEntries,
-            failures: failures,
             alreadyCorrect: alreadyCorrect
         )
     }
@@ -185,19 +177,10 @@ enum ModpackService {
             throw ModpackError.modpackNotFound
         }
 
-        // Remove bundled files if present, but only when the resolved path stays
-        // strictly inside the modpacks directory. A persisted bundleFolderName is
-        // untrusted and could otherwise point removeItem at an arbitrary location.
-        // A rejected path just skips the file removal; the modpack is still removed.
+        // Remove bundled files if present
         if let bundleName = modpack.bundleFolderName {
-            let baseURL = settings.modpacksDirectoryURL.standardizedFileURL.resolvingSymlinksInPath()
             let bundleURL = settings.modpacksDirectoryURL.appending(path: bundleName)
-                .standardizedFileURL.resolvingSymlinksInPath()
-            let basePath = baseURL.path(percentEncoded: false)
-            let bundlePath = bundleURL.path(percentEncoded: false)
-            if bundlePath.hasPrefix(basePath + "/"),
-               bundlePath != basePath,
-               FileManager.default.fileExists(atPath: bundlePath) {
+            if FileManager.default.fileExists(atPath: bundleURL.path(percentEncoded: false)) {
                 try? FileManager.default.removeItem(at: bundleURL)
             }
         }
@@ -231,37 +214,24 @@ enum ModpackService {
             throw ModpackError.exportFailed("Failed to create temp directory: \(error.localizedDescription)")
         }
 
-        // Duplicate on-disk copies of one mod can exist — export the enabled one
-        let modsByID = Dictionary(grouping: mods, by: \.id)
-            .mapValues { instances in instances.first(where: \.isEnabled) ?? instances[0] }
+        let modsByID = Dictionary(mods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+
+        // Write the modpack manifest
+        let manifestEncoder = JSONEncoder()
+        manifestEncoder.dateEncodingStrategy = .iso8601
+        manifestEncoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let manifestData = try manifestEncoder.encode(modpack)
+        try manifestData.write(to: tempDir.appending(path: "modpack.json"), options: .atomic)
 
         // Copy enabled mod folders into the staging directory
         let modsStaging = tempDir.appending(path: "Mods")
         try fm.createDirectory(at: modsStaging, withIntermediateDirectories: true)
 
-        // Track which entries have matching installed mods
-        let exportedEntries = modpack.entries.filter { entry in
-            guard entry.isEnabled else { return true } // keep disabled entries as-is
-            return modsByID[entry.uniqueID] != nil
-        }
-
         for entry in modpack.entries where entry.isEnabled {
             guard let mod = modsByID[entry.uniqueID] else { continue }
-            // Mirror the subfolder so two mods sharing a folder name can't collide
-            let relative = mod.subfolder.map { "\($0)/\(mod.folderName)" } ?? mod.folderName
-            let destination = modsStaging.appending(path: relative)
-            try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            let destination = modsStaging.appending(path: mod.folderName)
             try fm.copyItem(at: mod.folderURL, to: destination)
         }
-
-        // Write the modpack manifest with only entries that have matching mods
-        var exportModpack = modpack
-        exportModpack.entries = exportedEntries
-        let manifestEncoder = JSONEncoder()
-        manifestEncoder.dateEncodingStrategy = .iso8601
-        manifestEncoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let manifestData = try manifestEncoder.encode(exportModpack)
-        try manifestData.write(to: tempDir.appending(path: "modpack.json"), options: .atomic)
 
         // Remove existing file at destination if present
         if fm.fileExists(atPath: url.path(percentEncoded: false)) {
@@ -284,11 +254,6 @@ enum ModpackService {
 
     /// ZIP a subset of mods into a temp file for Bluetooth transfer
     static func zipMods(_ mods: [Mod]) throws -> URL {
-        try zipModFolders(mods.map { (folderName: $0.folderName, folderURL: $0.folderURL, subfolder: $0.subfolder) })
-    }
-
-    /// ZIP mod folders by path — safe to call from any thread
-    static func zipModFolders(_ folders: [(folderName: String, folderURL: URL, subfolder: String?)]) throws -> URL {
         let fm = FileManager.default
         let tempDir = fm.temporaryDirectory.appending(path: "transfer_\(UUID().uuidString)")
 
@@ -297,15 +262,9 @@ enum ModpackService {
         let modsStaging = tempDir.appending(path: "Mods")
         try fm.createDirectory(at: modsStaging, withIntermediateDirectories: true)
 
-        for folder in folders {
-            // Mirror the subfolder so two mods sharing a folder name can't silently overwrite
-            let relative = folder.subfolder.map { "\($0)/\(folder.folderName)" } ?? folder.folderName
-            let destination = modsStaging.appending(path: relative)
-            try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
-            if fm.fileExists(atPath: destination.path(percentEncoded: false)) {
-                try fm.removeItem(at: destination)
-            }
-            try fm.copyItem(at: folder.folderURL, to: destination)
+        for mod in mods {
+            let destination = modsStaging.appending(path: mod.folderName)
+            try fm.copyItem(at: mod.folderURL, to: destination)
         }
 
         let zipURL = fm.temporaryDirectory.appending(path: "mods_transfer_\(UUID().uuidString).zip")
@@ -336,8 +295,6 @@ enum ModpackService {
             decoder.dateDecodingStrategy = .iso8601
             var modpack = try decoder.decode(Modpack.self, from: data)
             modpack.source = .imported(fileName: url.lastPathComponent)
-            // Untrusted: only the app itself ever sets a real bundle folder name.
-            modpack.bundleFolderName = nil
             return modpack
         } catch let error as ModpackError {
             throw error
@@ -346,7 +303,7 @@ enum ModpackService {
         }
     }
 
-    static func importFromZIP(at url: URL, settings: AppSettings, existingMods: [Mod] = []) throws -> (Modpack, [Mod]) {
+    static func importFromZIP(at url: URL, settings: AppSettings) throws -> (Modpack, [Mod]) {
         let fm = FileManager.default
         let tempDir = fm.temporaryDirectory.appending(path: UUID().uuidString)
         defer { try? fm.removeItem(at: tempDir) }
@@ -357,11 +314,19 @@ enum ModpackService {
             throw ModpackError.importFailed("Failed to create temp directory: \(error.localizedDescription)")
         }
 
-        // Extract ZIP using the validated extractor (zip-slip / symlink / zip-bomb guarded)
+        // Extract ZIP using ditto
+        let process = Process()
+        process.executableURL = URL(filePath: "/usr/bin/ditto")
+        process.arguments = ["-xk", url.path(percentEncoded: false), tempDir.path(percentEncoded: false)]
         do {
-            try ArchiveService.extract(url, to: tempDir)
+            try process.run()
+            process.waitUntilExit()
         } catch {
-            throw ModpackError.importFailed(error.localizedDescription)
+            throw ModpackError.importFailed("Failed to extract ZIP: \(error.localizedDescription)")
+        }
+
+        guard process.terminationStatus == 0 else {
+            throw ModpackError.importFailed("ditto returned exit code \(process.terminationStatus)")
         }
 
         // Look for modpack.json in extracted contents (may be nested inside a folder from --keepParent)
@@ -397,7 +362,7 @@ enum ModpackService {
         let modFolders = findModFolders(in: modsDir, fm: fm)
         for modFolder in modFolders {
             do {
-                let imported = try ModManagementService.importMod(from: modFolder, settings: settings, existingMods: existingMods)
+                let imported = try ModManagementService.importMod(from: modFolder, settings: settings)
                 importedMods.append(contentsOf: imported)
             } catch {
                 // Skip individual mods that fail to import
@@ -421,9 +386,6 @@ enum ModpackService {
 
         modpack.source = .imported(fileName: url.lastPathComponent)
         modpack.includesFiles = true
-        // Untrusted: a decoded modpack.json could carry an arbitrary bundle folder
-        // name; only the app itself ever sets a real one.
-        modpack.bundleFolderName = nil
 
         return (modpack, importedMods)
     }

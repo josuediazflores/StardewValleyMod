@@ -7,16 +7,9 @@ struct NearbyCompareSheet: View {
     @State private var selectedModpack: Modpack?
     @State private var hasSent = false
 
-    // Consent flow for peer-pushed mods: nothing is imported until the user
-    // explicitly taps Install in the confirmation sheet.
-    @State private var receivedZipURL: URL?
-    @State private var receivedModNames: [String] = []
-    @State private var receivedInstalledNames: Set<String> = []
-    @State private var showReceivedConfirmation = false
-
     var body: some View {
         VStack(spacing: 16) {
-            Text(L.s("nearby_title"))
+            Text("Compare with Nearby Player")
                 .font(.stardew(size: 22))
                 .foregroundStyle(Color.textDark)
 
@@ -39,7 +32,7 @@ struct NearbyCompareSheet: View {
 
             Spacer()
 
-            Button(L.s("nearby_close")) {
+            Button("Close") {
                 peerService.stopSearching()
                 dismiss()
             }
@@ -50,52 +43,19 @@ struct NearbyCompareSheet: View {
         .padding(24)
         .frame(width: 520, height: 560)
         .background(Color.parchment)
-        .alert(
-            L.s("nearby_invite_title", peerService.pendingInvitation?.peerName ?? ""),
-            isPresented: Binding(
-                get: { peerService.pendingInvitation != nil },
-                set: { if !$0 { peerService.pendingInvitation?.respond(false) } }
-            )
-        ) {
-            Button(L.s("nearby_invite_accept")) {
-                peerService.pendingInvitation?.respond(true)
-            }
-            Button(L.s("nearby_invite_decline"), role: .cancel) {
-                peerService.pendingInvitation?.respond(false)
-            }
-        } message: {
-            Text(L.s("nearby_invite_message"))
-        }
-        .sheet(isPresented: $showReceivedConfirmation) {
-            ReceivedModsConfirmationSheet(
-                modNames: receivedModNames,
-                installedNames: receivedInstalledNames,
-                onInstall: confirmInstallReceivedMods,
-                onCancel: cancelReceivedMods
-            )
-        }
         .onDisappear {
             peerService.stopSearching()
         }
         .onAppear {
-            // Capture the @State wrappers (not self) so this closure, which
-            // peerService stores strongly, does not re-form a retain cycle back
-            // to peerService via the enclosing view.
-            peerService.onModsReceived = { [weak appState, weak peerService,
-                                            receivedZipURL = _receivedZipURL,
-                                            receivedModNames = _receivedModNames,
-                                            receivedInstalledNames = _receivedInstalledNames,
-                                            showReceivedConfirmation = _showReceivedConfirmation] zipURL in
-                guard let appState, let peerService else { return }
-                // Do NOT auto-install peer-pushed mods. Peek the mod names WITHOUT
-                // installing, then ask the user to confirm.
-                let names = ModManagementService.peekModNames(from: zipURL)
-                receivedZipURL.wrappedValue = zipURL
-                receivedModNames.wrappedValue = names.isEmpty ? ["Received mods"] : names
-                receivedInstalledNames.wrappedValue = Set(appState.mods.map { $0.manifest.name })
-                // Awaiting explicit consent, leave no auto-import in flight.
-                peerService.transferState = .idle
-                showReceivedConfirmation.wrappedValue = true
+            peerService.onModsReceived = { [weak appState] zipURL in
+                guard let appState else { return }
+                Task { @MainActor in
+                    appState.importMods(from: [zipURL])
+                    try? FileManager.default.removeItem(at: zipURL)
+                    let count = appState.mods.count
+                    peerService.transferState = .complete(count)
+                    SoundService.play(.bigSelect)
+                }
             }
         }
     }
@@ -106,11 +66,11 @@ struct NearbyCompareSheet: View {
         VStack(spacing: 16) {
             // Modpack picker
             VStack(alignment: .leading, spacing: 4) {
-                Text(L.s("nearby_select_modpack"))
+                Text("Select your modpack to compare:")
                     .font(.stardew(size: 14))
                     .foregroundStyle(Color.textMuted)
                 Picker("", selection: $selectedModpack) {
-                    Text(L.s("compare_select")).tag(nil as Modpack?)
+                    Text("Select...").tag(nil as Modpack?)
                     ForEach(appState.modpacks) { mp in
                         Text(mp.name).tag(mp as Modpack?)
                     }
@@ -126,7 +86,7 @@ struct NearbyCompareSheet: View {
                         HStack(spacing: 6) {
                             Image(systemName: "antenna.radiowaves.left.and.right")
                                 .font(.system(size: 12))
-                            Text(L.s("nearby_start"))
+                            Text("Start Searching")
                                 .font(.stardew(size: 16))
                         }
                         .foregroundStyle(.white)
@@ -141,18 +101,18 @@ struct NearbyCompareSheet: View {
                 } else {
                     VStack(spacing: 12) {
                         ProgressView()
-                        Text(L.s("nearby_searching"))
+                        Text("Looking for nearby players...")
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
 
                         if peerService.foundPeers.isEmpty {
-                            Text(L.s("nearby_ensure"))
+                            Text("Make sure the other player also has Compare Nearby open")
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.textMuted.opacity(0.7))
                                 .multilineTextAlignment(.center)
                         } else {
                             VStack(spacing: 6) {
-                                Text(L.s("nearby_found"))
+                                Text("Found nearby:")
                                     .font(.stardew(size: 13))
                                     .foregroundStyle(Color.textMuted)
                                 ForEach(peerService.foundPeers, id: \.self) { peer in
@@ -185,7 +145,7 @@ struct NearbyCompareSheet: View {
                     }
                 }
             } else {
-                Text(L.s("nearby_pick_first"))
+                Text("Pick a modpack first")
                     .font(.stardew(size: 14))
                     .foregroundStyle(Color.textMuted)
             }
@@ -199,7 +159,7 @@ struct NearbyCompareSheet: View {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(Color.stardewGreen)
-                Text(L.s("nearby_connected", peerName))
+                Text("Connected to \(peerName)")
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.stardewGreen)
             }
@@ -216,7 +176,7 @@ struct NearbyCompareSheet: View {
                         HStack(spacing: 6) {
                             Image(systemName: "paperplane.fill")
                                 .font(.system(size: 12))
-                            Text(L.s("nearby_send"))
+                            Text("Send My Modpack")
                                 .font(.stardew(size: 16))
                         }
                         .foregroundStyle(.white)
@@ -236,44 +196,19 @@ struct NearbyCompareSheet: View {
                         HStack(spacing: 6) {
                             Image(systemName: "shippingbox.fill")
                                 .font(.system(size: 12))
-                            Text(L.s("nearby_send_full"))
+                            Text("Send Full Modpack with Files")
                                 .font(.stardew(size: 14))
                         }
                         .foregroundStyle(Color.stardewBlue)
                     }
                     .buttonStyle(.plain)
-                    .help(L.s("nearby_send_full_help"))
+                    .help("Send all mod files so your friend can install them")
                 }
-            } else if peerService.receivedModpack != nil {
-                // They sent theirs too — jump to results
-                Button {
-                    peerService.connectionState = .received
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 12))
-                        Text(L.s("nearby_compare"))
-                            .font(.stardew(size: 16))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.stardewBlue)
-                    )
-                }
-                .buttonStyle(.plain)
             } else {
-                VStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundStyle(Color.stardewGreen)
-                    Text(L.s("nearby_sent"))
-                        .font(.stardew(size: 16))
-                        .foregroundStyle(Color.stardewGreen)
-                    Text(L.s("nearby_waiting"))
-                        .font(.stardew(size: 13))
+                VStack(spacing: 8) {
+                    ProgressView()
+                    Text("Modpack sent! Waiting for their modpack...")
+                        .font(.stardew(size: 14))
                         .foregroundStyle(Color.textMuted)
                 }
             }
@@ -298,21 +233,21 @@ struct NearbyCompareSheet: View {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 36))
                             .foregroundStyle(Color.stardewGreen)
-                        Text(L.s("nearby_perfect_match"))
+                        Text("Perfect Match!")
                             .font(.stardew(size: 20))
                             .foregroundStyle(Color.stardewGreen)
-                        Text(L.s("nearby_all_match", inBoth.count))
+                        Text("All \(inBoth.count) enabled mods match.")
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                     }
                 } else {
                     // Mismatch summary
                     HStack(spacing: 20) {
-                        Label(L.s("nearby_shared", inBoth.count), systemImage: "checkmark.circle")
+                        Label("\(inBoth.count) shared", systemImage: "checkmark.circle")
                             .foregroundStyle(Color.stardewGreen)
-                        Label(L.s("nearby_only_you", onlyMine.count), systemImage: "person")
+                        Label("\(onlyMine.count) only you", systemImage: "person")
                             .foregroundStyle(Color.stardewOrange)
-                        Label(L.s("nearby_only_them", onlyTheirs.count), systemImage: "person.2")
+                        Label("\(onlyTheirs.count) only them", systemImage: "person.2")
                             .foregroundStyle(Color.stardewBlue)
                     }
                     .font(.stardew(size: 13))
@@ -320,7 +255,7 @@ struct NearbyCompareSheet: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 2) {
                             if !onlyMine.isEmpty {
-                                sectionHeader(L.s("nearby_you_have"), color: .stardewOrange)
+                                sectionHeader("You have, they don't", color: .stardewOrange)
                                 ForEach(sortedNames(ids: onlyMine, myEntries: myModpack.entries, theirMods: theirModpack.mods), id: \.self) { name in
                                     modRow(name, color: .stardewOrange)
                                 }
@@ -332,7 +267,7 @@ struct NearbyCompareSheet: View {
                                     HStack(spacing: 6) {
                                         Image(systemName: "paperplane.fill")
                                             .font(.system(size: 11))
-                                        Text(L.s("nearby_send_missing", onlyMine.count))
+                                        Text("Send \(onlyMine.count) Missing Mod\(onlyMine.count == 1 ? "" : "s")")
                                             .font(.stardew(size: 14))
                                     }
                                     .foregroundStyle(.white)
@@ -347,18 +282,18 @@ struct NearbyCompareSheet: View {
                                 .padding(.top, 6)
                             }
                             if !onlyTheirs.isEmpty {
-                                sectionHeader(L.s("nearby_they_have"), color: .stardewBlue)
+                                sectionHeader("They have, you don't", color: .stardewBlue)
                                 ForEach(sortedNames(ids: onlyTheirs, myEntries: myModpack.entries, theirMods: theirModpack.mods), id: \.self) { name in
                                     modRow(name, color: .stardewBlue)
                                 }
 
-                                Text(L.s("nearby_ask_friend"))
+                                Text("Ask your friend to send these from their side")
                                     .font(.system(size: 11))
                                     .foregroundStyle(Color.textMuted.opacity(0.7))
                                     .padding(.top, 4)
                             }
                             if !inBoth.isEmpty {
-                                sectionHeader(L.s("nearby_matched", inBoth.count), color: .stardewGreen)
+                                sectionHeader("Matched (\(inBoth.count))", color: .stardewGreen)
                                 ForEach(sortedNames(ids: inBoth, myEntries: myModpack.entries, theirMods: theirModpack.mods), id: \.self) { name in
                                     modRow(name, color: .stardewGreen)
                                 }
@@ -379,35 +314,35 @@ struct NearbyCompareSheet: View {
             case .zipping:
                 VStack(spacing: 12) {
                     ProgressView()
-                    Text(L.s("nearby_preparing"))
+                    Text("Preparing mods...")
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textMuted)
                 }
 
             case .sending:
                 VStack(spacing: 16) {
-                    Text(L.s("nearby_sending"))
+                    Text("Sending mods...")
                         .font(.stardew(size: 18))
                         .foregroundStyle(Color.textDark)
                     StardewProgressBar(
                         progress: peerService.transferProgress,
                         label: "\(Int(peerService.transferProgress * 100))%"
                     )
-                    Text(L.s("nearby_keep_near"))
+                    Text("Keep both devices nearby")
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textMuted.opacity(0.7))
                 }
 
             case .receiving:
                 VStack(spacing: 16) {
-                    Text(L.s("nearby_receiving"))
+                    Text("Receiving mods...")
                         .font(.stardew(size: 18))
                         .foregroundStyle(Color.textDark)
                     StardewProgressBar(
                         progress: peerService.transferProgress,
                         label: "\(Int(peerService.transferProgress * 100))%"
                     )
-                    Text(L.s("nearby_keep_near"))
+                    Text("Keep both devices nearby")
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textMuted.opacity(0.7))
                 }
@@ -415,7 +350,7 @@ struct NearbyCompareSheet: View {
             case .importing:
                 VStack(spacing: 12) {
                     ProgressView()
-                    Text(L.s("nearby_importing"))
+                    Text("Importing mods...")
                         .font(.stardew(size: 16))
                         .foregroundStyle(Color.textMuted)
                 }
@@ -425,15 +360,15 @@ struct NearbyCompareSheet: View {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 36))
                         .foregroundStyle(Color.stardewGreen)
-                    Text(L.s("nearby_transfer_done"))
+                    Text("Transfer Complete!")
                         .font(.stardew(size: 20))
                         .foregroundStyle(Color.stardewGreen)
                     if count > 0 {
-                        Text(L.s("nearby_mods_imported"))
+                        Text("Mods imported successfully.")
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                     } else {
-                        Text(L.s("nearby_mods_sent"))
+                        Text("Mods sent successfully.")
                             .font(.stardew(size: 14))
                             .foregroundStyle(Color.textMuted)
                     }
@@ -444,7 +379,7 @@ struct NearbyCompareSheet: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 36))
                         .foregroundStyle(Color.stardewRed)
-                    Text(L.s("nearby_transfer_failed"))
+                    Text("Transfer Failed")
                         .font(.stardew(size: 20))
                         .foregroundStyle(Color.stardewRed)
                     Text(message)
@@ -463,64 +398,16 @@ struct NearbyCompareSheet: View {
     // MARK: - Transfer Actions
 
     private func sendMissingMods(ids: Set<String>, from modpack: Modpack) {
-        let modsToSend = dedupedMods(matching: ids)
+        let modsToSend = appState.mods.filter { ids.contains($0.id) }
         guard !modsToSend.isEmpty else { return }
-        zipAndSend(modsToSend)
-    }
 
-    /// One instance per uniqueID, preferring the enabled copy when duplicates exist
-    private func dedupedMods(matching ids: Set<String>) -> [Mod] {
-        let grouped = Dictionary(grouping: appState.mods.filter { ids.contains($0.id) && !$0.isBuiltIn }, by: \.id)
-        return grouped.values.compactMap { $0.first(where: \.isEnabled) ?? $0.first }
-    }
-
-    private func sendFullModpack() {
-        guard let modpack = selectedModpack else { return }
-
-        // Always send metadata first so receiver gets the enable/disable config
-        let shareable = ShareableModpack.from(modpack)
-        peerService.sendModpack(shareable)
-        hasSent = true
-
-        let enabledIDs = Set(modpack.entries.filter(\.isEnabled).map(\.uniqueID))
-
-        // If we know what the receiver has, only send what they're missing
-        let idsToSend: Set<String>
-        if let theirModpack = peerService.receivedModpack {
-            let theirIDs = Set(theirModpack.mods.map(\.uniqueID))
-            idsToSend = enabledIDs.subtracting(theirIDs)
-        } else {
-            idsToSend = enabledIDs
-        }
-
-        let modsToSend = dedupedMods(matching: idsToSend)
-        guard !modsToSend.isEmpty else {
-            // They already have everything, just show complete
-            peerService.transferState = .complete(0)
-            return
-        }
-        zipAndSend(modsToSend)
-    }
-
-    private func zipAndSend(_ mods: [Mod]) {
         peerService.transferState = .zipping
-
-        // Capture folder info for background thread (avoid sending Mod across threads)
-        let modFolders = mods.map { (folderName: $0.folderName, folderURL: $0.folderURL, subfolder: $0.subfolder) }
 
         Task {
             do {
-                let zipURL = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<URL, Error>) in
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        do {
-                            let url = try ModpackService.zipModFolders(modFolders)
-                            continuation.resume(returning: url)
-                        } catch {
-                            continuation.resume(throwing: error)
-                        }
-                    }
-                }
+                let zipURL = try ModpackService.zipMods(modsToSend)
                 peerService.sendMods(zipURL: zipURL)
+                // Clean up ZIP after send completes
                 Task {
                     try? await Task.sleep(for: .seconds(30))
                     try? FileManager.default.removeItem(at: zipURL)
@@ -531,48 +418,26 @@ struct NearbyCompareSheet: View {
         }
     }
 
-    // MARK: - Received Mods Consent
+    private func sendFullModpack() {
+        guard let modpack = selectedModpack else { return }
+        let enabledIDs = Set(modpack.entries.filter(\.isEnabled).map(\.uniqueID))
+        let modsToSend = appState.mods.filter { enabledIDs.contains($0.id) }
+        guard !modsToSend.isEmpty else { return }
 
-    /// User approved the incoming mods: import the staged zip, then apply the
-    /// existing received-modpack handling.
-    private func confirmInstallReceivedMods() {
-        guard let zipURL = receivedZipURL else {
-            resetReceivedState()
-            return
-        }
-        appState.importMods(from: [zipURL])
-        try? FileManager.default.removeItem(at: zipURL)
+        peerService.transferState = .zipping
 
-        // Save the modpack config as a profile if metadata was received
-        if let received = peerService.receivedModpack {
-            let newModpack = received.toModpack()
-            if !appState.modpacks.contains(where: { $0.name == newModpack.name }) {
-                appState.modpacks.append(newModpack)
-                try? ModpackService.saveModpacks(appState.modpacks, settings: appState.settings)
+        Task {
+            do {
+                let zipURL = try ModpackService.zipMods(modsToSend)
+                peerService.sendMods(zipURL: zipURL)
+                Task {
+                    try? await Task.sleep(for: .seconds(30))
+                    try? FileManager.default.removeItem(at: zipURL)
+                }
+            } catch {
+                peerService.transferState = .error("Failed to prepare mods: \(error.localizedDescription)")
             }
         }
-
-        let importedCount = appState.mods.count
-        peerService.transferState = .complete(importedCount)
-        SoundService.play(.bigSelect)
-
-        resetReceivedState()
-    }
-
-    /// User declined: discard the staged zip and clear the transfer state.
-    private func cancelReceivedMods() {
-        if let zipURL = receivedZipURL {
-            try? FileManager.default.removeItem(at: zipURL)
-        }
-        peerService.transferState = .idle
-        resetReceivedState()
-    }
-
-    private func resetReceivedState() {
-        receivedZipURL = nil
-        receivedModNames = []
-        receivedInstalledNames = []
-        showReceivedConfirmation = false
     }
 
     // MARK: - Helpers
@@ -639,101 +504,5 @@ private struct StardewProgressBar: View {
                 .font(.stardew(size: 16))
                 .foregroundStyle(Color.textMedium)
         }
-    }
-}
-
-// MARK: - Received Mods Confirmation
-
-/// Consent sheet shown before installing mods pushed by a nearby peer. Mirrors
-/// the NXM picker tone: nothing installs until the user taps Install.
-private struct ReceivedModsConfirmationSheet: View {
-    let modNames: [String]
-    let installedNames: Set<String>
-    let onInstall: () -> Void
-    let onCancel: () -> Void
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "shippingbox.fill")
-                .font(.system(size: 32))
-                .foregroundStyle(Color.stardewBlue)
-
-            Text("Install Received Mods?")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Color.textDark)
-
-            Text("A nearby player sent \(modNames.count) mod\(modNames.count == 1 ? "" : "s"). Nothing is installed until you choose Install.")
-                .font(.system(size: 13))
-                .foregroundStyle(Color.textMedium)
-                .multilineTextAlignment(.center)
-                .lineLimit(3)
-
-            Color.stardewDivider.opacity(0.3).frame(height: 1)
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(Array(modNames.enumerated()), id: \.offset) { _, name in
-                        HStack(spacing: 10) {
-                            Circle()
-                                .fill(installedNames.contains(name) ? Color.stardewOrange : Color.stardewGreen)
-                                .frame(width: 8, height: 8)
-                            Text(name)
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(Color.textDark)
-                            Spacer()
-                            if installedNames.contains(name) {
-                                Text("Already installed")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(Color.stardewOrange)
-                            }
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.parchmentAlt)
-                        )
-                    }
-                }
-            }
-            .frame(maxHeight: 250)
-
-            Color.stardewDivider.opacity(0.3).frame(height: 1)
-
-            HStack(spacing: 12) {
-                Button(action: onCancel) {
-                    Text(L.s("common_cancel"))
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.textMuted)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.frameBorder, lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-
-                Button(action: onInstall) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 12))
-                        Text("Install")
-                            .font(.system(size: 13, weight: .medium))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.stardewGreen)
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(24)
-        .frame(width: 420)
-        .background(Color.parchment)
     }
 }

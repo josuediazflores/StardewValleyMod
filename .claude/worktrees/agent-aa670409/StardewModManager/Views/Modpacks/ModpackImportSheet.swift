@@ -35,7 +35,7 @@ struct ModpackImportSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            Text(L.s("modpack_import_title"))
+            Text("Import Modpack")
                 .font(.stardew(size: 24))
                 .foregroundStyle(Color.textDark)
                 .frame(maxWidth: .infinity)
@@ -49,10 +49,10 @@ struct ModpackImportSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // URL input
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(L.s("modpack_import_url"))
+                        Text("URL")
                             .font(.stardew(size: 16))
                             .foregroundStyle(Color.textDark)
-                        TextField(L.s("modpack_import_url_placeholder"), text: $urlString)
+                        TextField("https://...", text: $urlString)
                             .font(.stardew(size: 16))
                             .textFieldStyle(.roundedBorder)
                     }
@@ -60,7 +60,7 @@ struct ModpackImportSheet: View {
                     // Detected source badge
                     if !urlString.trimmingCharacters(in: .whitespaces).isEmpty {
                         HStack(spacing: 8) {
-                            Text(L.s("modpack_import_detected"))
+                            Text("Detected:")
                                 .font(.stardew(size: 14))
                                 .foregroundStyle(Color.textLight)
 
@@ -78,7 +78,7 @@ struct ModpackImportSheet: View {
                         HStack(spacing: 10) {
                             ProgressView()
                                 .controlSize(.small)
-                            Text(L.s("modpack_import_downloading"))
+                            Text("Downloading...")
                                 .font(.stardew(size: 16))
                                 .foregroundStyle(Color.textLight)
                         }
@@ -110,7 +110,7 @@ struct ModpackImportSheet: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text(L.s("common_cancel"))
+                    Text("Cancel")
                         .font(.stardew(size: 16))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -123,7 +123,7 @@ struct ModpackImportSheet: View {
                 Button {
                     performImport()
                 } label: {
-                    Text(L.s("modpack_import_button"))
+                    Text("Import")
                         .font(.stardew(size: 16))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -146,7 +146,7 @@ struct ModpackImportSheet: View {
     private var detectedBadge: some View {
         switch detectedType {
         case .nexusCollection:
-            Text(L.s("modpack_import_nexus"))
+            Text("Nexus Collection")
                 .font(.stardew(size: 13))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -154,7 +154,7 @@ struct ModpackImportSheet: View {
                 .foregroundStyle(Color.stardewOrange)
                 .clipShape(Capsule())
         case .googleDrive:
-            Text(L.s("modpack_import_google"))
+            Text("Google Drive")
                 .font(.stardew(size: 13))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -162,7 +162,7 @@ struct ModpackImportSheet: View {
                 .foregroundStyle(Color.stardewBlue)
                 .clipShape(Capsule())
         case .directZIP:
-            Text(L.s("modpack_import_zip"))
+            Text("Direct Archive")
                 .font(.stardew(size: 13))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -170,7 +170,7 @@ struct ModpackImportSheet: View {
                 .foregroundStyle(Color.stardewPurple)
                 .clipShape(Capsule())
         case .unknown:
-            Text(L.s("modpack_import_unknown"))
+            Text("Unknown Source")
                 .font(.stardew(size: 13))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -191,7 +191,7 @@ struct ModpackImportSheet: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(Color.stardewOrange)
                     .font(.system(size: 16))
-                Text(L.s("modpack_import_security"))
+                Text("Security Warning")
                     .font(.stardew(size: 16))
                     .foregroundStyle(Color.stardewOrange)
             }
@@ -214,7 +214,7 @@ struct ModpackImportSheet: View {
             }
 
             Toggle(isOn: $acceptedRisks) {
-                Text(L.s("modpack_import_trust"))
+                Text("I understand the risks")
                     .font(.stardew(size: 14))
                     .foregroundStyle(Color.textDark)
             }
@@ -236,12 +236,8 @@ struct ModpackImportSheet: View {
         guard !trimmed.isEmpty else { return }
 
         if isNexusCollection {
-            // Extract and validate the collection slug; reject anything that
-            // isn't a clean Nexus slug rather than forwarding arbitrary text.
-            guard let slug = extractNexusSlug(from: trimmed) else {
-                appState.modpackError = L.s("common_error")
-                return
-            }
+            // Extract slug from Nexus collection URL
+            let slug = extractNexusSlug(from: trimmed)
             Task {
                 await appState.importNexusCollection(slug: slug)
                 if appState.modpackError == nil {
@@ -258,23 +254,15 @@ struct ModpackImportSheet: View {
         }
     }
 
-    private func extractNexusSlug(from urlString: String) -> String? {
+    private func extractNexusSlug(from urlString: String) -> String {
         // Try to extract collection slug from URL like:
         // https://next.nexusmods.com/stardewvalley/collections/abcdef
-        guard let url = URL(string: urlString) else { return nil }
+        guard let url = URL(string: urlString) else { return urlString }
         let components = url.pathComponents
-        let slug: String
         if let collectionIndex = components.firstIndex(of: "collections"),
            collectionIndex + 1 < components.count {
-            slug = components[collectionIndex + 1]
-        } else {
-            slug = url.lastPathComponent
+            return components[collectionIndex + 1]
         }
-        // Only accept a clean Nexus slug; reject anything else so arbitrary
-        // text is never forwarded to the collections API.
-        guard slug.range(of: "^[A-Za-z0-9._-]+$", options: .regularExpression) != nil else {
-            return nil
-        }
-        return slug
+        return url.lastPathComponent
     }
 }

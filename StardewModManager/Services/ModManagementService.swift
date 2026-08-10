@@ -268,15 +268,11 @@ enum ModManagementService {
         try fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: tempDir) }
 
-        // Extract using ditto
-        let process = Process()
-        process.executableURL = URL(filePath: "/usr/bin/ditto")
-        process.arguments = ["-xk", zipURL.path(percentEncoded: false), tempDir.path(percentEncoded: false)]
-        try process.run()
-        process.waitUntilExit()
-
-        guard process.terminationStatus == 0 else {
-            throw ModManagementError.importError("Failed to extract ZIP file")
+        // Extract using the validated extractor (zip-slip / symlink / zip-bomb guarded)
+        do {
+            try ArchiveService.extract(zipURL, to: tempDir)
+        } catch {
+            throw ModManagementError.importError(error.localizedDescription)
         }
 
         // Find all manifest.json files in the extracted contents
@@ -329,11 +325,7 @@ enum ModManagementService {
 
         do {
             try fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-            process.arguments = ["-xk", zipURL.path(percentEncoded: false), tempDir.path(percentEncoded: false)]
-            try process.run()
-            process.waitUntilExit()
+            try ArchiveService.extract(zipURL, to: tempDir)
 
             let modDirs = findModFolders(in: tempDir, fm: fm)
             return modDirs.compactMap { dir in

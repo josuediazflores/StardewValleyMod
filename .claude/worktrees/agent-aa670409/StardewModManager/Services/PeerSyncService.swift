@@ -22,22 +22,6 @@ class PeerSyncService: NSObject, ObservableObject {
     private var progressObservation: AnyCancellable?
     var onModsReceived: ((URL) -> Void)?
 
-    // Incoming connection consent
-    struct PendingInvitation: Identifiable {
-        let id = UUID()
-        let peerName: String
-        let respond: (Bool) -> Void
-    }
-    @Published var pendingInvitation: PendingInvitation?
-    /// After a decline, ignore new invitations briefly so a spammy peer
-    /// can't trap the user in a re-presenting consent alert
-    private var lastDeclineAt: Date?
-
-    /// Peers advertising without our protocol marker run an older app version
-    /// that can't complete an encrypted session
-    @Published var outdatedPeers: Set<MCPeerID> = []
-    private static let protocolVersion = "2"
-
     enum ConnectionState {
         case idle
         case searching
@@ -62,11 +46,11 @@ class PeerSyncService: NSObject, ObservableObject {
     }
 
     func startSearching() {
-        let session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .required)
+        let session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .none)
         session.delegate = self
         self.session = session
 
-        let advertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: ["proto": Self.protocolVersion], serviceType: serviceType)
+        let advertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: nil, serviceType: serviceType)
         advertiser.delegate = self
         advertiser.startAdvertisingPeer()
         self.advertiser = advertiser
@@ -79,17 +63,13 @@ class PeerSyncService: NSObject, ObservableObject {
         isSearching = true
         connectionState = .searching
         foundPeers = []
-        outdatedPeers = []
         connectedPeer = nil
         receivedModpack = nil
         transferState = .idle
         transferProgress = 0
-        lastDeclineAt = nil
     }
 
     func stopSearching() {
-        pendingInvitation?.respond(false)
-        pendingInvitation = nil
         advertiser?.stopAdvertisingPeer()
         browser?.stopBrowsingForPeers()
         session?.disconnect()
@@ -101,32 +81,17 @@ class PeerSyncService: NSObject, ObservableObject {
         foundPeers = []
         connectedPeer = nil
         progressObservation = nil
-        // Break the retain cycle: peerService owns this closure, and the closure
-        // (assigned in NearbyCompareSheet) transitively references peerService.
-        onModsReceived = nil
     }
 
     func connectToPeer(_ peer: MCPeerID) {
         guard let session, let browser else { return }
-        if outdatedPeers.contains(peer) {
-            connectionState = .error("\(peer.displayName) is running an older app version — update Stardew Mod Manager on both Macs to sync.")
-            return
-        }
-        // Generous timeout: the other side has to approve the connection prompt
-        browser.invitePeer(peer, to: session, withContext: nil, timeout: 30)
+        browser.invitePeer(peer, to: session, withContext: nil, timeout: 10)
     }
 
     func sendModpack(_ modpack: ShareableModpack) {
-        guard let session, !session.connectedPeers.isEmpty else {
-            connectionState = .error("No connected peer")
-            return
-        }
-        do {
-            let data = try modpack.toJSON()
-            try session.send(data, toPeers: session.connectedPeers, with: .reliable)
-        } catch {
-            connectionState = .error("Send failed: \(error.localizedDescription)")
-        }
+        guard let session, !session.connectedPeers.isEmpty else { return }
+        guard let data = try? modpack.toJSON() else { return }
+        try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
     }
 
     // MARK: - File Transfer
@@ -180,19 +145,8 @@ extension PeerSyncService: MCSessionDelegate {
             case .notConnected:
                 if connectedPeer == peerID {
                     connectedPeer = nil
-                    if case .received = connectionState {
-                        // Keep received state — user is viewing results
-                    } else if case .error = transferState {
-                        // Keep error visible
-                    } else if case .complete = transferState {
-                        // Transfer finished — disconnect is expected
-                    } else if transferState != .idle {
-                        transferState = .error("Connection lost during transfer")
-                    } else {
+                    if case .received = connectionState { } else {
                         connectionState = .searching
-                        // Restart discovery since we stopped it on connect
-                        advertiser?.startAdvertisingPeer()
-                        browser?.startBrowsingForPeers()
                     }
                 }
             case .connecting:
@@ -204,14 +158,10 @@ extension PeerSyncService: MCSessionDelegate {
     }
 
     nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+        guard let modpack = try? ShareableModpack.fromJSON(data) else { return }
         Task { @MainActor in
-            do {
-                let modpack = try ShareableModpack.fromJSON(data)
-                receivedModpack = modpack
-                connectionState = .received
-            } catch {
-                connectionState = .error("Failed to read modpack data")
-            }
+            receivedModpack = modpack
+            connectionState = .received
         }
     }
 
@@ -230,43 +180,26 @@ extension PeerSyncService: MCSessionDelegate {
     }
 
     nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {
-        if let error {
-            Task { @MainActor in
-                progressObservation = nil
-                transferState = .error("Receive failed: \(error.localizedDescription)")
-            }
-            return
-        }
-        guard let localURL else {
-            Task { @MainActor in
-                progressObservation = nil
-                transferState = .error("No file received")
-            }
-            return
-        }
-
-        // Move the received file to a stable location SYNCHRONOUSLY, before this
-        // nonisolated delegate method returns. MultipeerConnectivity reclaims
-        // localURL as soon as we return, so deferring the move into the @MainActor
-        // hop below can lose the file. FileManager is thread-safe, so it is safe to
-        // do this work off the main actor.
-        let stableURL = FileManager.default.temporaryDirectory.appending(path: "received_mods_\(UUID().uuidString).zip")
-        do {
-            try FileManager.default.moveItem(at: localURL, to: stableURL)
-        } catch {
-            Task { @MainActor in
-                progressObservation = nil
-                transferState = .error("Failed to save received file")
-            }
-            return
-        }
-
-        // Now that the bytes are safely staged, hop to the main actor only to
-        // publish state and hand off to the consent flow.
         Task { @MainActor in
             progressObservation = nil
-            transferState = .importing
-            onModsReceived?(stableURL)
+            if let error {
+                transferState = .error("Receive failed: \(error.localizedDescription)")
+                return
+            }
+            guard let localURL else {
+                transferState = .error("No file received")
+                return
+            }
+
+            // Move to a stable temp location (MC's localURL is ephemeral)
+            let stableURL = FileManager.default.temporaryDirectory.appending(path: "received_mods_\(UUID().uuidString).zip")
+            do {
+                try FileManager.default.moveItem(at: localURL, to: stableURL)
+                transferState = .importing
+                onModsReceived?(stableURL)
+            } catch {
+                transferState = .error("Failed to save received file")
+            }
         }
     }
 }
@@ -275,21 +208,9 @@ extension PeerSyncService: MCSessionDelegate {
 
 extension PeerSyncService: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        // Ask the user before joining a session; never auto-accept
+        // Auto-accept invitations
         Task { @MainActor in
-            guard pendingInvitation == nil else {
-                invitationHandler(false, nil)
-                return
-            }
-            if let last = lastDeclineAt, Date().timeIntervalSince(last) < 10 {
-                invitationHandler(false, nil)
-                return
-            }
-            pendingInvitation = PendingInvitation(peerName: peerID.displayName) { [weak self] accept in
-                invitationHandler(accept, accept ? self?.session : nil)
-                if !accept { self?.lastDeclineAt = Date() }
-                self?.pendingInvitation = nil
-            }
+            invitationHandler(true, self.session)
         }
     }
 }
@@ -298,13 +219,9 @@ extension PeerSyncService: MCNearbyServiceAdvertiserDelegate {
 
 extension PeerSyncService: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
-        let isOutdated = info?["proto"] == nil
         Task { @MainActor in
             if !foundPeers.contains(peerID) {
                 foundPeers.append(peerID)
-            }
-            if isOutdated {
-                outdatedPeers.insert(peerID)
             }
         }
     }
@@ -312,7 +229,6 @@ extension PeerSyncService: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         Task { @MainActor in
             foundPeers.removeAll { $0 == peerID }
-            outdatedPeers.remove(peerID)
         }
     }
 }

@@ -91,15 +91,8 @@ actor NexusAPIService {
     }
 
     func downloadLinks(modId: Int, fileId: Int, nxmKey: String, nxmExpires: String) async throws -> [NexusDownloadLink] {
-        // key/expires come from an externally supplied nxm:// link — percent-encode
-        // them so crafted values can't inject extra query parameters
-        var query = URLComponents()
-        query.queryItems = [
-            URLQueryItem(name: "key", value: nxmKey),
-            URLQueryItem(name: "expires", value: nxmExpires),
-        ]
         let request = try buildRequest(
-            path: "/games/\(gameDomain)/mods/\(modId)/files/\(fileId)/download_link.json?\(query.percentEncodedQuery ?? "")"
+            path: "/games/\(gameDomain)/mods/\(modId)/files/\(fileId)/download_link.json?key=\(nxmKey)&expires=\(nxmExpires)"
         )
         let (data, response) = try await performRequest(request)
 
@@ -198,7 +191,7 @@ actor NexusAPIService {
         } ?? ""
 
         let graphqlQuery = """
-        {"query":"{ mods(filter: { gameDomainName: { value: \\"stardewvalley\\" }\(searchFilter) }, sort: [{ \(sortBy.rawValue): { direction: DESC } }], offset: \(offset), count: \(count)) { nodes { modId name summary version author pictureUrl downloads endorsements createdAt updatedAt } } }"}
+        {"query":"{ mods(filter: { gameDomainName: { value: \\"stardewvalley\\" }\(searchFilter) }, sort: [{ \(sortBy.rawValue): { direction: DESC } }], offset: \(offset), count: \(count)) { nodes { modId name summary version author pictureUrl downloads endorsements } } }"}
         """
         request.httpBody = graphqlQuery.data(using: .utf8)
 
@@ -214,8 +207,6 @@ actor NexusAPIService {
             let pictureUrl: String?
             let downloads: Int?
             let endorsements: Int?
-            let createdAt: String?
-            let updatedAt: String?
         }
 
         struct GraphQLResponse: Codable {
@@ -235,8 +226,7 @@ actor NexusAPIService {
                 description: nil, version: m.version, author: m.author,
                 pictureUrl: m.pictureUrl, endorsementCount: m.endorsements,
                 modDownloads: m.downloads, modUniqueDownloads: nil,
-                categoryId: nil, available: nil, status: nil, uploadedBy: nil,
-                createdAt: m.createdAt, updatedAt: m.updatedAt
+                categoryId: nil, available: nil, status: nil, uploadedBy: nil
             )
         }
     }
@@ -248,11 +238,10 @@ actor NexusAPIService {
     // MARK: - Collections
 
     func collectionDetails(slug: String) async throws -> NexusCollectionInfo {
-        // Pass slug as a GraphQL variable so it can't break out of the query string.
         let query = """
-        query($slug: String!) { collectionRevision(slug: $slug, gameDomainName: "\(gameDomain)") { collection { id name summary description user { name } endorsements modCount } } }
+        query { collectionRevision(slug: "\(slug)", gameDomainName: "\(gameDomain)") { collection { id name summary description user { name } endorsements modCount } } }
         """
-        let body: [String: Any] = ["query": query, "variables": ["slug": slug]]
+        let body: [String: Any] = ["query": query]
         let jsonData = try JSONSerialization.data(withJSONObject: body)
 
         var request = try buildGraphQLRequest()
@@ -291,11 +280,10 @@ actor NexusAPIService {
     }
 
     func collectionMods(slug: String) async throws -> [NexusCollectionMod] {
-        // Pass slug as a GraphQL variable so it can't break out of the query string.
         let query = """
-        query($slug: String!) { collectionRevision(slug: $slug, gameDomainName: "\(gameDomain)") { modFiles { mod { modId name } file { fileId } version optional } } }
+        query { collectionRevision(slug: "\(slug)", gameDomainName: "\(gameDomain)") { modFiles { mod { modId name } file { fileId } version optional } } }
         """
-        let body: [String: Any] = ["query": query, "variables": ["slug": slug]]
+        let body: [String: Any] = ["query": query]
         let jsonData = try JSONSerialization.data(withJSONObject: body)
 
         var request = try buildGraphQLRequest()
