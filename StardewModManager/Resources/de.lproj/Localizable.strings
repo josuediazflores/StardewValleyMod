@@ -318,6 +318,7 @@
 "settings_check_updates" = "Nach Updates suchen";
 "settings_checking" = "Prüfe...";
 "settings_up_to_date" = "Du bist auf dem neuesten Stand.";
+"settings_check_failed" = "Suche nach Updates fehlgeschlagen. Prüfe deine Verbindung.";
 "settings_update_available" = "v%@ verfügbar!";
 "settings_update_to" = "Auf v%@ aktualisieren";
 "settings_view_notes" = "Versionshinweise ansehen";

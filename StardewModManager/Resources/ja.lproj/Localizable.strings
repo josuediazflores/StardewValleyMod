@@ -318,6 +318,7 @@
 "settings_check_updates" = "アップデートを確認";
 "settings_checking" = "確認中...";
 "settings_up_to_date" = "最新バージョンです。";
+"settings_check_failed" = "アップデートを確認できませんでした。接続を確認してください。";
 "settings_update_available" = "v%@ が利用可能です！";
 "settings_update_to" = "v%@ にアップデート";
 "settings_view_notes" = "リリースノートを見る";

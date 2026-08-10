@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Hardened-runtime entitlements for Stardew Mod Manager.
+
+  The app is NOT sandboxed. Everything it does under the hardened runtime works
+  without special entitlements:
+    - outbound HTTPS (GitHub, Nexus, CDNs) and local network / Bonjour sync
+    - launching /usr/bin/ditto and /usr/bin/open via Process
+  None of these require an entitlement for a non-sandboxed, hardened-runtime app,
+  so this file is intentionally an empty dictionary.
+
+  Do NOT add App Sandbox entitlements here — the app manages files across the
+  user's game folder and relies on non-sandboxed behavior.
+-->
+<plist version="1.0">
+<dict/>
+</plist>

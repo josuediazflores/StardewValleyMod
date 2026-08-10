@@ -540,6 +540,7 @@ struct AboutSettingsTab: View {
     @Environment(AppState.self) private var appState
     @State private var isChecking = false
     @State private var checkResult: String?
+    @State private var checkFailed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -583,13 +584,21 @@ struct AboutSettingsTab: View {
                 Button {
                     isChecking = true
                     checkResult = nil
+                    checkFailed = false
                     Task {
-                        let update = await UpdateService.checkForUpdate()
-                        appState.availableUpdate = update
-                        if let update {
-                            checkResult = L.s("settings_update_available", update.version)
-                        } else {
-                            checkResult = L.s("settings_up_to_date")
+                        do {
+                            let update = try await UpdateService.checkForUpdate()
+                            appState.availableUpdate = update
+                            if let update {
+                                checkResult = L.s("settings_update_available", update.version)
+                            } else {
+                                checkResult = L.s("settings_up_to_date")
+                            }
+                        } catch {
+                            // Manual check: surface the failure so the user knows it didn't
+                            // just come back "up to date".
+                            checkFailed = true
+                            checkResult = L.s("settings_check_failed")
                         }
                         isChecking = false
                     }
@@ -623,7 +632,7 @@ struct AboutSettingsTab: View {
                 if let result = checkResult {
                     Text(result)
                         .font(.stardew(size: 14))
-                        .foregroundStyle(appState.availableUpdate != nil ? Color.stardewOrange : Color.stardewGreen)
+                        .foregroundStyle(checkFailed ? Color.stardewRed : (appState.availableUpdate != nil ? Color.stardewOrange : Color.stardewGreen))
                 }
             }
 

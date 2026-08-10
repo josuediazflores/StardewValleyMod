@@ -318,6 +318,7 @@
 "settings_check_updates" = "检查更新";
 "settings_checking" = "检查中...";
 "settings_up_to_date" = "已是最新版本。";
+"settings_check_failed" = "无法检查更新。请检查网络连接。";
 "settings_update_available" = "v%@ 可用！";
 "settings_update_to" = "更新到 v%@";
 "settings_view_notes" = "查看更新日志";

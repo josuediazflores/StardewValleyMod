@@ -318,6 +318,7 @@
 "settings_check_updates" = "업데이트 확인";
 "settings_checking" = "확인 중...";
 "settings_up_to_date" = "최신 버전입니다.";
+"settings_check_failed" = "업데이트를 확인할 수 없습니다. 연결을 확인하세요.";
 "settings_update_available" = "v%@ 사용 가능!";
 "settings_update_to" = "v%@(으)로 업데이트";
 "settings_view_notes" = "릴리스 노트 보기";

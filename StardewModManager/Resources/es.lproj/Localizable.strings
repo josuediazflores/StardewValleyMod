@@ -318,6 +318,7 @@
 "settings_check_updates" = "Buscar actualizaciones";
 "settings_checking" = "Comprobando...";
 "settings_up_to_date" = "Estás al día.";
+"settings_check_failed" = "No se pudieron buscar actualizaciones. Comprueba tu conexión.";
 "settings_update_available" = "¡v%@ disponible!";
 "settings_update_to" = "Actualizar a v%@";
 "settings_view_notes" = "Ver notas de versión";

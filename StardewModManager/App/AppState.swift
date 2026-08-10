@@ -671,9 +671,14 @@ final class AppState {
 
     func checkForAppUpdate() {
         Task {
-            availableUpdate = await UpdateService.checkForUpdate()
-            if availableUpdate != nil {
-                showAppUpdatePrompt = true
+            do {
+                availableUpdate = try await UpdateService.checkForUpdate()
+                if availableUpdate != nil {
+                    showAppUpdatePrompt = true
+                }
+            } catch {
+                // Silent startup check: don't interrupt the user, just log.
+                NSLog("[AppState] Silent app-update check failed: \(error.localizedDescription)")
             }
         }
     }

@@ -318,6 +318,7 @@
 "settings_check_updates" = "Проверить обновления";
 "settings_checking" = "Проверка...";
 "settings_up_to_date" = "Установлена последняя версия.";
+"settings_check_failed" = "Не удалось проверить обновления. Проверьте подключение.";
 "settings_update_available" = "Доступна v%@!";
 "settings_update_to" = "Обновить до v%@";
 "settings_view_notes" = "Заметки о выпуске";

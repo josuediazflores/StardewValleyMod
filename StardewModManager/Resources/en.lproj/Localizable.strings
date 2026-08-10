@@ -327,6 +327,7 @@
 "settings_check_updates" = "Check for Updates";
 "settings_checking" = "Checking...";
 "settings_up_to_date" = "You're up to date.";
+"settings_check_failed" = "Couldn't check for updates. Check your connection.";
 "settings_update_available" = "v%@ available!";
 "settings_update_to" = "Update to v%@";
 "settings_view_notes" = "View Release Notes";
