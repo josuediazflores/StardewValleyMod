@@ -107,9 +107,37 @@ enum ModpackService {
         var alreadyCorrect = 0
 
         // Duplicate folders for the same mod can exist on disk (e.g. one enabled copy
-        // and one disabled copy), so track every instance per uniqueID
-        let modsByID = Dictionary(grouping: mods.filter { !$0.isBuiltIn }, by: \.id)
-        let entryIDs = Set(modpack.entries.map(\.uniqueID))
+        // and one disabled copy), so track every instance per uniqueID. Keys are
+        // lowercased because SMAPI treats uniqueIDs case-insensitively.
+        let userMods = mods.filter { !$0.isBuiltIn }
+        let modsByID = Dictionary(grouping: userMods, by: { $0.id.lowercased() })
+        // Collection entries carry no SMAPI id (only a Nexus mod id), so also index by
+        // nexusModID to resolve them to already-installed mods.
+        let modsByNexusID = Dictionary(grouping: userMods.filter { $0.nexusModID != nil }, by: { $0.nexusModID! })
+
+        let entryIDs = Set(modpack.entries.map { $0.uniqueID.lowercased() })
+        let entryNexusIDs = Set(modpack.entries.compactMap { $0.nexusModID })
+
+        // An installed mod belongs to this profile if its uniqueID matches an entry
+        // (case-insensitive) OR its Nexus mod id matches an entry's — so collection
+        // mods the user already has are never treated as "not in the profile".
+        func isInProfile(_ mod: Mod) -> Bool {
+            if entryIDs.contains(mod.id.lowercased()) { return true }
+            if let nexusID = mod.nexusModID, entryNexusIDs.contains(nexusID) { return true }
+            return false
+        }
+
+        // Resolve an entry to its installed instances, falling back to nexusModID when
+        // the (normalized) uniqueID matches nothing installed.
+        func instances(for entry: ModpackEntry) -> [Mod] {
+            if let byID = modsByID[entry.uniqueID.lowercased()], !byID.isEmpty {
+                return byID
+            }
+            if let nexusID = entry.nexusModID, let byNexus = modsByNexusID[nexusID], !byNexus.isEmpty {
+                return byNexus
+            }
+            return []
+        }
 
         func disable(_ mod: Mod) {
             do {
@@ -122,8 +150,9 @@ enum ModpackService {
 
         // Process each entry in the modpack
         for entry in modpack.entries {
-            guard let instances = modsByID[entry.uniqueID], !instances.isEmpty else {
-                if mods.contains(where: { $0.isBuiltIn && $0.id == entry.uniqueID }) {
+            let matched = instances(for: entry)
+            guard !matched.isEmpty else {
+                if mods.contains(where: { $0.isBuiltIn && $0.id.caseInsensitiveCompare(entry.uniqueID) == .orderedSame }) {
                     alreadyCorrect += 1
                 } else if entry.isEnabled {
                     // A profile listing an uninstalled mod as disabled is vacuously satisfied
@@ -134,16 +163,16 @@ enum ModpackService {
 
             if entry.isEnabled {
                 // Keep exactly one instance enabled; extra enabled copies get disabled
-                if let enabledInstance = instances.first(where: \.isEnabled) {
+                if let enabledInstance = matched.first(where: \.isEnabled) {
                     alreadyCorrect += 1
-                    for extra in instances where extra !== enabledInstance && extra.isEnabled {
+                    for extra in matched where extra !== enabledInstance && extra.isEnabled {
                         disable(extra)
                     }
                 } else {
                     // Several disabled copies can exist — enable the newest one
-                    let candidate = instances.max(by: {
+                    let candidate = matched.max(by: {
                         $0.manifest.version.compare($1.manifest.version, options: .numeric) == .orderedAscending
-                    }) ?? instances[0]
+                    }) ?? matched[0]
                     do {
                         try ModManagementService.enableMod(candidate, settings: settings)
                         enabledNames.append(candidate.manifest.name)
@@ -152,8 +181,8 @@ enum ModpackService {
                     }
                 }
             } else {
-                if instances.contains(where: \.isEnabled) {
-                    for instance in instances where instance.isEnabled {
+                if matched.contains(where: \.isEnabled) {
+                    for instance in matched where instance.isEnabled {
                         disable(instance)
                     }
                 } else {
@@ -163,7 +192,7 @@ enum ModpackService {
         }
 
         // Disable mods not in the modpack (they're not part of this profile)
-        for mod in mods where !mod.isBuiltIn && !entryIDs.contains(mod.id) && mod.isEnabled {
+        for mod in userMods where !isInProfile(mod) && mod.isEnabled {
             disable(mod)
         }
 
@@ -334,11 +363,21 @@ enum ModpackService {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            var modpack = try decoder.decode(Modpack.self, from: data)
-            modpack.source = .imported(fileName: url.lastPathComponent)
+            let decoded = try decoder.decode(Modpack.self, from: data)
+            // Assign a fresh id so importing the same file twice can't create two
+            // modpacks that collide on identity (which breaks ForEach/selection).
             // Untrusted: only the app itself ever sets a real bundle folder name.
-            modpack.bundleFolderName = nil
-            return modpack
+            return Modpack(
+                id: UUID(),
+                name: decoded.name,
+                description: decoded.description,
+                entries: decoded.entries,
+                source: .imported(fileName: url.lastPathComponent),
+                includesFiles: decoded.includesFiles,
+                bundleFolderName: nil,
+                createdAt: decoded.createdAt,
+                updatedAt: decoded.updatedAt
+            )
         } catch let error as ModpackError {
             throw error
         } catch {
@@ -372,7 +411,20 @@ enum ModpackService {
             let data = try Data(contentsOf: manifestURL)
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            modpack = try decoder.decode(Modpack.self, from: data)
+            let decoded = try decoder.decode(Modpack.self, from: data)
+            // Assign a fresh id: reusing the file's UUID lets a repeated import
+            // create identity-colliding modpacks (breaks ForEach/selection).
+            modpack = Modpack(
+                id: UUID(),
+                name: decoded.name,
+                description: decoded.description,
+                entries: decoded.entries,
+                source: decoded.source,
+                includesFiles: decoded.includesFiles,
+                bundleFolderName: nil,
+                createdAt: decoded.createdAt,
+                updatedAt: decoded.updatedAt
+            )
         } else {
             // No modpack.json — create one from discovered mods
             let now = Date()
@@ -397,8 +449,8 @@ enum ModpackService {
         let modFolders = findModFolders(in: modsDir, fm: fm)
         for modFolder in modFolders {
             do {
-                let imported = try ModManagementService.importMod(from: modFolder, settings: settings, existingMods: existingMods)
-                importedMods.append(contentsOf: imported)
+                let result = try ModManagementService.importMod(from: modFolder, settings: settings, existingMods: existingMods)
+                importedMods.append(contentsOf: result.mods)
             } catch {
                 // Skip individual mods that fail to import
                 continue

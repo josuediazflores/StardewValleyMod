@@ -9,7 +9,9 @@ struct DependencyWarning {
 enum DependencyResolver {
     /// Resolves dependencies for all mods and populates their resolvedDependencies.
     static func resolveAll(mods: [Mod]) {
-        let lookup = Dictionary(mods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        // SMAPI treats uniqueIDs case-insensitively; key by lowercased id and, when
+        // duplicate on-disk copies share an id, prefer the enabled one for status.
+        let lookup = Dictionary(mods.map { ($0.id.lowercased(), $0) }, uniquingKeysWith: { $0.isEnabled ? $0 : $1 })
 
         for mod in mods {
             var resolved: [ResolvedDependency] = []
@@ -20,7 +22,7 @@ enum DependencyResolver {
                     let status: DependencyStatus
                     let depName: String?
 
-                    if let depMod = lookup[dep.uniqueID] {
+                    if let depMod = lookup[dep.uniqueID.lowercased()] {
                         depName = depMod.manifest.name
                         status = depMod.isEnabled ? .satisfied : .disabled
                     } else {
@@ -38,7 +40,7 @@ enum DependencyResolver {
                 let status: DependencyStatus
                 let depName: String?
 
-                if let depMod = lookup[cpf.uniqueID] {
+                if let depMod = lookup[cpf.uniqueID.lowercased()] {
                     depName = depMod.manifest.name
                     status = depMod.isEnabled ? .satisfied : .disabled
                 } else {
@@ -56,17 +58,17 @@ enum DependencyResolver {
     /// Checks what would break if a mod is disabled. Returns warning if other mods depend on it.
     static func checkDisableImpact(mod: Mod, allMods: [Mod]) -> DependencyWarning? {
         let dependents = allMods.filter { otherMod in
-            guard otherMod.isEnabled, otherMod.id != mod.id else { return false }
+            guard otherMod.isEnabled, otherMod.id.caseInsensitiveCompare(mod.id) != .orderedSame else { return false }
 
             // Check explicit dependencies
             if let deps = otherMod.manifest.dependencies {
-                if deps.contains(where: { $0.uniqueID == mod.id && $0.isRequired }) {
+                if deps.contains(where: { $0.uniqueID.caseInsensitiveCompare(mod.id) == .orderedSame && $0.isRequired }) {
                     return true
                 }
             }
 
             // Check ContentPackFor
-            if otherMod.manifest.contentPackFor?.uniqueID == mod.id {
+            if otherMod.manifest.contentPackFor?.uniqueID.caseInsensitiveCompare(mod.id) == .orderedSame {
                 return true
             }
 
@@ -85,12 +87,13 @@ enum DependencyResolver {
 
     /// Checks what dependencies are missing/disabled when enabling a mod.
     static func checkEnableRequirements(mod: Mod, allMods: [Mod]) -> DependencyWarning? {
-        let lookup = Dictionary(allMods.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        // Key by lowercased id (SMAPI is case-insensitive); prefer the enabled copy.
+        let lookup = Dictionary(allMods.map { ($0.id.lowercased(), $0) }, uniquingKeysWith: { $0.isEnabled ? $0 : $1 })
         var issues: [String] = []
 
         if let deps = mod.manifest.dependencies {
             for dep in deps where dep.isRequired {
-                if let depMod = lookup[dep.uniqueID] {
+                if let depMod = lookup[dep.uniqueID.lowercased()] {
                     if !depMod.isEnabled {
                         issues.append("\"\(depMod.manifest.name)\" is disabled")
                     }
@@ -101,7 +104,7 @@ enum DependencyResolver {
         }
 
         if let cpf = mod.manifest.contentPackFor {
-            if let depMod = lookup[cpf.uniqueID] {
+            if let depMod = lookup[cpf.uniqueID.lowercased()] {
                 if !depMod.isEnabled {
                     issues.append("\"\(depMod.manifest.name)\" is disabled")
                 }

@@ -27,12 +27,20 @@ actor ExternalDownloadService {
 
     static func detectURLType(_ urlString: String) -> URLType {
         let lowered = urlString.lowercased()
+        let host = URL(string: urlString)?.host?.lowercased()
 
-        if lowered.contains("drive.google.com") {
+        // Match on the parsed host (and its subdomains) so a crafted path or query
+        // can't spoof a trusted platform.
+        func hostMatches(_ domain: String) -> Bool {
+            guard let host else { return false }
+            return host == domain || host.hasSuffix("." + domain)
+        }
+
+        if hostMatches("drive.google.com") {
             return .googleDrive
         }
 
-        if lowered.contains("nexusmods.com") && lowered.contains("collection") {
+        if hostMatches("nexusmods.com") && lowered.contains("collection") {
             return .nexusCollection
         }
 

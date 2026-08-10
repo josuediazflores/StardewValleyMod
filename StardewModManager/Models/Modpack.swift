@@ -1,7 +1,7 @@
 import Foundation
 
 struct ModpackEntry: Codable, Identifiable, Hashable {
-    let uniqueID: String
+    var uniqueID: String
     let name: String
     let version: String?
     let nexusModID: Int?
@@ -59,8 +59,16 @@ struct TrustWarning {
 
     static func forURL(_ urlString: String) -> TrustWarning {
         let lowered = urlString.lowercased()
+        let host = URL(string: urlString)?.host?.lowercased()
 
-        if lowered.contains("drive.google.com") {
+        // Match on the parsed host (and its subdomains) so a crafted path or query
+        // like "evil.com/nexusmods.com" can't masquerade as a trusted source.
+        func hostMatches(_ domain: String) -> Bool {
+            guard let host else { return false }
+            return host == domain || host.hasSuffix("." + domain)
+        }
+
+        if hostMatches("drive.google.com") {
             return TrustWarning(
                 sourceURL: urlString,
                 message: "This file is hosted on Google Drive. Google Drive links can be modified by the uploader at any time.",
@@ -72,7 +80,7 @@ struct TrustWarning {
             )
         }
 
-        if lowered.contains("nexusmods.com") {
+        if hostMatches("nexusmods.com") {
             return TrustWarning(
                 sourceURL: urlString,
                 message: "This file is from Nexus Mods, a trusted modding platform.",

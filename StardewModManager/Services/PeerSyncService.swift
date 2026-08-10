@@ -209,6 +209,9 @@ extension PeerSyncService: MCSessionDelegate {
                 let modpack = try ShareableModpack.fromJSON(data)
                 receivedModpack = modpack
                 connectionState = .received
+            } catch let error as ShareableModpackError {
+                // Surface the specific reason (e.g. a newer-format modpack) to the user.
+                connectionState = .error(error.localizedDescription)
             } catch {
                 connectionState = .error("Failed to read modpack data")
             }

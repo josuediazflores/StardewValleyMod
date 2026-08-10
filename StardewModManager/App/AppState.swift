@@ -309,13 +309,14 @@ final class AppState {
             ))
         }
         modpacks[idx].updatedAt = Date()
-        try? ModpackService.saveModpacks(modpacks, settings: settings)
+        persistModpacks()
     }
 
     func deleteMod(_ mod: Mod) {
         do {
             try ModManagementService.deleteMod(mod)
-            mods.removeAll { $0.id == mod.id }
+            // Remove only this on-disk instance; a same-ID duplicate copy must survive.
+            mods.removeAll { $0.folderURL == mod.folderURL }
             if selectedModID == mod.id { selectedModID = nil }
             removeModFromAllModpacks(mod.id)
             DependencyResolver.resolveAll(mods: mods)
@@ -326,17 +327,19 @@ final class AppState {
 
     func importMods(from urls: [URL]) {
         var allImported: [Mod] = []
+        var allFailures: [ImportFailure] = []
         for url in urls {
             do {
                 let securityScoped = url.startAccessingSecurityScopedResource()
                 defer { if securityScoped { url.stopAccessingSecurityScopedResource() } }
 
-                let imported = try ModManagementService.importMod(from: url, settings: settings, existingMods: mods)
-                for newMod in imported {
+                let result = try ModManagementService.importMod(from: url, settings: settings, existingMods: mods)
+                for newMod in result.mods {
                     mods.removeAll { $0.id == newMod.id }
                     mods.append(newMod)
                     allImported.append(newMod)
                 }
+                allFailures.append(contentsOf: result.failures)
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -348,9 +351,15 @@ final class AppState {
             showToast("Imported \(allImported.count) mod\(allImported.count == 1 ? "" : "s")", type: .success)
             SoundService.play(.bigSelect)
         }
+        if !allFailures.isEmpty {
+            let names = allFailures.prefix(3).map(\.name).joined(separator: ", ")
+            let suffix = allFailures.count > 3 ? ", …" : ""
+            showToast("\(allFailures.count) mod\(allFailures.count == 1 ? "" : "s") failed to import: \(names)\(suffix)", type: .warning)
+        }
     }
 
-    /// Auto-adds newly installed mods to the active modpack as disabled entries
+    /// Auto-adds newly installed mods to the active modpack, recording each mod's
+    /// actual on-disk enabled state (imported mods install enabled).
     private func addNewModsToActiveModpack(_ newMods: [Mod]) {
         guard !newMods.isEmpty, let activeID = activeModpackID,
               let idx = modpacks.firstIndex(where: { $0.id == activeID }) else { return }
@@ -362,12 +371,12 @@ final class AppState {
                 version: mod.manifest.version,
                 nexusModID: mod.nexusModID,
                 nexusFileID: nil,
-                isEnabled: false
+                isEnabled: mod.isEnabled
             )
             modpacks[idx].entries.append(entry)
         }
         modpacks[idx].updatedAt = Date()
-        try? ModpackService.saveModpacks(modpacks, settings: settings)
+        persistModpacks()
     }
 
     // MARK: - Update Checking
@@ -459,16 +468,21 @@ final class AppState {
     func installPendingNXMToCurrentProfile() {
         guard let zipURL = pendingNXMZipURL else { return }
         do {
-            let imported = try ModManagementService.importMod(from: zipURL, settings: settings, existingMods: mods)
+            let result = try ModManagementService.importMod(from: zipURL, settings: settings, existingMods: mods)
             try? FileManager.default.removeItem(at: zipURL)
-            for newMod in imported {
+            for newMod in result.mods {
                 mods.removeAll { $0.id == newMod.id }
                 mods.append(newMod)
             }
             mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
             DependencyResolver.resolveAll(mods: mods)
-            pendingNXMMods = imported
-            addNewModsToActiveModpack(imported)
+            pendingNXMMods = result.mods
+            addNewModsToActiveModpack(result.mods)
+            if !result.failures.isEmpty {
+                let names = result.failures.prefix(3).map(\.name).joined(separator: ", ")
+                let suffix = result.failures.count > 3 ? ", …" : ""
+                showToast("\(result.failures.count) mod\(result.failures.count == 1 ? "" : "s") failed to install: \(names)\(suffix)", type: .warning)
+            }
         } catch {
             errorMessage = "Failed to install mod: \(error.localizedDescription)"
         }
@@ -502,7 +516,7 @@ final class AppState {
                             isEnabled: true
                         )
                     }
-                    try? ModpackService.saveModpacks(modpacks, settings: settings)
+                    persistModpacks()
                 }
             }
         }
@@ -521,19 +535,24 @@ final class AppState {
     func addModsToModpack(_ modpackID: UUID, mods modsToAdd: [Mod]) {
         guard let index = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
         for mod in modsToAdd {
-            let entry = ModpackEntry(
-                uniqueID: mod.id,
-                name: mod.manifest.name,
-                version: mod.manifest.version,
-                nexusModID: mod.nexusModID,
-                nexusFileID: nil,
-                isEnabled: true
-            )
-            if !modpacks[index].entries.contains(where: { $0.uniqueID == entry.uniqueID }) {
-                modpacks[index].entries.append(entry)
+            // Mods are being explicitly added to this profile, so enable them. Update
+            // an existing entry to enabled rather than skipping it.
+            if let existingIdx = modpacks[index].entries.firstIndex(where: {
+                $0.uniqueID.caseInsensitiveCompare(mod.id) == .orderedSame
+            }) {
+                modpacks[index].entries[existingIdx].isEnabled = true
+            } else {
+                modpacks[index].entries.append(ModpackEntry(
+                    uniqueID: mod.id,
+                    name: mod.manifest.name,
+                    version: mod.manifest.version,
+                    nexusModID: mod.nexusModID,
+                    nexusFileID: nil,
+                    isEnabled: true
+                ))
             }
         }
-        try? ModpackService.saveModpacks(modpacks, settings: settings)
+        persistModpacks()
     }
 
     // MARK: - Import from Nexus URL
@@ -692,6 +711,8 @@ final class AppState {
         let originalURLs: [URL]
         let wasEnabled: [Bool]
         let stagingURLs: [URL]
+        /// Modpack membership stripped on delete, captured so undo can restore it.
+        let removedEntries: [(modpackID: UUID, entry: ModpackEntry)]
     }
 
     var pendingDeletions: [PendingDeletion] = []
@@ -715,7 +736,9 @@ final class AppState {
                 stagingURLs.append(stagingURL)
                 deletedMods.append(mod)
 
-                mods.removeAll { $0.id == mod.id }
+                // Drop only the trashed on-disk instance; a same-ID duplicate copy
+                // (a supported state) at a different path must survive.
+                mods.removeAll { $0.folderURL == mod.folderURL }
                 if selectedModID == mod.id { selectedModID = nil }
             } catch {
                 errorMessage = error.localizedDescription
@@ -723,6 +746,16 @@ final class AppState {
         }
 
         guard !deletedMods.isEmpty else { return }
+
+        // Capture the modpack entries about to be stripped so undo can put them back.
+        let deletedIDs = deletedMods.map(\.id)
+        var removedEntries: [(modpackID: UUID, entry: ModpackEntry)] = []
+        for modpack in modpacks {
+            for entry in modpack.entries
+            where deletedIDs.contains(where: { $0.caseInsensitiveCompare(entry.uniqueID) == .orderedSame }) {
+                removedEntries.append((modpackID: modpack.id, entry: entry))
+            }
+        }
 
         for mod in deletedMods {
             removeModFromAllModpacks(mod.id)
@@ -734,7 +767,8 @@ final class AppState {
             mods: deletedMods,
             originalURLs: originalURLs,
             wasEnabled: wasEnabled,
-            stagingURLs: stagingURLs
+            stagingURLs: stagingURLs,
+            removedEntries: removedEntries
         )
         pendingDeletions.append(pending)
 
@@ -775,6 +809,22 @@ final class AppState {
 
         mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
         DependencyResolver.resolveAll(mods: mods)
+
+        // Restore the modpack membership that softDeleteMods stripped, guarding
+        // against modpacks that no longer exist and against re-adding duplicates.
+        var modpacksChanged = false
+        for removed in pending.removedEntries {
+            guard let idx = modpacks.firstIndex(where: { $0.id == removed.modpackID }) else { continue }
+            if !modpacks[idx].entries.contains(where: { $0.uniqueID.caseInsensitiveCompare(removed.entry.uniqueID) == .orderedSame }) {
+                modpacks[idx].entries.append(removed.entry)
+                modpacks[idx].updatedAt = Date()
+                modpacksChanged = true
+            }
+        }
+        if modpacksChanged {
+            persistModpacks()
+        }
+
         pendingDeletions.remove(at: pendingIndex)
 
         let restoredName = pending.mods.count == 1
@@ -820,9 +870,11 @@ final class AppState {
         for id in ids {
             guard let mod = mods.first(where: { $0.id == id }), mod.isEnabled, !mod.isBuiltIn else { continue }
             do {
-                syncActiveModpackEntry(mod: mod, isEnabled: false)
                 try ModManagementService.disableMod(mod, settings: settings)
                 pruneStaleDuplicates(of: mod)
+                // Sync only after the disk move succeeds, mirroring batchEnableMods,
+                // so a failed move can't leave the profile recording a wrong state.
+                syncActiveModpackEntry(mod: mod, isEnabled: false)
                 disabledCount += 1
             } catch { failedCount += 1 }
         }
@@ -997,15 +1049,20 @@ final class AppState {
                 return
             }
 
-            let imported = try ModManagementService.importMod(from: zipURL, settings: settings, existingMods: mods)
+            let result = try ModManagementService.importMod(from: zipURL, settings: settings, existingMods: mods)
             try? FileManager.default.removeItem(at: zipURL)
 
-            for newMod in imported {
+            for newMod in result.mods {
                 mods.removeAll { $0.id == newMod.id }
                 mods.append(newMod)
             }
             mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
             DependencyResolver.resolveAll(mods: mods)
+            if !result.failures.isEmpty {
+                let names = result.failures.prefix(3).map(\.name).joined(separator: ", ")
+                let suffix = result.failures.count > 3 ? ", …" : ""
+                showToast("\(result.failures.count) mod\(result.failures.count == 1 ? "" : "s") failed to install: \(names)\(suffix)", type: .warning)
+            }
         } catch NexusAPIError.premiumRequired {
             isNexusLoading = false
             openWebDownloadSheet(modId: modId, modName: "Mod #\(modId)")
@@ -1035,6 +1092,17 @@ final class AppState {
 
     func loadModpacks() {
         modpacks = ModpackService.loadModpacks(settings: settings)
+    }
+
+    /// Persists modpacks, surfacing a failure via errorMessage instead of silently
+    /// dropping it. Used by the entry-mutation/sync sites that previously swallowed
+    /// the save error with `try?`.
+    private func persistModpacks() {
+        do {
+            try ModpackService.saveModpacks(modpacks, settings: settings)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     /// Creates a default modpack from pre-existing mods on first launch
@@ -1155,14 +1223,16 @@ final class AppState {
 
     func importModpackFromClipboard() {
         guard let string = NSPasteboard.general.string(forType: .string),
-              let data = string.data(using: .utf8),
-              let shareable = try? ShareableModpack.fromJSON(data) else {
+              let data = string.data(using: .utf8) else {
             errorMessage = "No valid modpack data found in clipboard."
             return
         }
-        let modpack = shareable.toModpack()
-        modpacks.append(modpack)
         do {
+            // Decode inside the do/catch so a version-mismatch (or any decode) error
+            // is surfaced instead of being swallowed into a generic message.
+            let shareable = try ShareableModpack.fromJSON(data)
+            let modpack = shareable.toModpack()
+            modpacks.append(modpack)
             try ModpackService.saveModpacks(modpacks, settings: settings)
         } catch {
             errorMessage = error.localizedDescription
@@ -1246,7 +1316,10 @@ final class AppState {
 
             let entries = collectionMods.map { cm in
                 ModpackEntry(
-                    uniqueID: "",
+                    // Nexus gives no SMAPI id; use a stable non-empty synthetic id so
+                    // entries don't all collide on "" and applyModpack can still resolve
+                    // them to installed mods via nexusModID.
+                    uniqueID: "nexus:\(cm.modId)",
                     name: cm.name,
                     version: cm.version,
                     nexusModID: cm.modId,
@@ -1294,14 +1367,14 @@ final class AppState {
         }
 
         modpacks[idx].updatedAt = Date()
-        try? ModpackService.saveModpacks(modpacks, settings: settings)
+        persistModpacks()
     }
 
     func removeModpackEntry(modpackID: UUID, entryID: String) {
         guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
         modpacks[idx].entries.removeAll { $0.uniqueID == entryID }
         modpacks[idx].updatedAt = Date()
-        try? ModpackService.saveModpacks(modpacks, settings: settings)
+        persistModpacks()
     }
 
     func batchToggleModpackEntries(modpackID: UUID, entryIDs: Set<String>, enabled: Bool) {
@@ -1312,7 +1385,7 @@ final class AppState {
             }
         }
         modpacks[idx].updatedAt = Date()
-        try? ModpackService.saveModpacks(modpacks, settings: settings)
+        persistModpacks()
     }
 
     func removeModFromAllModpacks(_ modID: String) {
@@ -1326,7 +1399,7 @@ final class AppState {
             }
         }
         if changed {
-            try? ModpackService.saveModpacks(modpacks, settings: settings)
+            persistModpacks()
         }
     }
 
@@ -1334,7 +1407,7 @@ final class AppState {
         guard let idx = modpacks.firstIndex(where: { $0.id == modpackID }) else { return }
         modpacks[idx].entries.removeAll { entryIDs.contains($0.uniqueID) }
         modpacks[idx].updatedAt = Date()
-        try? ModpackService.saveModpacks(modpacks, settings: settings)
+        persistModpacks()
     }
 
     func addModToModpack(modpackID: UUID, mod: Mod) {
@@ -1346,6 +1419,6 @@ final class AppState {
         )
         modpacks[idx].entries.append(entry)
         modpacks[idx].updatedAt = Date()
-        try? ModpackService.saveModpacks(modpacks, settings: settings)
+        persistModpacks()
     }
 }

@@ -1,6 +1,20 @@
 import Foundation
 
+enum ShareableModpackError: LocalizedError {
+    case unsupportedFormatVersion(found: Int, supported: Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .unsupportedFormatVersion:
+            return "This modpack was made with a newer version of Stardew Mod Manager. Please update to import it."
+        }
+    }
+}
+
 struct ShareableModpack: Codable {
+    /// Highest modpack format version this build knows how to read.
+    static let currentSupportedFormatVersion = 1
+
     let formatVersion: Int
     let name: String
     let description: String
@@ -71,6 +85,13 @@ struct ShareableModpack: Codable {
     static func fromJSON(_ data: Data) throws -> ShareableModpack {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(ShareableModpack.self, from: data)
+        let modpack = try decoder.decode(ShareableModpack.self, from: data)
+        guard modpack.formatVersion <= currentSupportedFormatVersion else {
+            throw ShareableModpackError.unsupportedFormatVersion(
+                found: modpack.formatVersion,
+                supported: currentSupportedFormatVersion
+            )
+        }
+        return modpack
     }
 }
