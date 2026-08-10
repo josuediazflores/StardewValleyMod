@@ -4,3 +4,6 @@ build/
 *.xcodeproj/xcuserdata/
 DerivedData/
 .DS_Store
+
+# Claude Code session data and agent worktrees
+.claude/
