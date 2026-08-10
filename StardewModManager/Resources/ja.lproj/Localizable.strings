@@ -341,6 +341,7 @@
 "sort_help" = "並び替え";
 "theme_stardew" = "Stardew";
 "theme_pink" = "ピンク";
+"theme_night" = "ナイト";
 "settings_smapi_console" = "起動時にSMAPIコンソールを表示";
 "file_picker_title" = "ファイルを選択";
 "file_picker_subtitle" = "このModには複数のファイルがあります。インストールするものを選んでください。";
@@ -350,3 +351,9 @@
 "nearby_invite_message" = "承認すると、近くのMacとModパックを比較・同期できます。";
 "nearby_invite_accept" = "承認";
 "nearby_invite_decline" = "拒否";
+
+/* Phase 5 additions: UI/UX & accessibility */
+"installed_update_filter_help" = "更新可能なMODを表示";
+"modpack_builtin" = "組み込み";
+"onboarding_skip_setup" = "セットアップをスキップ";
+"onboarding_path_warning" = "セットアップは後で「設定」から完了できます。";

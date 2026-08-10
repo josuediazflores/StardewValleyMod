@@ -24,6 +24,7 @@ struct ModpackListView: View {
                         HStack(spacing: 8) {
                             JunimoIcon(name: appState.selectedJunimoName, size: 24)
                                 .frame(width: 24, height: 24)
+                                .accessibilityHidden(true)
                             Text(L.s("modpack_list_play"))
                                 .font(.stardew(size: 24))
                                 .foregroundStyle(Color.textDark)
@@ -182,7 +183,7 @@ struct ModpackListView: View {
                         .font(.stardew(size: 18))
                         .foregroundStyle(Color.textDark)
 
-                    Text(L.s("modpack_list_vanilla"))
+                    Text(L.s("modpack_builtin"))
                         .font(.stardew(size: 12))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)

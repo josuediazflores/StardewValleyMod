@@ -3,6 +3,7 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(AppState.self) private var appState
     @State private var currentStep = 0
+    @State private var showPathWarning = false
 
     private let totalSteps = 4
 
@@ -33,6 +34,15 @@ struct OnboardingView: View {
             // Bottom navigation
             VStack(spacing: 16) {
                 Color.frameBorder.frame(height: 2)
+
+                // Gentle, non-blocking nudge when the game path is not yet valid.
+                if currentStep == 1, showPathWarning, !appState.settings.isGamePathValid {
+                    Text(L.s("onboarding_path_warning"))
+                        .font(.stardew(size: 14))
+                        .foregroundStyle(Color.stardewOrange)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                }
 
                 HStack {
                     // Back button
@@ -72,16 +82,7 @@ struct OnboardingView: View {
 
                     // Next / Get Started button
                     Button {
-                        if currentStep < totalSteps - 1 {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                currentStep += 1
-                            }
-                        } else {
-                            appState.createInitialModpackIfNeeded()
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                appState.settings.hasCompletedOnboarding = true
-                            }
-                        }
+                        advance()
                     } label: {
                         Text(nextButtonText)
                             .font(.stardew(size: 18))
@@ -98,6 +99,7 @@ struct OnboardingView: View {
                             )
                     }
                     .buttonStyle(.plain)
+                    .keyboardShortcut(.defaultAction)
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
@@ -108,6 +110,47 @@ struct OnboardingView: View {
             RoundedRectangle(cornerRadius: 0)
                 .stroke(Color.frameBorder, lineWidth: 4)
         )
+        .overlay(alignment: .topTrailing) {
+            Button {
+                skipSetup()
+            } label: {
+                Text(L.s("onboarding_skip_setup"))
+                    .font(.stardew(size: 14))
+                    .foregroundStyle(Color.textMuted)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+            }
+            .buttonStyle(.plain)
+            .help(L.s("onboarding_skip_setup"))
+        }
+    }
+
+    /// Advances the flow. On the game-path step it surfaces a gentle, non-blocking
+    /// warning the first time the user continues without a valid path; a second
+    /// press proceeds.
+    private func advance() {
+        if currentStep < totalSteps - 1 {
+            if currentStep == 1, !appState.settings.isGamePathValid, !showPathWarning {
+                withAnimation(.easeInOut(duration: 0.2)) { showPathWarning = true }
+                return
+            }
+            withAnimation(.easeInOut(duration: 0.3)) {
+                currentStep += 1
+            }
+        } else {
+            finishOnboarding()
+        }
+    }
+
+    private func skipSetup() {
+        finishOnboarding()
+    }
+
+    private func finishOnboarding() {
+        appState.createInitialModpackIfNeeded()
+        withAnimation(.easeInOut(duration: 0.3)) {
+            appState.settings.hasCompletedOnboarding = true
+        }
     }
 
     private var nextButtonText: String {
@@ -132,6 +175,7 @@ private struct WelcomeStepView: View {
             Spacer()
 
             JunimoIcon(name: appState.selectedJunimoName, size: 80)
+                .accessibilityHidden(true)
 
             Text(L.s("onboarding_welcome"))
                 .font(.stardew(size: 32))
@@ -501,6 +545,7 @@ private struct OrientationStepView: View {
                     .resizable()
                     .interpolation(.none)
                     .frame(width: 32, height: 32)
+                    .accessibilityHidden(true)
             }
 
             VStack(alignment: .leading, spacing: 2) {

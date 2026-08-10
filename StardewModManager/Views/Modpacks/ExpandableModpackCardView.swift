@@ -234,15 +234,18 @@ struct ExpandableModpackCardView: View {
 
                             StardewIcon(type: .gear, size: 14)
                                 .opacity(isInstalled ? 1 : 0.3)
+                                .accessibilityHidden(true)
 
+                            // Dense list text reads better in the system font than in
+                            // the VT323 pixel font; versions use a monospaced face.
                             Text(entry.name)
-                                .font(.stardew(size: 15))
+                                .font(.system(size: 13))
                                 .foregroundStyle(isInstalled ? Color.textDark : Color.textMuted)
                                 .lineLimit(1)
 
                             if let version = entry.version {
                                 Text(version)
-                                    .font(.stardew(size: 13))
+                                    .font(.system(size: 11, design: .monospaced))
                                     .foregroundStyle(Color.textLight)
                             }
 
@@ -265,6 +268,8 @@ struct ExpandableModpackCardView: View {
                                 ))
                                 .toggleStyle(StardewToggleStyle())
                                 .labelsHidden()
+                                .accessibilityLabel(entry.name)
+                                .accessibilityValue(entry.isEnabled ? L.s("detail_enabled") : L.s("detail_disabled"))
                             }
                         }
                         .padding(.horizontal, 16)

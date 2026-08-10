@@ -341,6 +341,7 @@
 "sort_help" = "Cambiar orden";
 "theme_stardew" = "Stardew";
 "theme_pink" = "Rosa";
+"theme_night" = "Noche";
 "settings_smapi_console" = "Consola SMAPI al iniciar";
 "file_picker_title" = "Elige un archivo";
 "file_picker_subtitle" = "Este mod tiene varios archivos. Elige cuál instalar.";
@@ -350,3 +351,9 @@
 "nearby_invite_message" = "Acepta para comparar y sincronizar modpacks con este Mac cercano.";
 "nearby_invite_accept" = "Aceptar";
 "nearby_invite_decline" = "Rechazar";
+
+/* Phase 5 additions: UI/UX & accessibility */
+"installed_update_filter_help" = "Mostrar mods con actualizaciones disponibles";
+"modpack_builtin" = "Integrado";
+"onboarding_skip_setup" = "Omitir configuración";
+"onboarding_path_warning" = "Puedes terminar la configuración más tarde en Ajustes.";

@@ -58,7 +58,7 @@ struct ToastBannerView: View {
                 .foregroundStyle(accentColor)
 
             Text(toast.message)
-                .font(.stardew(size: 16))
+                .font(.system(size: 13))
                 .foregroundStyle(Color.textDark)
                 .lineLimit(2)
 

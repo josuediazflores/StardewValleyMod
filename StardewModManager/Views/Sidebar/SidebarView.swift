@@ -14,6 +14,7 @@ struct SidebarView: View {
                 } label: {
                     HStack(spacing: 10) {
                         stardewIcon(for: item)
+                            .accessibilityHidden(true)
                         Text(item.displayName)
                             .font(.stardew(size: 17))
                             .lineLimit(1)
@@ -36,6 +37,7 @@ struct SidebarView: View {
                                     .padding(.vertical, 1)
                                     .background(Color.stardewOrange.opacity(0.2))
                                     .clipShape(Capsule())
+                                    .accessibilityLabel(L.s("installed_update_count", appState.modUpdates.count))
                             } else {
                                 Text("\(appState.userModCount)")
                                     .font(.system(size: 11, weight: .medium, design: .rounded))
@@ -92,6 +94,27 @@ struct SidebarView: View {
                     .buttonStyle(.plain)
                 }
 
+                // Persistent launch button, always reachable from the sidebar.
+                Button {
+                    appState.launchGame()
+                } label: {
+                    HStack(spacing: 8) {
+                        JunimoIcon(name: appState.selectedJunimoName, size: 16)
+                            .frame(width: 16, height: 16)
+                            .accessibilityHidden(true)
+                        Text(L.s("modpack_list_play"))
+                            .font(.stardew(size: 15))
+                        Spacer()
+                    }
+                    .foregroundStyle(Color.accentGold)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 2)
+                }
+                .buttonStyle(.plain)
+                .disabled(!appState.settings.isSMAPIInstalled)
+                .help(L.s("modpack_list_play_help"))
+                .accessibilityLabel(L.s("modpack_list_play_help"))
+
                 Button {
                     openSettings()
                 } label: {
@@ -108,9 +131,11 @@ struct SidebarView: View {
                 .buttonStyle(.plain)
 
                 HStack(spacing: 6) {
+                    // Color-only dot is decorative; the adjacent text carries the state.
                     Circle()
                         .fill(appState.settings.isSMAPIInstalled ? Color.stardewGreen : Color.stardewRed)
                         .frame(width: 7, height: 7)
+                        .accessibilityHidden(true)
                     Text(appState.settings.isSMAPIInstalled ? L.s("sidebar_smapi_ready") : L.s("sidebar_smapi_not_found"))
                         .font(.system(size: 11))
                         .foregroundStyle(Color.accentGold.opacity(0.5))

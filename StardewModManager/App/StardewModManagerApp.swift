@@ -128,6 +128,7 @@ struct StardewModManagerApp: App {
             SettingsView()
                 .id("\(appState.settings.theme)-\(appState.settings.language)")
                 .environment(appState)
+                .preferredColorScheme(appState.settings.theme == .night ? .dark : .light)
         }
     }
 }
@@ -176,7 +177,7 @@ struct ContentView: View {
                     .zIndex(1)
             }
         }
-        .preferredColorScheme(.light)
+        .preferredColorScheme(appState.settings.theme == .night ? .dark : .light)
         .background(WindowAccessor())
         .alert(L.s("common_error"), isPresented: .init(
             get: { appState.errorMessage != nil },

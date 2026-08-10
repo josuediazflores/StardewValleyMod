@@ -341,6 +341,7 @@
 "sort_help" = "정렬 변경";
 "theme_stardew" = "Stardew";
 "theme_pink" = "핑크";
+"theme_night" = "나이트";
 "settings_smapi_console" = "실행 시 SMAPI 콘솔 표시";
 "file_picker_title" = "파일 선택";
 "file_picker_subtitle" = "이 모드에는 여러 파일이 있습니다. 설치할 파일을 선택하세요.";
@@ -350,3 +351,9 @@
 "nearby_invite_message" = "수락하면 근처 Mac과 모드팩을 비교하고 동기화할 수 있습니다.";
 "nearby_invite_accept" = "수락";
 "nearby_invite_decline" = "거절";
+
+/* Phase 5 additions: UI/UX & accessibility */
+"installed_update_filter_help" = "업데이트 가능한 모드 표시";
+"modpack_builtin" = "기본 제공";
+"onboarding_skip_setup" = "설정 건너뛰기";
+"onboarding_path_warning" = "설정은 나중에 설정에서 완료할 수 있습니다.";

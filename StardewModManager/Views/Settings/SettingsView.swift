@@ -212,7 +212,7 @@ struct GeneralSettingsTab: View {
                         .frame(width: 160, alignment: .leading)
 
                     Text(appState.settings.gamePath)
-                        .font(.stardew(size: 14))
+                        .font(.system(size: 12, design: .monospaced))
                         .foregroundStyle(Color.textMuted)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -294,7 +294,7 @@ struct GeneralSettingsTab: View {
                 if let error = appState.smapiInstallError {
                     VStack(spacing: 6) {
                         Text(error)
-                            .font(.stardew(size: 12))
+                            .font(.system(size: 12))
                             .foregroundStyle(Color.stardewRed)
                             .multilineTextAlignment(.center)
                         HStack(spacing: 12) {
@@ -679,7 +679,7 @@ struct AboutSettingsTab: View {
 
                 if let error = appState.updateError {
                     Text(error)
-                        .font(.stardew(size: 13))
+                        .font(.system(size: 12))
                         .foregroundStyle(Color.stardewRed)
                 }
             }

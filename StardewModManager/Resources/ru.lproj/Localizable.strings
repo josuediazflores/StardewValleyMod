@@ -341,6 +341,7 @@
 "sort_help" = "Изменить сортировку";
 "theme_stardew" = "Stardew";
 "theme_pink" = "Розовая";
+"theme_night" = "Ночная";
 "settings_smapi_console" = "Консоль SMAPI при запуске";
 "file_picker_title" = "Выберите файл";
 "file_picker_subtitle" = "У этого мода несколько файлов. Выберите, какой установить.";
@@ -350,3 +351,9 @@
 "nearby_invite_message" = "Примите, чтобы сравнивать и синхронизировать модпаки с этим Mac поблизости.";
 "nearby_invite_accept" = "Принять";
 "nearby_invite_decline" = "Отклонить";
+
+/* Phase 5 additions: UI/UX & accessibility */
+"installed_update_filter_help" = "Показать моды с доступными обновлениями";
+"modpack_builtin" = "Встроенный";
+"onboarding_skip_setup" = "Пропустить настройку";
+"onboarding_path_warning" = "Вы можете завершить настройку позже в разделе «Настройки».";

@@ -175,6 +175,7 @@ struct InstalledModsView: View {
                             }
                             .buttonStyle(.borderless)
                             .help(L.s("installed_import_help"))
+                            .accessibilityLabel(L.s("installed_import_help"))
 
                             Button {
                                 openFolderPicker()
@@ -241,13 +242,26 @@ struct InstalledModsView: View {
                         Spacer()
 
                         if !appState.modUpdates.isEmpty {
-                            HStack(spacing: 4) {
-                                Image(systemName: "arrow.up.circle.fill")
-                                    .font(.system(size: 11))
-                                Text(L.s("installed_update_count", appState.modUpdates.count))
-                                    .font(.system(size: 13, weight: .medium))
+                            // Tappable pill that activates the existing Updates filter.
+                            Button {
+                                appState.filterMode = .updates
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.up.circle.fill")
+                                        .font(.system(size: 11))
+                                    Text(L.s("installed_update_count", appState.modUpdates.count))
+                                        .font(.system(size: 13, weight: .medium))
+                                }
+                                .foregroundStyle(Color.stardewBlueText)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(
+                                    Capsule().fill(Color.stardewBlueText.opacity(0.12))
+                                )
                             }
-                            .foregroundStyle(Color.stardewBlue)
+                            .buttonStyle(.plain)
+                            .help(L.s("installed_update_filter_help"))
+                            .accessibilityHint(L.s("installed_update_filter_help"))
                         } else if appState.isCheckingUpdates {
                             HStack(spacing: 4) {
                                 ProgressView()
@@ -272,6 +286,7 @@ struct InstalledModsView: View {
                         }
                         .buttonStyle(.borderless)
                         .help(L.s("sort_help"))
+                        .accessibilityLabel(L.s("sort_help"))
 
                         Button {
                             isBatchMode = true
@@ -287,6 +302,7 @@ struct InstalledModsView: View {
                         }
                         .buttonStyle(.borderless)
                         .help(L.s("installed_select_help"))
+                        .accessibilityLabel(L.s("installed_select_help"))
                     }
                 }
                 .padding(.horizontal, 16)
@@ -764,15 +780,19 @@ private struct InstalledModRow: View {
                     }
                     .buttonStyle(.borderless)
                     .padding(.trailing, 8)
+                    .accessibilityLabel(mod.manifest.name)
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }
             }
 
             // Left: mod info
             HStack(spacing: 10) {
-                // Enable/disable dot
+                // Enable/disable dot (secondary indicator; the trailing Toggle is the
+                // primary control and carries the accessible state).
                 Circle()
                     .fill(mod.isEnabled ? Color.stardewGreen : Color.stardewRed.opacity(0.5))
                     .frame(width: 8, height: 8)
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
@@ -808,6 +828,7 @@ private struct InstalledModRow: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.stardewOrange)
                                 .help(L.s("row_missing_deps"))
+                                .accessibilityLabel(L.s("row_missing_deps"))
                         }
                     }
 
@@ -816,6 +837,8 @@ private struct InstalledModRow: View {
                         .foregroundStyle(Color.textLight)
                         .lineLimit(1)
                 }
+                // State is conveyed by more than color: disabled rows also dim.
+                .opacity(mod.isEnabled ? 1 : 0.55)
             }
 
             Spacer(minLength: 12)
@@ -841,11 +864,12 @@ private struct InstalledModRow: View {
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(Color.stardewBlue.opacity(0.15))
-                            .foregroundStyle(Color.stardewBlue)
+                            .foregroundStyle(Color.stardewBlueText)
                             .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
                         .help(L.s("row_update_help"))
+                        .accessibilityLabel(L.s("row_update_help"))
                     }
                 }
 
@@ -857,6 +881,20 @@ private struct InstalledModRow: View {
                     .background(typeColor.opacity(0.1))
                     .foregroundStyle(typeColor)
                     .clipShape(Capsule())
+            }
+
+            // Enable/disable toggle (primary control). Hidden in batch mode and for
+            // built-in SMAPI components, which cannot be toggled.
+            if !isBatchMode && !mod.isBuiltIn {
+                Toggle("", isOn: Binding(
+                    get: { mod.isEnabled },
+                    set: { _ in toggleMod(mod) }
+                ))
+                .toggleStyle(StardewToggleStyle())
+                .labelsHidden()
+                .padding(.leading, 12)
+                .accessibilityLabel(mod.manifest.name)
+                .accessibilityValue(mod.isEnabled ? L.s("detail_enabled") : L.s("detail_disabled"))
             }
         }
         .padding(.horizontal, 16)

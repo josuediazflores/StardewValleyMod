@@ -36,7 +36,7 @@ struct ModDetailView: View {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("v\(update.newVersion) available")
                                     .font(.system(size: 12, weight: .semibold))
-                                Text("Tap to update")
+                                Text("Click to update")
                                     .font(.system(size: 10))
                                     .opacity(0.8)
                             }
@@ -44,7 +44,7 @@ struct ModDetailView: View {
                             Image(systemName: "arrow.down.circle")
                                 .font(.system(size: 16))
                         }
-                        .foregroundStyle(Color.stardewBlue)
+                        .foregroundStyle(Color.stardewBlueText)
                         .padding(10)
                         .background(
                             RoundedRectangle(cornerRadius: 6)

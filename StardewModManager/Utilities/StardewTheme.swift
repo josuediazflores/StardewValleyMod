@@ -18,37 +18,191 @@ extension Font {
     }
 }
 
+// MARK: - Theme Palette
+
+/// Every theme-dependent color, resolved once per theme into stored properties.
+/// Accessing a themed color (e.g. `Color.parchment`) no longer re-reads
+/// UserDefaults or rebuilds a `Color` on every call: `Palette.current` hands back
+/// a cached value and only rebuilds when the active theme changes.
+struct Palette {
+    // Sidebar tones
+    let sidebarWood: Color
+    let sidebarWoodLight: Color
+    let sidebarWoodDark: Color
+
+    // Parchment backgrounds (warm sandy tones matching in-game UI)
+    let parchment: Color
+    let parchmentAlt: Color
+    let parchmentHeader: Color
+
+    // Frame borders (thick borders matching in-game panels)
+    let frameBorder: Color
+    let frameBorderDark: Color
+
+    // Text
+    let textDark: Color
+    let textMedium: Color
+    let textLight: Color
+    let textMuted: Color
+
+    // Accent
+    let accentGold: Color
+    let accentGoldBorder: Color
+    let accentGoldDark: Color
+
+    // UI
+    let toggleOff: Color
+    let stardewDivider: Color
+
+    // Table row backgrounds (warmer to match parchment)
+    let rowEven: Color
+    let rowOdd: Color
+    let rowHover: Color
+    let rowSelected: Color
+    let tableHeader: Color
+
+    // Card
+    let cardBorder: Color
+
+    // Blue text tuned for legibility on the current surface. See `Color.stardewBlue`
+    // for the on-dark/background blue that stays the same across every theme.
+    let stardewBlueText: Color
+}
+
+extension Palette {
+    static let stardew = Palette(
+        sidebarWood: Color(hex: 0x5B3A21),
+        sidebarWoodLight: Color(hex: 0x6B4226),
+        sidebarWoodDark: Color(hex: 0x3E2218),
+        parchment: Color(hex: 0xF5D6A0),
+        parchmentAlt: Color(hex: 0xECC888),
+        parchmentHeader: Color(hex: 0xE0B870),
+        frameBorder: Color(hex: 0xB8741A),
+        frameBorderDark: Color(hex: 0x8B5A14),
+        textDark: Color(hex: 0x3E2218),
+        textMedium: Color(hex: 0x5B3A21),
+        // textLight/textMuted darkened from 0x7A6344/0xA0855C so muted text
+        // clears ~4.5:1 on the lightest parchment.
+        textLight: Color(hex: 0x6B5335),
+        textMuted: Color(hex: 0x745B3C),
+        accentGold: Color(hex: 0xD4A96A),
+        accentGoldBorder: Color(hex: 0xB8842A),
+        accentGoldDark: Color(hex: 0x8B6914),
+        toggleOff: Color(hex: 0x8B7355),
+        stardewDivider: Color(hex: 0xB8741A),
+        rowEven: Color(hex: 0xF7DDB0),
+        rowOdd: Color(hex: 0xF0CC95),
+        rowHover: Color(hex: 0xE8C080),
+        rowSelected: Color(hex: 0xE0B870),
+        tableHeader: Color(hex: 0xDAAA60),
+        cardBorder: Color(hex: 0xB8741A),
+        stardewBlueText: Color(hex: 0x2C5F8A)
+    )
+
+    static let pink = Palette(
+        sidebarWood: Color(hex: 0x9E4B6D),
+        sidebarWoodLight: Color(hex: 0xB05A7E),
+        sidebarWoodDark: Color(hex: 0x7A3555),
+        parchment: Color(hex: 0xFFF0F3),
+        parchmentAlt: Color(hex: 0xFFE4EA),
+        parchmentHeader: Color(hex: 0xFFD6E0),
+        frameBorder: Color(hex: 0xC46A8A),
+        frameBorderDark: Color(hex: 0x9E4A6A),
+        textDark: Color(hex: 0x5C1A33),
+        textMedium: Color(hex: 0x8B3A5C),
+        textLight: Color(hex: 0xB06A8A),
+        textMuted: Color(hex: 0xC9879F),
+        accentGold: Color(hex: 0xF2A0B5),
+        accentGoldBorder: Color(hex: 0xD47A95),
+        accentGoldDark: Color(hex: 0xB85A7A),
+        toggleOff: Color(hex: 0xC9879F),
+        stardewDivider: Color(hex: 0xC46A8A),
+        rowEven: Color(hex: 0xFFFAFC),
+        rowOdd: Color(hex: 0xFFF0F5),
+        rowHover: Color(hex: 0xFFE4ED),
+        rowSelected: Color(hex: 0xFFD6E3),
+        tableHeader: Color(hex: 0xF5D0DE),
+        cardBorder: Color(hex: 0xC46A8A),
+        stardewBlueText: Color(hex: 0x2C5F8A)
+    )
+
+    // Dark, warm-brown night theme. Body text (textDark/textMedium) clears 4.5:1
+    // on every surface; the gold and sidebar labels use the VT323 pixel font at
+    // large sizes and clear WCAG AA-large (3:1) on the dark wood and under the
+    // cream button text.
+    static let night = Palette(
+        sidebarWood: Color(hex: 0x1F1610),
+        sidebarWoodLight: Color(hex: 0x281C10),
+        sidebarWoodDark: Color(hex: 0x130D07),
+        parchment: Color(hex: 0x2A1F14),
+        parchmentAlt: Color(hex: 0x33261A),
+        parchmentHeader: Color(hex: 0x3D2E1F),
+        frameBorder: Color(hex: 0x8A6A3C),
+        frameBorderDark: Color(hex: 0x5A421F),
+        textDark: Color(hex: 0xF2E4CC),
+        textMedium: Color(hex: 0xD8C3A0),
+        textLight: Color(hex: 0xB89B72),
+        textMuted: Color(hex: 0x9C835C),
+        accentGold: Color(hex: 0x8F6A30),
+        accentGoldBorder: Color(hex: 0xB89050),
+        accentGoldDark: Color(hex: 0xD9B878),
+        toggleOff: Color(hex: 0x5A4A32),
+        stardewDivider: Color(hex: 0x8A6A3C),
+        rowEven: Color(hex: 0x2E2216),
+        rowOdd: Color(hex: 0x241A10),
+        rowHover: Color(hex: 0x3A2C1C),
+        rowSelected: Color(hex: 0x46351F),
+        tableHeader: Color(hex: 0x3D2E1F),
+        cardBorder: Color(hex: 0x8A6A3C),
+        stardewBlueText: Color(hex: 0x7EC8E3)
+    )
+
+    /// Palette for the active theme, memoized so repeated color lookups during a
+    /// render pass don't rebuild it. Rebuilds only when `AppTheme.current` differs
+    /// from the last resolved theme.
+    private static var cachedTheme: AppTheme?
+    private static var cachedPalette = Palette.stardew
+
+    static var current: Palette {
+        let theme = AppTheme.current
+        if theme != cachedTheme {
+            switch theme {
+            case .stardew: cachedPalette = .stardew
+            case .pink: cachedPalette = .pink
+            case .night: cachedPalette = .night
+            }
+            cachedTheme = theme
+        }
+        return cachedPalette
+    }
+}
+
 // MARK: - Stardew Colors
 
 extension Color {
-    private static var isPink: Bool { AppTheme.current == .pink }
+    // Themed roles delegate to the active palette (see `Palette`), preserving the
+    // existing `Color.parchment` / `Color.textDark` / ... accessor API.
+    static var sidebarWood: Color { Palette.current.sidebarWood }
+    static var sidebarWoodLight: Color { Palette.current.sidebarWoodLight }
+    static var sidebarWoodDark: Color { Palette.current.sidebarWoodDark }
 
-    // Sidebar tones
-    static var sidebarWood: Color { isPink ? Color(hex: 0x9E4B6D) : Color(hex: 0x5B3A21) }
-    static var sidebarWoodLight: Color { isPink ? Color(hex: 0xB05A7E) : Color(hex: 0x6B4226) }
-    static var sidebarWoodDark: Color { isPink ? Color(hex: 0x7A3555) : Color(hex: 0x3E2218) }
+    static var parchment: Color { Palette.current.parchment }
+    static var parchmentAlt: Color { Palette.current.parchmentAlt }
+    static var parchmentHeader: Color { Palette.current.parchmentHeader }
 
-    // Parchment backgrounds (warm sandy tones matching in-game UI)
-    static var parchment: Color { isPink ? Color(hex: 0xFFF0F3) : Color(hex: 0xF5D6A0) }
-    static var parchmentAlt: Color { isPink ? Color(hex: 0xFFE4EA) : Color(hex: 0xECC888) }
-    static var parchmentHeader: Color { isPink ? Color(hex: 0xFFD6E0) : Color(hex: 0xE0B870) }
+    static var frameBorder: Color { Palette.current.frameBorder }
+    static var frameBorderDark: Color { Palette.current.frameBorderDark }
 
-    // Frame borders (thick brown/orange borders matching in-game panels)
-    static var frameBorder: Color { isPink ? Color(hex: 0xC46A8A) : Color(hex: 0xB8741A) }
-    static var frameBorderDark: Color { isPink ? Color(hex: 0x9E4A6A) : Color(hex: 0x8B5A14) }
+    static var textDark: Color { Palette.current.textDark }
+    static var textMedium: Color { Palette.current.textMedium }
+    static var textLight: Color { Palette.current.textLight }
+    static var textMuted: Color { Palette.current.textMuted }
 
-    // Text
-    static var textDark: Color { isPink ? Color(hex: 0x5C1A33) : Color(hex: 0x3E2218) }
-    static var textMedium: Color { isPink ? Color(hex: 0x8B3A5C) : Color(hex: 0x5B3A21) }
-    static var textLight: Color { isPink ? Color(hex: 0xB06A8A) : Color(hex: 0x7A6344) }
-    static var textMuted: Color { isPink ? Color(hex: 0xC9879F) : Color(hex: 0xA0855C) }
+    static var accentGold: Color { Palette.current.accentGold }
+    static var accentGoldBorder: Color { Palette.current.accentGoldBorder }
+    static var accentGoldDark: Color { Palette.current.accentGoldDark }
 
-    // Accent
-    static var accentGold: Color { isPink ? Color(hex: 0xF2A0B5) : Color(hex: 0xD4A96A) }
-    static var accentGoldBorder: Color { isPink ? Color(hex: 0xD47A95) : Color(hex: 0xB8842A) }
-    static var accentGoldDark: Color { isPink ? Color(hex: 0xB85A7A) : Color(hex: 0x8B6914) }
-
-    // Game colors (semantic — stay the same)
+    // Game colors (semantic, identical across themes)
     static let stardewGreen = Color(hex: 0x5D8A3C)
     static let stardewGreenDark = Color(hex: 0x4A7030)
     static let stardewPurple = Color(hex: 0x7B4FA2)
@@ -58,19 +212,24 @@ extension Color {
     static let stardewBlue = Color(hex: 0x7EC8E3)
     static let stardewRed = Color(hex: 0xC0392B)
 
-    // UI
-    static var toggleOff: Color { isPink ? Color(hex: 0xC9879F) : Color(hex: 0x8B7355) }
-    static var stardewDivider: Color { isPink ? Color(hex: 0xC46A8A) : Color(hex: 0xB8741A) }
+    // Blue text tuned per theme: a dark blue for text on the light tan/pink
+    // parchment, and the light 0x7EC8E3 blue on Night. Use `stardewBlue` for the
+    // on-dark/background blue that stays constant across themes.
+    static var stardewBlueText: Color { Palette.current.stardewBlueText }
 
-    // Table row backgrounds (warmer to match parchment)
-    static var rowEven: Color { isPink ? Color(hex: 0xFFFAFC) : Color(hex: 0xF7DDB0) }
-    static var rowOdd: Color { isPink ? Color(hex: 0xFFF0F5) : Color(hex: 0xF0CC95) }
-    static var rowHover: Color { isPink ? Color(hex: 0xFFE4ED) : Color(hex: 0xE8C080) }
-    static var rowSelected: Color { isPink ? Color(hex: 0xFFD6E3) : Color(hex: 0xE0B870) }
-    static var tableHeader: Color { isPink ? Color(hex: 0xF5D0DE) : Color(hex: 0xDAAA60) }
+    // UI
+    static var toggleOff: Color { Palette.current.toggleOff }
+    static var stardewDivider: Color { Palette.current.stardewDivider }
+
+    // Table row backgrounds
+    static var rowEven: Color { Palette.current.rowEven }
+    static var rowOdd: Color { Palette.current.rowOdd }
+    static var rowHover: Color { Palette.current.rowHover }
+    static var rowSelected: Color { Palette.current.rowSelected }
+    static var tableHeader: Color { Palette.current.tableHeader }
 
     // Card
-    static var cardBorder: Color { isPink ? Color(hex: 0xC46A8A) : Color(hex: 0xB8741A) }
+    static var cardBorder: Color { Palette.current.cardBorder }
 
     init(hex: UInt32) {
         self.init(
@@ -85,26 +244,38 @@ extension Color {
 
 struct StardewToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
-        HStack {
-            configuration.label
-            ZStack(alignment: configuration.isOn ? .trailing : .leading) {
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(configuration.isOn ? Color.stardewGreen : Color.toggleOff)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 3)
-                            .stroke(configuration.isOn ? Color.stardewGreenDark : Color(hex: 0x6B5535), lineWidth: 1)
-                    )
-                    .frame(width: 34, height: 18)
-
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(configuration.isOn ? Color.parchment : Color(hex: 0xD4C4A8))
-                    .frame(width: 14, height: 14)
-                    .padding(2)
+        // The Button gives the whole row a hit area, keyboard activation, and a
+        // focus ring; accessibilityRepresentation re-exposes it to VoiceOver as a
+        // real switch that announces its on/off value. The pixel-art visual and
+        // the 0.15s toggle animation are unchanged.
+        Button {
+            withAnimation(.easeInOut(duration: 0.15)) {
+                configuration.isOn.toggle()
             }
-            .onTapGesture {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    configuration.isOn.toggle()
+        } label: {
+            HStack {
+                configuration.label
+                ZStack(alignment: configuration.isOn ? .trailing : .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(configuration.isOn ? Color.stardewGreen : Color.toggleOff)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 3)
+                                .stroke(configuration.isOn ? Color.stardewGreenDark : Color(hex: 0x6B5535), lineWidth: 1)
+                        )
+                        .frame(width: 34, height: 18)
+
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(configuration.isOn ? Color.parchment : Color(hex: 0xD4C4A8))
+                        .frame(width: 14, height: 14)
+                        .padding(2)
                 }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityRepresentation {
+            Toggle(isOn: configuration.$isOn) {
+                configuration.label
             }
         }
     }

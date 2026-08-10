@@ -3,6 +3,7 @@ import Foundation
 enum AppTheme: String, CaseIterable, Identifiable {
     case stardew = "Stardew"
     case pink = "Pink"
+    case night = "Night"
 
     var id: String { rawValue }
 
@@ -10,6 +11,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
         switch self {
         case .stardew: L.s("theme_stardew")
         case .pink: L.s("theme_pink")
+        case .night: L.s("theme_night")
         }
     }
 

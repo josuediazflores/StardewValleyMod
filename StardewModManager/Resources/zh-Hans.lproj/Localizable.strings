@@ -341,6 +341,7 @@
 "sort_help" = "切换排序";
 "theme_stardew" = "Stardew";
 "theme_pink" = "粉色";
+"theme_night" = "夜间";
 "settings_smapi_console" = "启动时显示 SMAPI 控制台";
 "file_picker_title" = "选择文件";
 "file_picker_subtitle" = "此模组有多个文件，请选择要安装的文件。";
@@ -350,3 +351,9 @@
 "nearby_invite_message" = "接受后可与附近的 Mac 比较并同步模组包。";
 "nearby_invite_accept" = "接受";
 "nearby_invite_decline" = "拒绝";
+
+/* Phase 5 additions: UI/UX & accessibility */
+"installed_update_filter_help" = "显示有可用更新的模组";
+"modpack_builtin" = "内置";
+"onboarding_skip_setup" = "跳过设置";
+"onboarding_path_warning" = "你可以稍后在设置中完成设置。";
