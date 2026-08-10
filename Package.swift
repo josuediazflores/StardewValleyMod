@@ -10,6 +10,11 @@ let package = Package(
             name: "StardewModManager",
             path: "StardewModManager",
             resources: [.process("Resources")]
+        ),
+        .testTarget(
+            name: "StardewModManagerTests",
+            dependencies: ["StardewModManager"],
+            path: "Tests/StardewModManagerTests"
         )
     ]
 )

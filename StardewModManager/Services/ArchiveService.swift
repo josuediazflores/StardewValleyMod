@@ -52,7 +52,11 @@ enum ArchiveService {
     /// entry-count / total-size caps.
     private static func validateExtractedContents(of dir: URL) throws {
         let fm = FileManager.default
-        let basePath = dir.resolvingSymlinksInPath().standardized.path(percentEncoded: false)
+        // resolvingSymlinksInPath() yields a directory path that may carry a trailing
+        // slash; strip it before appending one, or baseWithSlash ends in "//" and no
+        // legitimate child clears the hasPrefix check (rejecting every entry).
+        var basePath = dir.resolvingSymlinksInPath().standardized.path(percentEncoded: false)
+        while basePath.hasSuffix("/") { basePath.removeLast() }
         let baseWithSlash = basePath + "/"
 
         guard let enumerator = fm.enumerator(
