@@ -282,13 +282,15 @@ struct ModpackDetailView: View {
     // MARK: - Actions
 
     private func applyModpack() {
-        appState.applyModpack(modpack)
-        if let error = appState.modpackError {
-            applyResultMessage = error
-        } else {
-            applyResultMessage = L.s("modpack_detail_applied_message", modpack.name)
+        Task {
+            let succeeded = await appState.applyModpackAsync(modpack)
+            if !succeeded, let error = appState.modpackError {
+                applyResultMessage = error
+            } else {
+                applyResultMessage = L.s("modpack_detail_applied_message", modpack.name)
+            }
+            showApplyAlert = true
         }
-        showApplyAlert = true
     }
 
     private func exportModpack(asZIP: Bool) {

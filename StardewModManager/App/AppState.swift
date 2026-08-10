@@ -44,6 +44,7 @@ final class AppState {
     var filterMode: ModFilter = .all
     var sortOption: ModSortOption = .name
     var isLoading = false
+    var isImporting = false
     var showImportPicker = false
     var showInspector = true
     var errorMessage: String?
@@ -325,36 +326,75 @@ final class AppState {
         }
     }
 
+    /// Imports mods off the main thread so a large (hundreds-of-MB) archive can't
+    /// beachball the UI: the heavy extraction + recursive copy run on a detached
+    /// executor and `mods` is only mutated back on the MainActor after each await.
     func importMods(from urls: [URL]) {
-        var allImported: [Mod] = []
-        var allFailures: [ImportFailure] = []
-        for url in urls {
-            do {
-                let securityScoped = url.startAccessingSecurityScopedResource()
-                defer { if securityScoped { url.stopAccessingSecurityScopedResource() } }
+        guard !isImporting else { return }
 
-                let result = try ModManagementService.importMod(from: url, settings: settings, existingMods: mods)
-                for newMod in result.mods {
-                    mods.removeAll { $0.id == newMod.id }
-                    mods.append(newMod)
-                    allImported.append(newMod)
+        // A source that lives in our own temp dir (e.g. a peer-transfer zip) can be
+        // deleted by the caller the instant this method returns, which would race the
+        // background read. Take ownership of those synchronously with an O(1) move so
+        // the detached import reads a copy the caller can't pull out from under it.
+        // User-picked files are left in place and read under a held security scope;
+        // their callers never delete them.
+        let fm = FileManager.default
+        let tempBase = fm.temporaryDirectory.resolvingSymlinksInPath().path(percentEncoded: false)
+        var sources: [(url: URL, isOwnedCopy: Bool)] = []
+        for url in urls {
+            let resolved = url.resolvingSymlinksInPath().path(percentEncoded: false)
+            if resolved.hasPrefix(tempBase) {
+                let staged = fm.temporaryDirectory.appending(path: "import_\(UUID().uuidString)_\(url.lastPathComponent)")
+                if (try? fm.moveItem(at: url, to: staged)) != nil {
+                    sources.append((staged, true))
+                    continue
                 }
-                allFailures.append(contentsOf: result.failures)
-            } catch {
-                errorMessage = error.localizedDescription
             }
+            sources.append((url, false))
         }
-        mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
-        DependencyResolver.resolveAll(mods: mods)
-        addNewModsToActiveModpack(allImported)
-        if !allImported.isEmpty {
-            showToast("Imported \(allImported.count) mod\(allImported.count == 1 ? "" : "s")", type: .success)
-            SoundService.play(.bigSelect)
-        }
-        if !allFailures.isEmpty {
-            let names = allFailures.prefix(3).map(\.name).joined(separator: ", ")
-            let suffix = allFailures.count > 3 ? ", …" : ""
-            showToast("\(allFailures.count) mod\(allFailures.count == 1 ? "" : "s") failed to import: \(names)\(suffix)", type: .warning)
+
+        isImporting = true
+        isLoading = true
+        let currentSettings = settings
+        Task {
+            defer {
+                isImporting = false
+                isLoading = false
+            }
+            var allImported: [Mod] = []
+            var allFailures: [ImportFailure] = []
+            for source in sources {
+                let url = source.url
+                let securityScoped = url.startAccessingSecurityScopedResource()
+                do {
+                    let existing = mods
+                    let result = try await Task.detached(priority: .userInitiated) {
+                        try ModManagementService.importMod(from: url, settings: currentSettings, existingMods: existing)
+                    }.value
+                    for newMod in result.mods {
+                        mods.removeAll { $0.id == newMod.id }
+                        mods.append(newMod)
+                        allImported.append(newMod)
+                    }
+                    allFailures.append(contentsOf: result.failures)
+                } catch {
+                    errorMessage = error.localizedDescription
+                }
+                if securityScoped { url.stopAccessingSecurityScopedResource() }
+                if source.isOwnedCopy { try? fm.removeItem(at: source.url) }
+            }
+            mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+            DependencyResolver.resolveAll(mods: mods)
+            addNewModsToActiveModpack(allImported)
+            if !allImported.isEmpty {
+                showToast("Imported \(allImported.count) mod\(allImported.count == 1 ? "" : "s")", type: .success)
+                SoundService.play(.bigSelect)
+            }
+            if !allFailures.isEmpty {
+                let names = allFailures.prefix(3).map(\.name).joined(separator: ", ")
+                let suffix = allFailures.count > 3 ? ", …" : ""
+                showToast("\(allFailures.count) mod\(allFailures.count == 1 ? "" : "s") failed to import: \(names)\(suffix)", type: .warning)
+            }
         }
     }
 
@@ -450,8 +490,10 @@ final class AppState {
                 let tempDir = FileManager.default.temporaryDirectory
                 let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
 
-                // Parse mod names from the zip without installing
-                let names = ModManagementService.peekModNames(from: zipURL)
+                // Parse mod names from the zip without installing (ditto runs off-main)
+                let names = await Task.detached(priority: .userInitiated) {
+                    ModManagementService.peekModNames(from: zipURL)
+                }.value
 
                 nxmDownloadStatus = nil
                 pendingNXMZipURL = zipURL
@@ -465,10 +507,19 @@ final class AppState {
         }
     }
 
-    func installPendingNXMToCurrentProfile() {
+    /// Installs the staged NXM zip off the main thread, applying the resulting `mods`
+    /// mutations back on the MainActor. Leaves `pendingNXMMods` set to the installed
+    /// mods so the modpack-targeting callers can act on them after awaiting.
+    private func performPendingNXMInstall() async {
         guard let zipURL = pendingNXMZipURL else { return }
+        isLoading = true
+        defer { isLoading = false }
         do {
-            let result = try ModManagementService.importMod(from: zipURL, settings: settings, existingMods: mods)
+            let currentSettings = settings
+            let existing = mods
+            let result = try await Task.detached(priority: .userInitiated) {
+                try ModManagementService.importMod(from: zipURL, settings: currentSettings, existingMods: existing)
+            }.value
             try? FileManager.default.removeItem(at: zipURL)
             for newMod in result.mods {
                 mods.removeAll { $0.id == newMod.id }
@@ -490,37 +541,45 @@ final class AppState {
         pendingNXMModNames = []
     }
 
+    func installPendingNXMToCurrentProfile() {
+        Task { await performPendingNXMInstall() }
+    }
+
     func installPendingNXMToModpack(_ modpackID: UUID) {
         // Install to current profile first, then add to modpack
-        installPendingNXMToCurrentProfile()
-        if !pendingNXMMods.isEmpty {
-            addModsToModpack(modpackID, mods: pendingNXMMods)
+        Task {
+            await performPendingNXMInstall()
+            if !pendingNXMMods.isEmpty {
+                addModsToModpack(modpackID, mods: pendingNXMMods)
+            }
+            pendingNXMMods = []
         }
-        pendingNXMMods = []
     }
 
     func installPendingNXMToNewModpack(name: String) {
-        installPendingNXMToCurrentProfile()
-        if !pendingNXMMods.isEmpty {
-            createModpackFromCurrentState(name: name, description: "Created from NXM download")
-            if let newPack = modpacks.last {
-                // Clear entries and only add the downloaded mods
-                if let idx = modpacks.firstIndex(where: { $0.id == newPack.id }) {
-                    modpacks[idx].entries = pendingNXMMods.map { mod in
-                        ModpackEntry(
-                            uniqueID: mod.id,
-                            name: mod.manifest.name,
-                            version: mod.manifest.version,
-                            nexusModID: mod.nexusModID,
-                            nexusFileID: nil,
-                            isEnabled: true
-                        )
+        Task {
+            await performPendingNXMInstall()
+            if !pendingNXMMods.isEmpty {
+                createModpackFromCurrentState(name: name, description: "Created from NXM download")
+                if let newPack = modpacks.last {
+                    // Clear entries and only add the downloaded mods
+                    if let idx = modpacks.firstIndex(where: { $0.id == newPack.id }) {
+                        modpacks[idx].entries = pendingNXMMods.map { mod in
+                            ModpackEntry(
+                                uniqueID: mod.id,
+                                name: mod.manifest.name,
+                                version: mod.manifest.version,
+                                nexusModID: mod.nexusModID,
+                                nexusFileID: nil,
+                                isEnabled: true
+                            )
+                        }
+                        persistModpacks()
                     }
-                    persistModpacks()
                 }
             }
+            pendingNXMMods = []
         }
-        pendingNXMMods = []
     }
 
     func cancelPendingNXM() {
@@ -648,7 +707,9 @@ final class AppState {
 
             let tempDir = FileManager.default.temporaryDirectory
             let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
-            let names = ModManagementService.peekModNames(from: zipURL)
+            let names = await Task.detached(priority: .userInitiated) {
+                ModManagementService.peekModNames(from: zipURL)
+            }.value
 
             nxmDownloadStatus = nil
             pendingNXMZipURL = zipURL
@@ -949,6 +1010,8 @@ final class AppState {
                 mods.append(mod)
             }
         }
+        // A tab switch cancels this load; bail without stomping the new tab's flags.
+        if Task.isCancelled { return }
         nexusEssentialMods = mods
         isNexusLoading = false
     }
@@ -961,10 +1024,16 @@ final class AppState {
             if let key = settings.nexusAPIKey {
                 await nexusAPI.setAPIKey(key)
             }
-            nexusTrendingMods = try await nexusAPI.browseMods(sortBy: .endorsements, offset: 0)
+            let result = try await nexusAPI.browseMods(sortBy: .endorsements, offset: 0)
+            if Task.isCancelled { return }
+            nexusTrendingMods = result
         } catch {
+            // A tab switch cancels the in-flight request; don't let the stale failure
+            // stomp the flags the new tab's load has already set.
+            if Task.isCancelled || error is CancellationError { return }
             nexusError = error.localizedDescription
         }
+        if Task.isCancelled { return }
         isNexusLoading = false
     }
 
@@ -976,10 +1045,14 @@ final class AppState {
             if let key = settings.nexusAPIKey {
                 await nexusAPI.setAPIKey(key)
             }
-            nexusLatestMods = try await nexusAPI.browseMods(sortBy: .createdAt, offset: 0)
+            let result = try await nexusAPI.browseMods(sortBy: .createdAt, offset: 0)
+            if Task.isCancelled { return }
+            nexusLatestMods = result
         } catch {
+            if Task.isCancelled || error is CancellationError { return }
             nexusError = error.localizedDescription
         }
+        if Task.isCancelled { return }
         isNexusLoading = false
     }
 
@@ -991,10 +1064,14 @@ final class AppState {
             if let key = settings.nexusAPIKey {
                 await nexusAPI.setAPIKey(key)
             }
-            nexusSearchResults = try await nexusAPI.browseMods(sortBy: .downloads, searchText: query)
+            let result = try await nexusAPI.browseMods(sortBy: .downloads, searchText: query)
+            if Task.isCancelled { return }
+            nexusSearchResults = result
         } catch {
+            if Task.isCancelled || error is CancellationError { return }
             nexusError = error.localizedDescription
         }
+        if Task.isCancelled { return }
         isNexusLoading = false
     }
 
@@ -1042,8 +1119,10 @@ final class AppState {
             let tempDir = FileManager.default.temporaryDirectory
             let zipURL = try await nexusAPI.downloadFile(url: link.uri, to: tempDir)
 
-            // Check if multi-mod before installing
-            let names = ModManagementService.peekModNames(from: zipURL)
+            // Check if multi-mod before installing (ditto runs off-main)
+            let names = await Task.detached(priority: .userInitiated) {
+                ModManagementService.peekModNames(from: zipURL)
+            }.value
             if names.count > 1 {
                 // Multi-mod: show modpack picker instead of silently installing
                 isNexusLoading = false
@@ -1054,7 +1133,11 @@ final class AppState {
                 return
             }
 
-            let result = try ModManagementService.importMod(from: zipURL, settings: settings, existingMods: mods)
+            let currentSettings = settings
+            let existing = mods
+            let result = try await Task.detached(priority: .userInitiated) {
+                try ModManagementService.importMod(from: zipURL, settings: currentSettings, existingMods: existing)
+            }.value
             try? FileManager.default.removeItem(at: zipURL)
 
             for newMod in result.mods {
@@ -1141,32 +1224,50 @@ final class AppState {
     }
 
     func applyModpack(_ modpack: Modpack) {
+        Task { await applyModpackAsync(modpack) }
+    }
+
+    /// Awaitable apply. Returns true when the profile applied without a fatal error
+    /// (non-fatal per-mod failures/missing are still reported via toast). Callers that
+    /// need to react to the outcome (e.g. the detail sheet's result alert) await this.
+    @discardableResult
+    func applyModpackAsync(_ modpack: Modpack) async -> Bool {
+        guard !isModpackLoading else { return false }
         isModpackLoading = true
         modpackError = nil
+        defer { isModpackLoading = false }
         do {
-            let result = try ModpackService.applyModpack(modpack, mods: mods, settings: settings)
-            activeModpackID = modpack.id
+                // The mass folder moves run off the main thread so a large profile
+                // switch can't beachball the UI. loadMods() then rebuilds `mods` from
+                // disk on the MainActor, discarding the detached in-memory mutations.
+                let currentSettings = settings
+                let snapshot = mods
+                let result = try await Task.detached(priority: .userInitiated) {
+                    try ModpackService.applyModpack(modpack, mods: snapshot, settings: currentSettings)
+                }.value
+                activeModpackID = modpack.id
 
-            // Always refresh mods from disk, even if some moves failed
-            loadMods()
+                // Always refresh mods from disk, even if some moves failed
+                loadMods()
 
-            let enabledCount = mods.filter { !$0.isBuiltIn && $0.isEnabled }.count
-            if !result.failures.isEmpty {
-                let names = result.failures.prefix(3).map(\.name).joined(separator: ", ")
-                let suffix = result.failures.count > 3 ? ", …" : ""
-                showToast("Profile loaded, but \(result.failures.count) mod\(result.failures.count == 1 ? "" : "s") could not be moved: \(names)\(suffix)", type: .warning)
-            } else if !result.missing.isEmpty {
-                let names = result.missing.map(\.name).joined(separator: ", ")
-                showToast("Profile loaded (\(enabledCount) mods enabled). Missing: \(names)", type: .warning)
-            } else {
-                showToast("Profile \"\(modpack.name)\" loaded — \(enabledCount) mods enabled", type: .success)
+                let enabledCount = mods.filter { !$0.isBuiltIn && $0.isEnabled }.count
+                if !result.failures.isEmpty {
+                    let names = result.failures.prefix(3).map(\.name).joined(separator: ", ")
+                    let suffix = result.failures.count > 3 ? ", …" : ""
+                    showToast("Profile loaded, but \(result.failures.count) mod\(result.failures.count == 1 ? "" : "s") could not be moved: \(names)\(suffix)", type: .warning)
+                } else if !result.missing.isEmpty {
+                    let names = result.missing.map(\.name).joined(separator: ", ")
+                    showToast("Profile loaded (\(enabledCount) mods enabled). Missing: \(names)", type: .warning)
+                } else {
+                    showToast("Profile \"\(modpack.name)\" loaded — \(enabledCount) mods enabled", type: .success)
+                }
+                SoundService.play(.bigSelect)
+                return true
+            } catch {
+                modpackError = error.localizedDescription
+                loadMods()
+                return false
             }
-            SoundService.play(.bigSelect)
-        } catch {
-            modpackError = error.localizedDescription
-            loadMods()
-        }
-        isModpackLoading = false
     }
 
     func deleteModpack(_ modpack: Modpack) {
@@ -1259,30 +1360,37 @@ final class AppState {
     }
 
     func importModpackFromFile(url: URL) {
-        do {
+        Task {
             let securityScoped = url.startAccessingSecurityScopedResource()
             defer { if securityScoped { url.stopAccessingSecurityScopedResource() } }
 
-            if url.pathExtension.lowercased() == "smm" {
-                let data = try Data(contentsOf: url)
-                let shareable = try ShareableModpack.fromJSON(data)
-                modpacks.append(shareable.toModpack())
-            } else if url.pathExtension.lowercased() == "json" {
-                let modpack = try ModpackService.importFromJSON(at: url)
-                modpacks.append(modpack)
-            } else {
-                let (modpack, imported) = try ModpackService.importFromZIP(at: url, settings: settings, existingMods: mods)
-                modpacks.append(modpack)
-                for newMod in imported {
-                    mods.removeAll { $0.id == newMod.id }
-                    mods.append(newMod)
+            do {
+                if url.pathExtension.lowercased() == "smm" {
+                    let data = try Data(contentsOf: url)
+                    let shareable = try ShareableModpack.fromJSON(data)
+                    modpacks.append(shareable.toModpack())
+                } else if url.pathExtension.lowercased() == "json" {
+                    let modpack = try ModpackService.importFromJSON(at: url)
+                    modpacks.append(modpack)
+                } else {
+                    // Extraction + recursive mod copies run off the main thread.
+                    let currentSettings = settings
+                    let existing = mods
+                    let (modpack, imported) = try await Task.detached(priority: .userInitiated) {
+                        try ModpackService.importFromZIP(at: url, settings: currentSettings, existingMods: existing)
+                    }.value
+                    modpacks.append(modpack)
+                    for newMod in imported {
+                        mods.removeAll { $0.id == newMod.id }
+                        mods.append(newMod)
+                    }
+                    mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+                    DependencyResolver.resolveAll(mods: mods)
                 }
-                mods.sort { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
-                DependencyResolver.resolveAll(mods: mods)
+                try ModpackService.saveModpacks(modpacks, settings: settings)
+            } catch {
+                errorMessage = error.localizedDescription
             }
-            try ModpackService.saveModpacks(modpacks, settings: settings)
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 
@@ -1292,7 +1400,11 @@ final class AppState {
         do {
             let tempDir = FileManager.default.temporaryDirectory
             let localURL = try await externalDownloader.downloadFile(from: urlString, to: tempDir)
-            let (modpack, imported) = try ModpackService.importFromZIP(at: localURL, settings: settings, existingMods: mods)
+            let currentSettings = settings
+            let existing = mods
+            let (modpack, imported) = try await Task.detached(priority: .userInitiated) {
+                try ModpackService.importFromZIP(at: localURL, settings: currentSettings, existingMods: existing)
+            }.value
             try? FileManager.default.removeItem(at: localURL)
 
             modpacks.append(modpack)

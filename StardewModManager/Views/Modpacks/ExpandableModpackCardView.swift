@@ -222,7 +222,7 @@ struct ExpandableModpackCardView: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(Array(entries.enumerated()), id: \.offset) { index, entry in
+                    ForEach(Array(entries.enumerated()), id: \.element.uniqueID) { index, entry in
                         let isInstalled = installedIDs.contains(entry.uniqueID)
 
                         HStack(spacing: 8) {

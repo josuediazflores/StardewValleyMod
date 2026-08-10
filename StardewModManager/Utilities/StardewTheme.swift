@@ -282,9 +282,20 @@ struct JunimoIcon: View {
     let name: String
     var size: CGFloat = 20
 
+    // Junimo PNGs cached by name so re-renders don't re-read them from disk. NSCache is
+    // thread-safe and may evict under memory pressure (in which case it reloads on demand).
+    private static let cache = NSCache<NSString, NSImage>()
+
+    private static func image(named name: String) -> NSImage? {
+        if let cached = cache.object(forKey: name as NSString) { return cached }
+        guard let url = Bundle.appBundle.url(forResource: name, withExtension: "png"),
+              let image = NSImage(contentsOf: url) else { return nil }
+        cache.setObject(image, forKey: name as NSString)
+        return image
+    }
+
     var body: some View {
-        if let url = Bundle.appBundle.url(forResource: name, withExtension: "png"),
-           let nsImage = NSImage(contentsOf: url) {
+        if let nsImage = Self.image(named: name) {
             Image(nsImage: nsImage)
                 .renderingMode(.original)
                 .resizable()

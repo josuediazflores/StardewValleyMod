@@ -140,8 +140,7 @@ struct SidebarView: View {
     private func stardewIcon(for item: SidebarItem) -> some View {
         switch item {
         case .modpacks:
-            if let url = Bundle.appBundle.url(forResource: "Golden_Scroll", withExtension: "png"),
-               let nsImage = NSImage(contentsOf: url) {
+            if let nsImage = IconAssets.goldenScroll {
                 Image(nsImage: nsImage)
                     .resizable()
                     .interpolation(.none)
@@ -150,8 +149,7 @@ struct SidebarView: View {
                 StardewIcon(type: .chest, size: 20)
             }
         case .browseNexus:
-            if let url = Bundle.appBundle.url(forResource: "Horse_The_Book", withExtension: "png"),
-               let nsImage = NSImage(contentsOf: url) {
+            if let nsImage = IconAssets.horseBook {
                 Image(nsImage: nsImage)
                     .resizable()
                     .interpolation(.none)
@@ -160,8 +158,7 @@ struct SidebarView: View {
                 StardewIcon(type: .globe, size: 20)
             }
         case .installedMods:
-            if let url = Bundle.appBundle.url(forResource: "Robins_Hammer", withExtension: "png"),
-               let nsImage = NSImage(contentsOf: url) {
+            if let nsImage = IconAssets.robinsHammer {
                 Image(nsImage: nsImage)
                     .resizable()
                     .interpolation(.none)
@@ -169,6 +166,19 @@ struct SidebarView: View {
             } else {
                 StardewIcon(type: .chest, size: 20)
             }
+        }
+    }
+
+    /// Sidebar PNGs loaded once and cached. The sidebar re-renders on nearly every state
+    /// change, so loading these inline in `body` re-read them from disk each time.
+    private enum IconAssets {
+        static let goldenScroll = load("Golden_Scroll")
+        static let horseBook = load("Horse_The_Book")
+        static let robinsHammer = load("Robins_Hammer")
+
+        private static func load(_ name: String) -> NSImage? {
+            guard let url = Bundle.appBundle.url(forResource: name, withExtension: "png") else { return nil }
+            return NSImage(contentsOf: url)
         }
     }
 }

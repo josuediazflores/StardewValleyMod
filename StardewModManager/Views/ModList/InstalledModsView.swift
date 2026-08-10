@@ -3,7 +3,6 @@ import UniformTypeIdentifiers
 
 struct InstalledModsView: View {
     @Environment(AppState.self) private var appState
-    @State private var hoveredModID: String?
     @State private var isBatchMode = false
     @State private var selectedModIDs: Set<String> = []
     @State private var showBatchDeleteConfirmation = false
@@ -12,10 +11,12 @@ struct InstalledModsView: View {
     @State private var nexusURLInput = ""
     @State private var isDownloadingFromURL = false
     @FocusState private var isListFocused: Bool
+    @State private var hasClaimedInitialFocus = false
     @State private var selectionAnchor: String?
 
     var body: some View {
         @Bindable var state = appState
+        let mods = appState.filteredMods
 
         HSplitView {
             // Mod list
@@ -81,7 +82,7 @@ struct InstalledModsView: View {
                                 selectedModIDs = selectableIDs
                             }
                         } label: {
-                            let allSelected = selectedModIDs == Set(appState.filteredMods.filter { !$0.isBuiltIn }.map(\.id))
+                            let allSelected = selectedModIDs == Set(mods.filter { !$0.isBuiltIn }.map(\.id))
                             Text(allSelected ? L.s("installed_deselect_all") : L.s("installed_select_all"))
                                 .font(.system(size: 12))
                         }
@@ -294,7 +295,7 @@ struct InstalledModsView: View {
 
                 Color.frameBorder.frame(height: 3)
 
-                if appState.filteredMods.isEmpty {
+                if mods.isEmpty {
                     if appState.searchText.isEmpty {
                         VStack(spacing: 16) {
                             StardewIcon(type: .arrowBox, size: 48)
@@ -348,10 +349,14 @@ struct InstalledModsView: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
-                                let mods = appState.filteredMods
-                                ForEach(Array(mods.enumerated()), id: \.element.id) { index, mod in
+                                ForEach(Array(mods.enumerated()), id: \.element.folderURL) { index, mod in
                                     VStack(spacing: 0) {
-                                        modRow(mod)
+                                        InstalledModRow(
+                                            mod: mod,
+                                            isBatchMode: isBatchMode,
+                                            isSelected: selectedModIDs.contains(mod.id),
+                                            onToggleSelection: { toggleSelection(mod) }
+                                        )
 
                                         if index < mods.count - 1 {
                                             Color.stardewDivider.opacity(0.2).frame(height: 1)
@@ -368,7 +373,13 @@ struct InstalledModsView: View {
                         .onKeyPress { keyPress in
                             handleKeyPress(keyPress, proxy: proxy)
                         }
-                        .onAppear { isListFocused = true }
+                        .onAppear {
+                            // Claim focus only on the list's genuine first appearance, never when it
+                            // reappears because a search query started matching again mid-typing.
+                            guard !hasClaimedInitialFocus, appState.searchText.isEmpty else { return }
+                            hasClaimedInitialFocus = true
+                            isListFocused = true
+                        }
                     }
                 }
             }
@@ -483,176 +494,11 @@ struct InstalledModsView: View {
         }
     }
 
-    @ViewBuilder
-    private func modRow(_ mod: Mod) -> some View {
-        HStack(spacing: 0) {
-            // Checkbox in delete mode
-            if isBatchMode {
-                if mod.isBuiltIn {
-                    // Empty space to keep alignment
-                    Color.clear.frame(width: 24, height: 24)
-                        .padding(.trailing, 8)
-                } else {
-                    Button {
-                        if selectedModIDs.contains(mod.id) {
-                            selectedModIDs.remove(mod.id)
-                        } else {
-                            selectedModIDs.insert(mod.id)
-                        }
-                    } label: {
-                        Image(systemName: selectedModIDs.contains(mod.id) ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 18))
-                            .foregroundStyle(selectedModIDs.contains(mod.id) ? Color.accentGold : Color.textMuted.opacity(0.4))
-                    }
-                    .buttonStyle(.borderless)
-                    .padding(.trailing, 8)
-                }
-            }
-
-            // Left: mod info
-            HStack(spacing: 10) {
-                // Enable/disable dot
-                Circle()
-                    .fill(mod.isEnabled ? Color.stardewGreen : Color.stardewRed.opacity(0.5))
-                    .frame(width: 8, height: 8)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text(mod.manifest.name)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Color.textDark)
-                            .lineLimit(1)
-
-                        if let folder = mod.subfolder {
-                            Text(folder)
-                                .font(.system(size: 9))
-                                .lineLimit(1)
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 1)
-                                .background(Color.accentGold.opacity(0.15))
-                                .foregroundStyle(Color.accentGoldDark)
-                                .clipShape(Capsule())
-                                .help(folder)
-                        }
-
-                        if mod.isBuiltIn {
-                            Text(L.s("row_built_in"))
-                                .font(.caption2)
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 1)
-                                .background(.blue.opacity(0.15))
-                                .foregroundStyle(.blue)
-                                .clipShape(Capsule())
-                        }
-
-                        if mod.resolvedDependencies.contains(where: { $0.status != .satisfied && $0.entry.isRequired }) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 11))
-                                .foregroundStyle(Color.stardewOrange)
-                                .help(L.s("row_missing_deps"))
-                        }
-                    }
-
-                    Text(mod.manifest.author)
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.textLight)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer(minLength: 12)
-
-            // Right: version + update badge + type badge
-            VStack(alignment: .trailing, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text("v\(mod.manifest.version)")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.textDark)
-
-                    if let update = appState.modUpdates[mod.id] {
-                        Button {
-                            if let urlString = update.updateURL, let url = URL(string: urlString) {
-                                NSWorkspace.shared.open(url)
-                            }
-                        } label: {
-                            HStack(spacing: 3) {
-                                Image(systemName: "arrow.up.circle.fill")
-                                Text(update.newVersion)
-                            }
-                            .font(.system(size: 10, weight: .medium))
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Color.stardewBlue.opacity(0.15))
-                            .foregroundStyle(Color.stardewBlue)
-                            .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        .help(L.s("row_update_help"))
-                    }
-                }
-
-                let typeColor: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
-                Text(mod.modType.displayName)
-                    .font(.system(size: 10, weight: .medium))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(typeColor.opacity(0.1))
-                    .foregroundStyle(typeColor)
-                    .clipShape(Capsule())
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 9)
-        .opacity(isBatchMode && mod.isBuiltIn ? 0.3 : 1.0)
-        .background(
-            isBatchMode && selectedModIDs.contains(mod.id)
-                ? Color.accentGold.opacity(0.2)
-                : appState.selectedModID == mod.id && !isBatchMode
-                    ? Color.rowSelected
-                    : hoveredModID == mod.id
-                        ? Color.rowHover
-                        : Color.clear
-        )
-        .overlay(alignment: .leading) {
-            if isBatchMode && selectedModIDs.contains(mod.id) {
-                Color.accentGold.frame(width: 3)
-            } else if !isBatchMode && appState.selectedModID == mod.id {
-                Color.accentGold.frame(width: 3)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if isBatchMode {
-                if !mod.isBuiltIn {
-                    if selectedModIDs.contains(mod.id) {
-                        selectedModIDs.remove(mod.id)
-                    } else {
-                        selectedModIDs.insert(mod.id)
-                    }
-                }
-            } else {
-                appState.selectedModID = mod.id
-            }
-        }
-        .onHover { hovering in
-            hoveredModID = hovering ? mod.id : nil
-        }
-        .contextMenu {
-            if !isBatchMode {
-                if !mod.isBuiltIn {
-                    Button(mod.isEnabled ? L.s("installed_disable") : L.s("installed_enable")) {
-                        toggleMod(mod)
-                    }
-                    Divider()
-                }
-                Button(L.s("detail_show_in_finder")) {
-                    NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mod.folderURL.path)
-                }
-                Button(L.s("detail_unique_id")) {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(mod.manifest.uniqueID, forType: .string)
-                }
-            }
+    private func toggleSelection(_ mod: Mod) {
+        if selectedModIDs.contains(mod.id) {
+            selectedModIDs.remove(mod.id)
+        } else {
+            selectedModIDs.insert(mod.id)
         }
     }
 
@@ -724,13 +570,17 @@ struct InstalledModsView: View {
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         var urls: [URL] = []
+        let urlsLock = NSLock()
         let group = DispatchGroup()
 
         for provider in providers {
             group.enter()
             provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { data, _ in
                 if let data = data as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
+                    // Completion handlers fire concurrently on arbitrary queues; serialize the append.
+                    urlsLock.lock()
                     urls.append(url)
+                    urlsLock.unlock()
                 }
                 group.leave()
             }
@@ -878,6 +728,193 @@ struct InstalledModsView: View {
             showBatchDeleteConfirmation = true
         } else if let mod = appState.selectedMod, !mod.isBuiltIn {
             appState.softDeleteMods([mod])
+        }
+    }
+}
+
+// MARK: - Installed Mod Row
+
+/// One row of the installed-mods list. Owns its own hover state so pointer moves
+/// invalidate only this row, not the whole list (which would recompute the O(n log n)
+/// `filteredMods` on every pointer move).
+private struct InstalledModRow: View {
+    @Environment(AppState.self) private var appState
+    let mod: Mod
+    let isBatchMode: Bool
+    let isSelected: Bool
+    let onToggleSelection: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        HStack(spacing: 0) {
+            // Checkbox in delete mode
+            if isBatchMode {
+                if mod.isBuiltIn {
+                    // Empty space to keep alignment
+                    Color.clear.frame(width: 24, height: 24)
+                        .padding(.trailing, 8)
+                } else {
+                    Button {
+                        onToggleSelection()
+                    } label: {
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 18))
+                            .foregroundStyle(isSelected ? Color.accentGold : Color.textMuted.opacity(0.4))
+                    }
+                    .buttonStyle(.borderless)
+                    .padding(.trailing, 8)
+                }
+            }
+
+            // Left: mod info
+            HStack(spacing: 10) {
+                // Enable/disable dot
+                Circle()
+                    .fill(mod.isEnabled ? Color.stardewGreen : Color.stardewRed.opacity(0.5))
+                    .frame(width: 8, height: 8)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(mod.manifest.name)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Color.textDark)
+                            .lineLimit(1)
+
+                        if let folder = mod.subfolder {
+                            Text(folder)
+                                .font(.system(size: 9))
+                                .lineLimit(1)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Color.accentGold.opacity(0.15))
+                                .foregroundStyle(Color.accentGoldDark)
+                                .clipShape(Capsule())
+                                .help(folder)
+                        }
+
+                        if mod.isBuiltIn {
+                            Text(L.s("row_built_in"))
+                                .font(.caption2)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(.blue.opacity(0.15))
+                                .foregroundStyle(.blue)
+                                .clipShape(Capsule())
+                        }
+
+                        if mod.resolvedDependencies.contains(where: { $0.status != .satisfied && $0.entry.isRequired }) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.stardewOrange)
+                                .help(L.s("row_missing_deps"))
+                        }
+                    }
+
+                    Text(mod.manifest.author)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textLight)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 12)
+
+            // Right: version + update badge + type badge
+            VStack(alignment: .trailing, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text("v\(mod.manifest.version)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textDark)
+
+                    if let update = appState.modUpdates[mod.id] {
+                        Button {
+                            if let urlString = update.updateURL, let url = URL(string: urlString) {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "arrow.up.circle.fill")
+                                Text(update.newVersion)
+                            }
+                            .font(.system(size: 10, weight: .medium))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.stardewBlue.opacity(0.15))
+                            .foregroundStyle(Color.stardewBlue)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .help(L.s("row_update_help"))
+                    }
+                }
+
+                let typeColor: Color = mod.modType == .codeMod ? .stardewPurple : .stardewOrange
+                Text(mod.modType.displayName)
+                    .font(.system(size: 10, weight: .medium))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(typeColor.opacity(0.1))
+                    .foregroundStyle(typeColor)
+                    .clipShape(Capsule())
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 9)
+        .opacity(isBatchMode && mod.isBuiltIn ? 0.3 : 1.0)
+        .background(
+            isBatchMode && isSelected
+                ? Color.accentGold.opacity(0.2)
+                : appState.selectedModID == mod.id && !isBatchMode
+                    ? Color.rowSelected
+                    : isHovered
+                        ? Color.rowHover
+                        : Color.clear
+        )
+        .overlay(alignment: .leading) {
+            if isBatchMode && isSelected {
+                Color.accentGold.frame(width: 3)
+            } else if !isBatchMode && appState.selectedModID == mod.id {
+                Color.accentGold.frame(width: 3)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isBatchMode {
+                if !mod.isBuiltIn {
+                    onToggleSelection()
+                }
+            } else {
+                appState.selectedModID = mod.id
+            }
+        }
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .contextMenu {
+            if !isBatchMode {
+                if !mod.isBuiltIn {
+                    Button(mod.isEnabled ? L.s("installed_disable") : L.s("installed_enable")) {
+                        toggleMod(mod)
+                    }
+                    Divider()
+                }
+                Button(L.s("detail_show_in_finder")) {
+                    NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mod.folderURL.path)
+                }
+                Button(L.s("detail_unique_id")) {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(mod.manifest.uniqueID, forType: .string)
+                }
+            }
+        }
+    }
+
+    private func toggleMod(_ mod: Mod) {
+        if mod.isEnabled {
+            appState.performDisableMod(mod)
+        } else {
+            appState.performEnableMod(mod)
         }
     }
 }

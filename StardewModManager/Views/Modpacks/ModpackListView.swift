@@ -376,13 +376,17 @@ struct ModpackListView: View {
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         var urls: [URL] = []
+        let urlsLock = NSLock()
         let group = DispatchGroup()
 
         for provider in providers {
             group.enter()
             provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { data, _ in
                 if let data = data as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
+                    // Completion handlers fire concurrently on arbitrary queues; serialize the append.
+                    urlsLock.lock()
                     urls.append(url)
+                    urlsLock.unlock()
                 }
                 group.leave()
             }
